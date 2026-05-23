@@ -1,43 +1,8 @@
 {
   "stocks": [
     {
-      "symbol": "ADANIPOWER",
-      "added_at": "2026-02-17T18:58:22.332721",
-      "added_from": "scan_results"
-    },
-    {
-      "symbol": "ANANTRAJ",
-      "added_at": "2026-02-17T18:58:58.277851",
-      "added_from": "scan_results"
-    },
-    {
-      "symbol": "CHENNPETRO",
-      "added_at": "2026-02-17T19:02:26.339490",
-      "added_from": "scan_results"
-    },
-    {
-      "symbol": "JINDALSAW",
-      "added_at": "2026-02-17T19:03:03.605618",
-      "added_from": "scan_results"
-    },
-    {
-      "symbol": "KITEX",
-      "added_at": "2026-02-17T19:08:31.315278",
-      "added_from": "scan_results"
-    },
-    {
-      "symbol": "MIDHANI",
-      "added_at": "2026-02-17T19:08:47.377162",
-      "added_from": "scan_results"
-    },
-    {
-      "symbol": "REDTAPE",
-      "added_at": "2026-02-17T19:09:03.647944",
-      "added_from": "scan_results"
-    },
-    {
-      "symbol": "ROSSTECH",
-      "added_at": "2026-02-17T19:09:09.785952",
+      "symbol": "NATCOPHARM",
+      "added_at": "2026-03-27T22:07:49.144684",
       "added_from": "scan_results"
     }
   ]
