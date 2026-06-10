@@ -283,7 +283,7 @@ class StockDataStreamer:
             except Exception as e:
                 logger.error(f"Connection failed: {e}")
                 if attempt < MAX_RETRIES - 1:
-                    logger.info(f"🔄 Retrying in {RETRY_DELAY} seconds...")
+                    logger.info(f"[REFRESH] Retrying in {RETRY_DELAY} seconds...")
                     time.sleep(RETRY_DELAY)
                 else:
                     logger.error("Max retries reached")

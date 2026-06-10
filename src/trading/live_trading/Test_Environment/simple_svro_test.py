@@ -15,16 +15,16 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src', 't
 
 try:
     from continuation_stock_monitor import StockMonitor
-    print("✅ Successfully imported StockMonitor")
+    print("[OK] Successfully imported StockMonitor")
 except ImportError as e:
-    print(f"❌ Failed to import StockMonitor: {e}")
+    print(f"[FAIL] Failed to import StockMonitor: {e}")
     print("This test requires the continuation_stock_monitor module")
     sys.exit(1)
 
 
 def test_basic_svro_logic():
     """Test basic SVRO logic"""
-    print("\n🧪 Basic SVRO Logic Test")
+    print("\n[TEST_TUBE] Basic SVRO Logic Test")
     print("=" * 40)
     
     # Create monitor
@@ -60,13 +60,13 @@ def test_basic_svro_logic():
     # Test gap validation
     print("\n1. Testing Gap Validation:")
     gap_valid = stock.validate_gap()
-    print(f"   Gap validation: {'✅ PASS' if gap_valid else '❌ FAIL'}")
+    print(f"   Gap validation: {'[OK] PASS' if gap_valid else '[FAIL] FAIL'}")
     
     # Test low violation
     print("\n2. Testing Low Violation:")
     stock.check_low_violation()
     low_valid = not stock.rejection_reason or 'Low violation' not in stock.rejection_reason
-    print(f"   Low violation check: {'✅ PASS' if low_valid else '❌ FAIL'}")
+    print(f"   Low violation check: {'[OK] PASS' if low_valid else '[FAIL] FAIL'}")
     if not low_valid:
         print(f"   Rejection reason: {stock.rejection_reason}")
     
@@ -74,14 +74,14 @@ def test_basic_svro_logic():
     print("\n3. Testing Volume Validation:")
     stock.early_volume = test_stock['volume_baseline'] * 0.10  # 10% volume
     volume_valid = stock.validate_volume(test_stock['volume_baseline'])
-    print(f"   Volume validation (10%): {'✅ PASS' if volume_valid else '❌ FAIL'}")
+    print(f"   Volume validation (10%): {'[OK] PASS' if volume_valid else '[FAIL] FAIL'}")
     
     # Test entry preparation
     print("\n4. Testing Entry Preparation:")
     if volume_valid:
         stock.prepare_entry()
         entry_ready = stock.entry_ready
-        print(f"   Entry preparation: {'✅ PASS' if entry_ready else '❌ FAIL'}")
+        print(f"   Entry preparation: {'[OK] PASS' if entry_ready else '[FAIL] FAIL'}")
         if entry_ready:
             print(f"   Entry High: {stock.entry_high:.2f}")
             print(f"   Entry SL: {stock.entry_sl:.2f}")
@@ -89,25 +89,25 @@ def test_basic_svro_logic():
     # Summary
     print("\n" + "=" * 40)
     print("TEST SUMMARY:")
-    print(f"  Gap Validation: {'✅' if gap_valid else '❌'}")
-    print(f"  Low Violation: {'✅' if low_valid else '❌'}")
-    print(f"  Volume Validation: {'✅' if volume_valid else '❌'}")
+    print(f"  Gap Validation: {'[OK]' if gap_valid else '[FAIL]'}")
+    print(f"  Low Violation: {'[OK]' if low_valid else '[FAIL]'}")
+    print(f"  Volume Validation: {'[OK]' if volume_valid else '[FAIL]'}")
     
     all_passed = gap_valid and low_valid and volume_valid
-    print(f"\nOVERALL: {'🎉 ALL TESTS PASSED!' if all_passed else '❌ SOME TESTS FAILED'}")
+    print(f"\nOVERALL: {'[DONE] ALL TESTS PASSED!' if all_passed else '[FAIL] SOME TESTS FAILED'}")
     
     return all_passed
 
 
 def main():
     """Main test runner"""
-    print("🚀 Simple SVRO Test Starting...")
+    print("[ROCKET] Simple SVRO Test Starting...")
     
     try:
         success = test_basic_svro_logic()
         return success
     except Exception as e:
-        print(f"❌ Test failed with error: {e}")
+        print(f"[FAIL] Test failed with error: {e}")
         import traceback
         traceback.print_exc()
         return False

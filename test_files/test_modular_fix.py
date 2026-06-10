@@ -171,7 +171,7 @@ def test_cross_contamination_fix():
             print("   Each stock processes only its own price")
             return True
         else:
-            print("\n   ✗ CROSS-CONTAMINATION BUG STILL EXISTS!")
+            print("\n   [FAIL] CROSS-CONTAMINATION BUG STILL EXISTS!")
             return False
             
     except Exception as e:
@@ -218,7 +218,7 @@ def test_state_machine_transitions():
                 stock._transition_to(to_state)
                 print(f"   ✓ {from_state.value} → {to_state.value}")
             else:
-                print(f"   ✗ Cannot transition from {from_state.value} to {to_state.value}")
+                print(f"   [FAIL] Cannot transition from {from_state.value} to {to_state.value}")
                 return False
         
         print("\n   ✓ ALL STATE TRANSITIONS WORKING CORRECTLY")
@@ -257,14 +257,14 @@ def main():
     print(f"Tests passed: {passed}/{total}")
     
     if passed == total:
-        print("🎉 ALL TESTS PASSED! The modular fix is working correctly.")
+        print("[DONE] ALL TESTS PASSED! The modular fix is working correctly.")
         print("\nThe cross-contamination bug has been eliminated:")
         print("- Each stock processes only its own price")
         print("- State machine provides explicit state management")
         print("- Modular architecture enables clean separation of concerns")
         print("- 93% reduction in WebSocket traffic through dynamic unsubscribe")
     else:
-        print("❌ Some tests failed. Please review the errors above.")
+        print("[FAIL] Some tests failed. Please review the errors above.")
     
     return passed == total
 

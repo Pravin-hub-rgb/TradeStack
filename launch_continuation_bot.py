@@ -106,9 +106,9 @@ def main():
     
     # Step 3: Launch bot
     if launch_continuation_bot():
-        print("\n🎉 CONTINUATION BOT LAUNCHED SUCCESSFULLY!")
+        print("\n[DONE] CONTINUATION BOT LAUNCHED SUCCESSFULLY!")
     else:
-        print("\n❌ FAILED TO LAUNCH CONTINUATION BOT")
+        print("\n[FAIL] FAILED TO LAUNCH CONTINUATION BOT")
     
     print("=" * 60)
 

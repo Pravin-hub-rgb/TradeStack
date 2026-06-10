@@ -15,7 +15,7 @@ sys.path.append('src')
 
 def test_api_endpoint():
     """Test the exact API endpoint that the frontend is calling"""
-    print("🔍 TESTING API ENDPOINT")
+    print("[SEARCH] TESTING API ENDPOINT")
     print("=" * 60)
     
     try:
@@ -39,17 +39,17 @@ def test_api_endpoint():
         response = requests.post(url, json=payload, timeout=30)
         
         if response.status_code != 200:
-            print(f"❌ API call failed with status {response.status_code}")
+            print(f"[FAIL] API call failed with status {response.status_code}")
             print(f"   Response: {response.text}")
             return
         
         result = response.json()
-        print(f"✅ API call successful")
+        print(f"[OK] API call successful")
         print(f"   Response: {json.dumps(result, indent=2)}")
         
         operation_id = result.get('operation_id')
         if not operation_id:
-            print("❌ No operation_id in response")
+            print("[FAIL] No operation_id in response")
             return
         
         # Poll for results
@@ -64,7 +64,7 @@ def test_api_endpoint():
                 print(f"   Progress: {status.get('progress', 0)}% - {status.get('message', '...')}")
                 
                 if status.get('status') == 'completed':
-                    print(f"✅ Scan completed!")
+                    print(f"[OK] Scan completed!")
                     
                     # Check the results
                     scan_results = status.get('result', {}).get('results', [])
@@ -78,43 +78,43 @@ def test_api_endpoint():
                         symbol = stock.get('symbol', '')
                         if symbol in target_stocks:
                             found_stocks.append(symbol)
-                            print(f"   🎯 FOUND {symbol} in API results!")
+                            print(f"   [TARGET] FOUND {symbol} in API results!")
                             print(f"      Close: {stock.get('close', 'N/A')}")
                             print(f"      SMA20: {stock.get('sma20', 'N/A')}")
                             print(f"      Dist to MA: {stock.get('dist_to_ma_pct', 'N/A')}%")
                     
                     if found_stocks:
-                        print(f"\n❌ PROBLEM: API returned {found_stocks} which are below 20 MA!")
+                        print(f"\n[FAIL] PROBLEM: API returned {found_stocks} which are below 20 MA!")
                         print("   This confirms the bug is in the backend scanner logic")
                     else:
-                        print(f"\n✅ GOOD: API correctly filtered out {target_stocks}")
+                        print(f"\n[OK] GOOD: API correctly filtered out {target_stocks}")
                         print("   The bug might be in the frontend display logic")
                     
                     return
                     
                 elif status.get('status') == 'error':
-                    print(f"❌ Scan failed: {status.get('error', 'Unknown error')}")
+                    print(f"[FAIL] Scan failed: {status.get('error', 'Unknown error')}")
                     return
             
             # Wait before next poll
             import time
             time.sleep(1)
         
-        print("❌ Scan polling timed out")
+        print("[FAIL] Scan polling timed out")
         
     except requests.exceptions.ConnectionError:
-        print("❌ Cannot connect to API server")
+        print("[FAIL] Cannot connect to API server")
         print("   Make sure the server is running on http://localhost:8001")
         print("   Run: python server.py")
     except Exception as e:
-        print(f"❌ Error testing API: {e}")
+        print(f"[FAIL] Error testing API: {e}")
         import traceback
         traceback.print_exc()
 
 def test_direct_scanner():
     """Test the scanner directly with the same parameters"""
     print("\n" + "="*60)
-    print("🔍 TESTING DIRECT SCANNER")
+    print("[SEARCH] TESTING DIRECT SCANNER")
     print("=" * 60)
     
     try:
@@ -145,26 +145,26 @@ def test_direct_scanner():
             symbol = stock.get('symbol', '')
             if symbol in target_stocks:
                 found_stocks.append(symbol)
-                print(f"   🎯 FOUND {symbol} in direct scanner!")
+                print(f"   [TARGET] FOUND {symbol} in direct scanner!")
                 print(f"      Close: {stock.get('close', 'N/A')}")
                 print(f"      SMA20: {stock.get('sma20', 'N/A')}")
                 print(f"      Dist to MA: {stock.get('dist_to_ma_pct', 'N/A')}%")
         
         if found_stocks:
-            print(f"\n❌ PROBLEM: Direct scanner returned {found_stocks} which are below 20 MA!")
+            print(f"\n[FAIL] PROBLEM: Direct scanner returned {found_stocks} which are below 20 MA!")
             print("   This confirms the bug is in the scanner logic")
         else:
-            print(f"\n✅ GOOD: Direct scanner correctly filtered out {target_stocks}")
+            print(f"\n[OK] GOOD: Direct scanner correctly filtered out {target_stocks}")
             print("   The bug might be in the API or frontend logic")
         
     except Exception as e:
-        print(f"❌ Error testing direct scanner: {e}")
+        print(f"[FAIL] Error testing direct scanner: {e}")
         import traceback
         traceback.print_exc()
 
 def main():
     """Main test function"""
-    print("🔍 API ENDPOINT VS DIRECT SCANNER TEST")
+    print("[SEARCH] API ENDPOINT VS DIRECT SCANNER TEST")
     print("=" * 60)
     print("Testing to identify where the 20 MA bug occurs")
     

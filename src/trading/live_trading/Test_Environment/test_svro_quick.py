@@ -30,7 +30,7 @@ logger = logging.getLogger('SVROQuickTest')
 
 def test_svro_core_logic():
     """Test the core SVRO logic with synthetic data"""
-    print("🧪 Quick SVRO Core Logic Test")
+    print("[TEST_TUBE] Quick SVRO Core Logic Test")
     print("=" * 50)
     print("Testing: Essential SVRO conditions with synthetic data")
     print("Focus: Volume, gap, and low violation validation")
@@ -107,7 +107,7 @@ def test_svro_core_logic():
     results = []
 
     for scenario in test_scenarios:
-        print(f"🧪 Testing: {scenario['name']}")
+        print(f"[TEST_TUBE] Testing: {scenario['name']}")
         print(f"   Gap: {scenario['gap_pct']*100:.1f}%, Volume: {scenario['volume_ratio']*100:.1f}%")
         print(f"   Expected: {'PASS' if scenario['expected_pass'] else 'FAIL'}")
 
@@ -203,7 +203,7 @@ def test_svro_core_logic():
 
         results.append(result)
 
-        status = "✅ PASS" if passed else "❌ FAIL"
+        status = "[OK] PASS" if passed else "[FAIL] FAIL"
         print(f"   {status} Expected: {'PASS' if scenario['expected_pass'] else 'FAIL'}, Got: {'PASS' if qualified else 'FAIL'}")
         if not passed:
             print(f"      Reason: {stock.rejection_reason if stock.rejection_reason else 'Unknown'}")
@@ -229,57 +229,57 @@ def print_test_summary(results):
 
     print("Detailed Results:")
     for result in results:
-        status = "✅ PASS" if result['passed'] else "❌ FAIL"
+        status = "[OK] PASS" if result['passed'] else "[FAIL] FAIL"
         print(f"  {status} {result['scenario']}")
         print(f"     Expected: {'PASS' if result['expected_pass'] else 'FAIL'}")
         print(f"     Actual: {'PASS' if result['actual_pass'] else 'FAIL'}")
-        print(f"     Gap: {'✅' if result['gap_validated'] else '❌'}")
-        print(f"     Low Violation: {'✅' if result['low_violation_checked'] else '❌'}")
-        print(f"     Volume: {'✅' if result['volume_validated'] else '❌'} ({result['final_volume_ratio']:.1%})")
-        print(f"     Entry Ready: {'✅' if result['entry_ready'] else '❌'}")
+        print(f"     Gap: {'[OK]' if result['gap_validated'] else '[FAIL]'}")
+        print(f"     Low Violation: {'[OK]' if result['low_violation_checked'] else '[FAIL]'}")
+        print(f"     Volume: {'[OK]' if result['volume_validated'] else '[FAIL]'} ({result['final_volume_ratio']:.1%})")
+        print(f"     Entry Ready: {'[OK]' if result['entry_ready'] else '[FAIL]'}")
         if result['rejection_reason']:
             print(f"     Rejection: {result['rejection_reason']}")
         print()
 
     # Critical validation
-    print("🎯 CRITICAL SVRO VALIDATION:")
+    print("[TARGET] CRITICAL SVRO VALIDATION:")
     
     # Volume threshold test
     volume_test = next((r for r in results if 'Volume Fail' in r['scenario']), None)
     if volume_test and volume_test['passed']:
-        print("  ✅ Volume threshold (7.5%) validation working")
+        print("  [OK] Volume threshold (7.5%) validation working")
     else:
-        print("  ❌ Volume threshold (7.5%) validation failed")
+        print("  [FAIL] Volume threshold (7.5%) validation failed")
 
     # Gap threshold test
     gap_test = next((r for r in results if 'Gap Boundary' in r['scenario']), None)
     if gap_test and gap_test['passed']:
-        print("  ✅ Gap threshold (0.3%) validation working")
+        print("  [OK] Gap threshold (0.3%) validation working")
     else:
-        print("  ❌ Gap threshold (0.3%) validation failed")
+        print("  [FAIL] Gap threshold (0.3%) validation failed")
 
     # Low violation test
     low_test = next((r for r in results if 'Low Violation' in r['scenario']), None)
     if low_test and low_test['passed']:
-        print("  ✅ Low violation detection working")
+        print("  [OK] Low violation detection working")
     else:
-        print("  ❌ Low violation detection failed")
+        print("  [FAIL] Low violation detection failed")
 
     # Easy pass test
     easy_test = next((r for r in results if 'Easy Pass' in r['scenario']), None)
     if easy_test and easy_test['passed']:
-        print("  ✅ Normal SVRO conditions working")
+        print("  [OK] Normal SVRO conditions working")
     else:
-        print("  ❌ Normal SVRO conditions failed")
+        print("  [FAIL] Normal SVRO conditions failed")
 
     success = passed_count == total_count
     print("\n" + "=" * 60)
     if success:
-        print("🎉 SVRO QUICK TEST PASSED!")
+        print("[DONE] SVRO QUICK TEST PASSED!")
         print("Core SVRO functionality is working correctly.")
         print("Ready to test with real market data.")
     else:
-        print("❌ SVRO QUICK TEST FAILED!")
+        print("[FAIL] SVRO QUICK TEST FAILED!")
         print("Core SVRO functionality has issues.")
         print("Review and fix before proceeding.")
 

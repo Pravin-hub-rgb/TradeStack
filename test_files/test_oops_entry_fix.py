@@ -52,12 +52,12 @@ def test_oops_entry_fix():
         assert stock.entry_ready == True, f"Expected entry_ready=True, got {stock.entry_ready}"
         assert stock.entry_price == stock.previous_close, f"Expected entry_price={stock.previous_close}, got {stock.entry_price}"
         
-        print("✅ OOPS entry fix working correctly!")
+        print("[OK] OOPS entry fix working correctly!")
         print(f"   Entry price set to: {stock.entry_price}")
         print(f"   Entry ready set to: {stock.entry_ready}")
         
     except Exception as e:
-        print(f"❌ OOPS entry fix failed: {e}")
+        print(f"[FAIL] OOPS entry fix failed: {e}")
         return False
     
     # Test 2: Entry Signal Check
@@ -72,10 +72,10 @@ def test_oops_entry_fix():
         print(f"Entry signal triggered: {entry_signal}")
         
         assert entry_signal == True, f"Expected entry signal=True, got {entry_signal}"
-        print("✅ Entry signal working correctly!")
+        print("[OK] Entry signal working correctly!")
         
     except Exception as e:
-        print(f"❌ Entry signal test failed: {e}")
+        print(f"[FAIL] Entry signal test failed: {e}")
         return False
     
     # Test 3: Tick Processing
@@ -101,15 +101,15 @@ def test_oops_entry_fix():
         assert stock.entered == True, f"Expected stock.entered=True, got {stock.entered}"
         assert stock.entry_price == test_price, f"Expected entry_price={test_price}, got {stock.entry_price}"
         
-        print("✅ Tick processing working correctly!")
+        print("[OK] Tick processing working correctly!")
         
     except Exception as e:
-        print(f"❌ Tick processing test failed: {e}")
+        print(f"[FAIL] Tick processing test failed: {e}")
         return False
     
     print("\n=== ALL OOPS ENTRY TESTS PASSED ===")
-    print("✅ OOPS stocks now properly set entry price and entry_ready!")
-    print("✅ OOPS stocks can now trigger entries when price crosses previous close!")
+    print("[OK] OOPS stocks now properly set entry price and entry_ready!")
+    print("[OK] OOPS stocks can now trigger entries when price crosses previous close!")
     print()
     print("The simple entry system is now working correctly:")
     print("- OOPS stocks get entry_price = previous_close when qualified")
@@ -121,8 +121,8 @@ def test_oops_entry_fix():
 if __name__ == "__main__":
     success = test_oops_entry_fix()
     if success:
-        print("\n🎉 OOPS ENTRY FIX VERIFIED - SIMPLE ENTRY SYSTEM WORKING!")
+        print("\n[DONE] OOPS ENTRY FIX VERIFIED - SIMPLE ENTRY SYSTEM WORKING!")
     else:
-        print("\n❌ OOPS entry fix needs attention")
+        print("\n[FAIL] OOPS entry fix needs attention")
     
     sys.exit(0 if success else 1)

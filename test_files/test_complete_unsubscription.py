@@ -85,7 +85,7 @@ def test_complete_unsubscription():
         
         # Check if we actually received any ticks
         if len(ticks_received) == 0:
-            print("❌ NO TICKS RECEIVED - Cannot test unsubscription!")
+            print("[FAIL] NO TICKS RECEIVED - Cannot test unsubscription!")
             print("   This suggests an issue with tick reception, not unsubscription.")
             print("   The test needs to receive ticks first to verify unsubscription works.")
             return False
@@ -121,11 +121,11 @@ def test_complete_unsubscription():
         print(f"Ticks after unsubscription: {len(ticks_after_unsub)}")
         
         if len(ticks_after_unsub) == 0:
-            print("✅ SUCCESS: No ticks received after unsubscription!")
+            print("[OK] SUCCESS: No ticks received after unsubscription!")
             print("   The complete unsubscription flow is working correctly.")
             print("   Both application-level and Upstox-level unsubscription are working.")
         else:
-            print("❌ FAILURE: Still receiving ticks after unsubscription!")
+            print("[FAIL] FAILURE: Still receiving ticks after unsubscription!")
             print("   There may be a delay in Upstox stopping the data flow.")
             print("   Or the unsubscription call didn't work properly.")
             print()
@@ -153,8 +153,8 @@ def test_complete_unsubscription():
 if __name__ == "__main__":
     success = test_complete_unsubscription()
     if success:
-        print("\n🎉 COMPLETE UNSUBSCRIPTION TEST PASSED!")
+        print("\n[DONE] COMPLETE UNSUBSCRIPTION TEST PASSED!")
         print("The full unsubscription flow is working correctly.")
     else:
-        print("\n❌ COMPLETE UNSUBSCRIPTION TEST FAILED!")
+        print("\n[FAIL] COMPLETE UNSUBSCRIPTION TEST FAILED!")
         print("There may be an issue with the complete unsubscription behavior.")

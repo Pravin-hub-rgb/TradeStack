@@ -450,10 +450,10 @@ def test_cache_bug_and_fix():
     print(f"Difference: {fixed_close - buggy_close}")
     
     if buggy_close != fixed_close:
-        print("✅ BUG CONFIRMED: Cache was overriding correct historical close!")
-        print(f"✅ FIX WORKING: Correct Sunday close ({fixed_close}) is now used instead of wrong cache close ({buggy_close})")
+        print("[OK] BUG CONFIRMED: Cache was overriding correct historical close!")
+        print(f"[OK] FIX WORKING: Correct Sunday close ({fixed_close}) is now used instead of wrong cache close ({buggy_close})")
     else:
-        print("❌ No difference detected")
+        print("[FAIL] No difference detected")
     
     print("\n" + "=" * 80)
     print("CACHE BUG TEST COMPLETE")

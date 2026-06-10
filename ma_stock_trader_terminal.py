@@ -24,7 +24,7 @@ logging.basicConfig(
 def display_continuation_results(results: List[Dict]):
     """Display continuation scan results in clean terminal format"""
     if not results:
-        print("\n❌ No stocks met continuation criteria")
+        print("\n[FAIL] No stocks met continuation criteria")
         return
     
     print(f"\n=== CONTINUATION SCANNER RESULTS ===")
@@ -48,7 +48,7 @@ def display_continuation_results(results: List[Dict]):
 def display_reversal_results(results: List[Dict]):
     """Display reversal scan results in clean terminal format"""
     if not results:
-        print("\n❌ No stocks met reversal criteria")
+        print("\n[FAIL] No stocks met reversal criteria")
         return
     
     print(f"\n=== REVERSAL SCANNER RESULTS ===")
@@ -72,7 +72,7 @@ def display_reversal_results(results: List[Dict]):
 
 def run_continuation_scan():
     """Run continuation scan with clean output"""
-    print("🔍 Running Continuation Scan...")
+    print("[SEARCH] Running Continuation Scan...")
     print("Criteria: Price ₹100-2000, ADR > 3%, Rising 20MA, 1M+ volume")
     
     try:
@@ -80,12 +80,12 @@ def run_continuation_scan():
         display_continuation_results(results)
         return results
     except Exception as e:
-        print(f"❌ Error running continuation scan: {e}")
+        print(f"[FAIL] Error running continuation scan: {e}")
         return []
 
 def run_reversal_scan():
     """Run reversal scan with clean output"""
-    print("🔍 Running Reversal Scan...")
+    print("[SEARCH] Running Reversal Scan...")
     print("Criteria: Price ₹100-2000, ADR > 3%, Extended decline, 1M+ volume")
     
     try:
@@ -93,12 +93,12 @@ def run_reversal_scan():
         display_reversation_results()
         return results
     except Exception as e:
-        print(f"❌ Error running reversal scan: {e}")
+        print(f"[FAIL] Error running reversal scan: {e}")
         return []
 
 def main():
     """Main menu for MA Stock Trader Terminal"""
-    print("🚀 MA Stock Trader - Terminal Version")
+    print("[ROCKET] MA Stock Trader - Terminal Version")
     print("=" * 50)
     print("1. Run Continuation Scan")
     print("2. Run Reversal Scan") 
@@ -121,7 +121,7 @@ def main():
             cont_results = run_continuation_scan()
             print("\n" + "="*80)
             rev_results = run_reversal_scan()
-            print(f"\n📊 SUMMARY:")
+            print(f"\n[CHART] SUMMARY:")
             print(f"Continuation candidates: {len(cont_results)}")
             print(f"Reversal candidates: {len(rev_results)}")
             input("\nPress Enter to continue...")

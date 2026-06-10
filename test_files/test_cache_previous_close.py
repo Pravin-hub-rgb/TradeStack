@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 def test_cache_previous_close():
     """Test fetching previous close from pickle cache"""
     
-    print("🔍 Testing Previous Close from Pickle Cache")
+    print("[SEARCH] Testing Previous Close from Pickle Cache")
     print("=" * 50)
     
     # Test symbols
@@ -29,14 +29,14 @@ def test_cache_previous_close():
     results = {}
     
     for symbol in test_symbols:
-        print(f"\n🧪 Testing {symbol}...")
+        print(f"\n[TEST_TUBE] Testing {symbol}...")
         
         try:
             # Build cache file path (pickle files in data/cache/)
             cache_file = os.path.join('data', 'cache', f'{symbol}.pkl')
             
             if not os.path.exists(cache_file):
-                print(f"   ❌ Cache file not found: {cache_file}")
+                print(f"   [FAIL] Cache file not found: {cache_file}")
                 results[symbol] = None
                 continue
             
@@ -48,11 +48,11 @@ def test_cache_previous_close():
                 cache_data = pickle.load(f)
             
             if cache_data.empty:
-                print(f"   ❌ Empty cache file")
+                print(f"   [FAIL] Empty cache file")
                 results[symbol] = None
                 continue
             
-            print(f"   ✅ Cache loaded: {len(cache_data)} rows")
+            print(f"   [OK] Cache loaded: {len(cache_data)} rows")
             
             # Check if cache data has the expected structure
             if isinstance(cache_data, dict):
@@ -70,7 +70,7 @@ def test_cache_previous_close():
                         'source': 'metadata'
                     }
                 else:
-                    print(f"   ❌ No previous close in metadata")
+                    print(f"   [FAIL] No previous close in metadata")
                     results[symbol] = None
                     
             elif isinstance(cache_data, pd.DataFrame):
@@ -103,33 +103,33 @@ def test_cache_previous_close():
                         'source': 'dataframe'
                     }
                 else:
-                    print(f"   ❌ No close column in DataFrame")
+                    print(f"   [FAIL] No close column in DataFrame")
                     results[symbol] = None
             else:
-                print(f"   ❌ Unknown cache data type: {type(cache_data)}")
+                print(f"   [FAIL] Unknown cache data type: {type(cache_data)}")
                 results[symbol] = None
             
         except Exception as e:
-            logger.error(f"❌ Error testing {symbol}: {e}")
+            logger.error(f"[FAIL] Error testing {symbol}: {e}")
             results[symbol] = {
                 'status': 'ERROR',
                 'error': str(e)
             }
     
     # Summary
-    print(f"\n📋 Cache Test Summary")
+    print(f"\n[CLIPBOARD] Cache Test Summary")
     print("=" * 30)
     
     successful = [s for s, r in results.items() if r and r.get('status') == 'SUCCESS']
     failed = [s for s, r in results.items() if r and r.get('status') == 'ERROR']
     not_found = [s for s, r in results.items() if r is None]
     
-    print(f"✅ Successful: {len(successful)} - {', '.join(successful) if successful else 'None'}")
-    print(f"❌ Failed: {len(failed)} - {', '.join(failed) if failed else 'None'}")
-    print(f"❌ Not found: {len(not_found)} - {', '.join(not_found) if not_found else 'None'}")
+    print(f"[OK] Successful: {len(successful)} - {', '.join(successful) if successful else 'None'}")
+    print(f"[FAIL] Failed: {len(failed)} - {', '.join(failed) if failed else 'None'}")
+    print(f"[FAIL] Not found: {len(not_found)} - {', '.join(not_found) if not_found else 'None'}")
     
     if successful:
-        print(f"\n🎯 Cache Previous Close Results:")
+        print(f"\n[TARGET] Cache Previous Close Results:")
         for symbol in successful:
             r = results[symbol]
             print(f"   {symbol}: ₹{r['previous_close']:.2f} (from {r['source']})")
@@ -139,7 +139,7 @@ def test_cache_previous_close():
 def test_cache_vs_upstox():
     """Compare cache previous close with Upstox LTP data"""
     
-    print(f"\n📊 Comparing Cache vs Upstox Previous Close")
+    print(f"\n[CHART] Comparing Cache vs Upstox Previous Close")
     print("=" * 50)
     
     try:
@@ -148,7 +148,7 @@ def test_cache_vs_upstox():
         test_symbols = ['ASHAPURMIN', 'GODREJPROP', 'IIFL', 'BALUFORGE']
         
         for symbol in test_symbols:
-            print(f"\n📈 {symbol}:")
+            print(f"\n[TREND_UP] {symbol}:")
             
             # Get cache data
             cache_file = os.path.join('bhavcopy_cache', f'{symbol.lower()}_daily.csv')
@@ -178,22 +178,22 @@ def test_cache_vs_upstox():
             if cache_close and ltp_close:
                 diff = abs(cache_close - ltp_close)
                 if diff > 0.01:
-                    print(f"   ⚠️  Difference: ₹{diff:.2f}")
+                    print(f"   [WARN]  Difference: ₹{diff:.2f}")
                 else:
-                    print(f"   ✅ Match")
+                    print(f"   [OK] Match")
             elif cache_close:
-                print(f"   ⚠️  Only cache available")
+                print(f"   [WARN]  Only cache available")
             elif ltp_close:
-                print(f"   ⚠️  Only Upstox available")
+                print(f"   [WARN]  Only Upstox available")
             else:
-                print(f"   ❌ No data available")
+                print(f"   [FAIL] No data available")
                 
     except ImportError as e:
-        print(f"❌ Could not import upstox_fetcher: {e}")
+        print(f"[FAIL] Could not import upstox_fetcher: {e}")
 
 def main():
     """Main execution function"""
-    print("🚀 Cache Previous Close Test")
+    print("[ROCKET] Cache Previous Close Test")
     print("=" * 60)
     
     # Test 1: Basic cache functionality
@@ -204,11 +204,11 @@ def main():
     
     # Save results
     if success:
-        print(f"\n✅ Cache test successful - ready for implementation")
+        print(f"\n[OK] Cache test successful - ready for implementation")
     else:
-        print(f"\n❌ Cache test failed - check cache files")
+        print(f"\n[FAIL] Cache test failed - check cache files")
     
-    print(f"\n🏁 Test completed")
+    print(f"\n[FLAG] Test completed")
 
 if __name__ == "__main__":
     main()

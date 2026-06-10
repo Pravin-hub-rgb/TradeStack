@@ -121,18 +121,18 @@ def test_real_time_ticks():
         print("-" * 70)
         
         if not tick_data:
-            print("❌ No ticks received - connection issue")
+            print("[FAIL] No ticks received - connection issue")
         else:
             market_status = "OPEN" if 9 <= datetime.now(IST).hour < 15 else "CLOSED"
-            print(f"📊 Market status during test: {market_status}")
+            print(f"[CHART] Market status during test: {market_status}")
             
             if market_status == "CLOSED":
                 if any(len(ticks) > 0 for ticks in tick_data.values()):
-                    print("⚠️  Ticks received during market closed - likely cached/stale data")
+                    print("[WARN]  Ticks received during market closed - likely cached/stale data")
                 else:
-                    print("✅ No ticks during market closed - correct behavior")
+                    print("[OK] No ticks during market closed - correct behavior")
             else:
-                print("✅ Ticks received during market open - correct behavior")
+                print("[OK] Ticks received during market open - correct behavior")
             
             # Check for price movement
             total_movement = 0
@@ -144,9 +144,9 @@ def test_real_time_ticks():
                     total_movement += movement
             
             if total_movement > 0:
-                print("✅ Price movement detected - likely real-time data")
+                print("[OK] Price movement detected - likely real-time data")
             else:
-                print("⚠️  No price movement - possibly cached data")
+                print("[WARN]  No price movement - possibly cached data")
         
     except KeyboardInterrupt:
         print("\nTest stopped by user")

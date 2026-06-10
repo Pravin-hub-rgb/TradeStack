@@ -39,11 +39,11 @@ def test_real_unsubscription():
         try:
             instrument_key = upstox_fetcher.get_instrument_key(test_symbol)
             if not instrument_key:
-                print(f"❌ Could not get instrument key for {test_symbol}")
+                print(f"[FAIL] Could not get instrument key for {test_symbol}")
                 return False
-            print(f"✅ Got instrument key: {instrument_key}")
+            print(f"[OK] Got instrument key: {instrument_key}")
         except Exception as e:
-            print(f"❌ Error getting instrument key: {e}")
+            print(f"[FAIL] Error getting instrument key: {e}")
             return False
         
         # Create SimpleStockStreamer exactly like run_continuation.py
@@ -59,10 +59,10 @@ def test_real_unsubscription():
         # Connect to data stream exactly like run_continuation.py
         print("Connecting to data stream...")
         if not data_streamer.connect():
-            print("❌ FAILED to connect to data stream")
+            print("[FAIL] FAILED to connect to data stream")
             return False
         
-        print("✅ Connected! Waiting for subscription...")
+        print("[OK] Connected! Waiting for subscription...")
         
         # Wait for connection and subscription (like run_continuation.py)
         time.sleep(3)
@@ -94,17 +94,17 @@ def test_real_unsubscription():
         while (datetime.now() - start_time).total_seconds() < 10:
             time.sleep(0.1)
         
-        print(f"\n✅ RECEIVED {len(ticks_received)} ticks in 10 seconds")
+        print(f"\n[OK] RECEIVED {len(ticks_received)} ticks in 10 seconds")
         
         if len(ticks_received) == 0:
-            print("❌ NO TICKS RECEIVED - Cannot test unsubscription!")
+            print("[FAIL] NO TICKS RECEIVED - Cannot test unsubscription!")
             print("   This could mean:")
             print("   - Market is closed")
             print("   - Stock has no trading activity")
             print("   - WebSocket connection issue")
             return False
         
-        print("✅ SUCCESS: Ticks are being received!")
+        print("[OK] SUCCESS: Ticks are being received!")
         
         # STEP 4: UNSUBSCRIBE - Use exact same method as run_continuation.py
         print("\n=== STEP 4: UNSUBSCRIBE ===")
@@ -112,9 +112,9 @@ def test_real_unsubscription():
         
         try:
             data_streamer.unsubscribe([instrument_key])
-            print("✅ Unsubscribe call completed")
+            print("[OK] Unsubscribe call completed")
         except Exception as e:
-            print(f"❌ Unsubscribe error: {e}")
+            print(f"[FAIL] Unsubscribe error: {e}")
             return False
         
         # STEP 5: VERIFY - Monitor for ticks after unsubscription
@@ -151,11 +151,11 @@ def test_real_unsubscription():
         print(f"Ticks after unsubscription: {len(ticks_after_unsub)}")
         
         if len(ticks_after_unsub) == 0:
-            print("✅ SUCCESS: No ticks received after unsubscription!")
+            print("[OK] SUCCESS: No ticks received after unsubscription!")
             print("   The unsubscription mechanism is working correctly.")
             print("   This proves that data_streamer.unsubscribe() stops ticks.")
         else:
-            print("❌ FAILURE: Still receiving ticks after unsubscription!")
+            print("[FAIL] FAILURE: Still receiving ticks after unsubscription!")
             print("   This indicates a problem with the unsubscription mechanism.")
             print("   Possible causes:")
             print("   - Upstox delay in processing unsubscribe")
@@ -175,14 +175,14 @@ def test_real_unsubscription():
         # Cleanup
         try:
             data_streamer.disconnect()
-            print("✅ WebSocket disconnected")
+            print("[OK] WebSocket disconnected")
         except:
             pass
         
         return len(ticks_after_unsub) == 0
         
     except Exception as e:
-        print(f"❌ Error in test: {e}")
+        print(f"[FAIL] Error in test: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -196,11 +196,11 @@ if __name__ == "__main__":
     
     print("\n" + "=" * 70)
     if success:
-        print("🎉 REAL UNSUBSCRIPTION TEST PASSED!")
+        print("[DONE] REAL UNSUBSCRIPTION TEST PASSED!")
         print("   The unsubscription mechanism is working correctly.")
         print("   You can trust that unsubscribed stocks stop receiving ticks.")
     else:
-        print("❌ REAL UNSUBSCRIPTION TEST FAILED!")
+        print("[FAIL] REAL UNSUBSCRIPTION TEST FAILED!")
         print("   There may be an issue with the unsubscription mechanism.")
         print("   Check the error messages above for more details.")
     print("=" * 70)

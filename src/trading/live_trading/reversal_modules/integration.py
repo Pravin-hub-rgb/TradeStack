@@ -94,7 +94,7 @@ class ReversalIntegration:
                 print(f"DEBUG: entry_price={stock.entry_price}, entry_sl={stock.entry_sl}")
                 print(f"ENTRY {stock.symbol} entered, SL placed")
             
-            # ✅ CHECK IF BOTH POSITIONS ARE FILLED AND UNSUBSCRIBE REMAINING STOCKS
+            # [OK] CHECK IF BOTH POSITIONS ARE FILLED AND UNSUBSCRIBE REMAINING STOCKS
             self._check_and_unsubscribe_after_positions_filled()
         
         # Log paper exits if stock just exited

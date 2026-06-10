@@ -24,20 +24,20 @@ class PreviousCloseTester:
         try:
             from utils.upstox_fetcher import upstox_fetcher
             self.upstox_fetcher = upstox_fetcher
-            logger.info("✅ Upstox fetcher imported successfully")
+            logger.info("[OK] Upstox fetcher imported successfully")
         except ImportError as e:
-            logger.error(f"❌ Failed to import upstox_fetcher: {e}")
+            logger.error(f"[FAIL] Failed to import upstox_fetcher: {e}")
             raise
     
     def test_ltp_vs_historical(self, symbols):
         """Test LTP vs Historical for discrepancies"""
-        print("🔍 Testing LTP vs Historical Previous Close")
+        print("[SEARCH] Testing LTP vs Historical Previous Close")
         print("=" * 50)
         
         results = {}
         
         for symbol in symbols:
-            print(f"\n🧪 Testing {symbol}...")
+            print(f"\n[TEST_TUBE] Testing {symbol}...")
             
             try:
                 # Get LTP data
@@ -71,7 +71,7 @@ class PreviousCloseTester:
                     if ltp_close:
                         diff = abs(hist_close - ltp_close)
                         if diff > 0.01:
-                            print(f"   ⚠️  DISCREPANCY: ₹{diff:.2f}")
+                            print(f"   [WARN]  DISCREPANCY: ₹{diff:.2f}")
                             results[symbol] = {
                                 'status': 'DISCREPANCY',
                                 'ltp': ltp_close,
@@ -79,7 +79,7 @@ class PreviousCloseTester:
                                 'discrepancy': diff
                             }
                         else:
-                            print(f"   ✅ MATCH")
+                            print(f"   [OK] MATCH")
                             results[symbol] = {
                                 'status': 'MATCH',
                                 'ltp': ltp_close,
@@ -94,7 +94,7 @@ class PreviousCloseTester:
                             'discrepancy': None
                         }
                 else:
-                    print(f"   ❌ No historical data")
+                    print(f"   [FAIL] No historical data")
                     results[symbol] = {
                         'status': 'HISTORICAL_FAILED',
                         'ltp': ltp_close,
@@ -103,7 +103,7 @@ class PreviousCloseTester:
                     }
                     
             except Exception as e:
-                logger.error(f"❌ Error testing {symbol}: {e}")
+                logger.error(f"[FAIL] Error testing {symbol}: {e}")
                 results[symbol] = {
                     'status': 'ERROR',
                     'ltp': None,
@@ -115,7 +115,7 @@ class PreviousCloseTester:
     
     def analyze_bug_scenario(self):
         """Analyze the specific bug scenario from the report"""
-        print(f"\n🎯 Analyzing Bug Scenario")
+        print(f"\n[TARGET] Analyzing Bug Scenario")
         print("=" * 30)
         
         # From the bug report:
@@ -137,16 +137,16 @@ class PreviousCloseTester:
             
             # Check if this matches Thursday's close (bug scenario)
             if abs(ltp_close - 750.75) < 0.01:  # Thursday's close
-                print("   ⚠️  BUG DETECTED: Showing Thursday's close instead of Friday's!")
+                print("   [WARN]  BUG DETECTED: Showing Thursday's close instead of Friday's!")
                 return True
             elif abs(ltp_close - 681.60) < 0.01:  # Friday's close
-                print("   ✅ CORRECT: Showing Friday's close")
+                print("   [OK] CORRECT: Showing Friday's close")
                 return False
             else:
-                print(f"   ❓ UNEXPECTED: Close doesn't match expected values")
+                print(f"   [?] UNEXPECTED: Close doesn't match expected values")
                 return False
         else:
-            print("   ❌ Cannot determine - LTP data not available")
+            print("   [FAIL] Cannot determine - LTP data not available")
             return False
 
 class PreviousCloseFixer:
@@ -203,7 +203,7 @@ class PreviousCloseFixer:
     
     def apply_fix(self):
         """Apply the fix to the upstox fetcher"""
-        print("🔧 Applying Previous Close Fix")
+        print("[WRENCH] Applying Previous Close Fix")
         print("=" * 30)
         
         # Create the fixed method
@@ -215,13 +215,13 @@ class PreviousCloseFixer:
         # Apply the fix
         self.upstox_fetcher.get_ltp_data = fixed_method
         
-        print("✅ Fix applied successfully")
+        print("[OK] Fix applied successfully")
         print("   - Historical API now used as primary source for previous close")
         print("   - Original method kept as fallback")
     
     def test_fix(self, symbols):
         """Test the fix with sample symbols"""
-        print(f"\n🧪 Testing Fix Implementation")
+        print(f"\n[TEST_TUBE] Testing Fix Implementation")
         print("=" * 30)
         
         for symbol in symbols:
@@ -241,13 +241,13 @@ class PreviousCloseFixer:
                 if original_data and 'cp' in original_data:
                     diff = abs(fixed_data['cp'] - original_data['cp'])
                     if diff > 0.01:
-                        print(f"   ✅ Fix applied: Difference of ₹{diff:.2f}")
+                        print(f"   [OK] Fix applied: Difference of ₹{diff:.2f}")
                     else:
-                        print(f"   ✅ Same result: No change needed")
+                        print(f"   [OK] Same result: No change needed")
 
 def main():
     """Main execution function"""
-    print("🚀 Previous Close Bug Test and Fix")
+    print("[ROCKET] Previous Close Bug Test and Fix")
     print("=" * 60)
     
     # Test symbols from the bug report
@@ -263,7 +263,7 @@ def main():
         
         # Step 3: Apply fix if needed
         if bug_detected or any(r['status'] == 'DISCREPANCY' for r in results.values()):
-            print(f"\n⚠️  Bug detected or discrepancies found - applying fix")
+            print(f"\n[WARN]  Bug detected or discrepancies found - applying fix")
             
             fixer = PreviousCloseFixer(tester.upstox_fetcher)
             fixer.apply_fix()
@@ -280,10 +280,10 @@ def main():
             with open('previous_close_fix_status.json', 'w') as f:
                 json.dump(fix_status, f, indent=2)
             
-            print(f"\n📋 Fix Status Saved to previous_close_fix_status.json")
+            print(f"\n[CLIPBOARD] Fix Status Saved to previous_close_fix_status.json")
             
         else:
-            print(f"\n✅ No bugs or discrepancies found - no fix needed")
+            print(f"\n[OK] No bugs or discrepancies found - no fix needed")
             
             # Save status
             fix_status = {
@@ -297,27 +297,27 @@ def main():
                 json.dump(fix_status, f, indent=2)
         
         # Step 4: Final summary
-        print(f"\n🏁 Test and Fix Summary")
+        print(f"\n[FLAG] Test and Fix Summary")
         print("=" * 30)
         
         discrepancies = [s for s, r in results.items() if r['status'] == 'DISCREPANCY']
         matches = [s for s, r in results.items() if r['status'] == 'MATCH']
         
-        print(f"✅ Matches: {len(matches)}")
-        print(f"⚠️  Discrepancies: {len(discrepancies)}")
+        print(f"[OK] Matches: {len(matches)}")
+        print(f"[WARN]  Discrepancies: {len(discrepancies)}")
         if discrepancies:
             print(f"   Affected symbols: {', '.join(discrepancies)}")
         
         if bug_detected:
-            print(f"⚠️  Bug scenario confirmed")
+            print(f"[WARN]  Bug scenario confirmed")
         else:
-            print(f"✅ Bug scenario not detected")
+            print(f"[OK] Bug scenario not detected")
         
-        print(f"\n📝 Results saved to previous_close_fix_status.json")
+        print(f"\n[NOTE] Results saved to previous_close_fix_status.json")
         
     except Exception as e:
         logger.error(f"Error in main execution: {e}")
-        print(f"❌ Execution failed: {e}")
+        print(f"[FAIL] Execution failed: {e}")
 
 if __name__ == "__main__":
     main()

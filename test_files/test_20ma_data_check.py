@@ -27,21 +27,21 @@ def check_stock_data(symbol: str, scan_date: date):
     cached_data = cache_manager.load_cached_data(symbol)
     
     if cached_data is None or cached_data.empty:
-        print(f"   ❌ No cached data found for {symbol}")
+        print(f"   [FAIL] No cached data found for {symbol}")
         return
     
-    print(f"   ✅ Found cached data: {len(cached_data)} days")
+    print(f"   [OK] Found cached data: {len(cached_data)} days")
     
     # Show date range of cached data
     if isinstance(cached_data.index, pd.DatetimeIndex):
         first_date = cached_data.index[0]
         last_date = cached_data.index[-1]
-        print(f"   📅 Date range: {first_date.date()} to {last_date.date()}")
+        print(f"   [CALENDAR] Date range: {first_date.date()} to {last_date.date()}")
         
         # Calculate total days
         total_days = (last_date.date() - first_date.date()).days + 1
-        print(f"   📊 Total calendar days: {total_days}")
-        print(f"   📈 Trading days in cache: {len(cached_data)}")
+        print(f"   [CHART] Total calendar days: {total_days}")
+        print(f"   [TREND_UP] Trading days in cache: {len(cached_data)}")
     
     # 2. Check data for scan date
     print(f"\n2. DATA FOR SCAN DATE ({scan_date}):")
@@ -60,9 +60,9 @@ def check_stock_data(symbol: str, scan_date: date):
                 break
     
     if has_scan_date:
-        print(f"   ✅ Data available for scan date: {scan_date}")
+        print(f"   [OK] Data available for scan date: {scan_date}")
     else:
-        print(f"   ❌ No data available for scan date: {scan_date}")
+        print(f"   [FAIL] No data available for scan date: {scan_date}")
         return
     
     # 3. Check data fetching for scanner
@@ -77,16 +77,16 @@ def check_stock_data(symbol: str, scan_date: date):
     )
     
     if scanner_data.empty:
-        print(f"   ❌ Scanner data fetch returned empty")
+        print(f"   [FAIL] Scanner data fetch returned empty")
         return
     
-    print(f"   ✅ Scanner data fetched: {len(scanner_data)} days")
+    print(f"   [OK] Scanner data fetched: {len(scanner_data)} days")
     
     # Show date range of scanner data
     if isinstance(scanner_data.index, pd.DatetimeIndex):
         first_date = scanner_data.index[0]
         last_date = scanner_data.index[-1]
-        print(f"   📅 Scanner data range: {first_date.date()} to {last_date.date()}")
+        print(f"   [CALENDAR] Scanner data range: {first_date.date()} to {last_date.date()}")
     
     # 4. Check technical indicators calculation
     print(f"\n4. TECHNICAL INDICATORS CALCULATION:")
@@ -98,26 +98,26 @@ def check_stock_data(symbol: str, scan_date: date):
     
     # Check if 20 MA has valid values
     ma_20_values = scanner_data['ma_20'].dropna()
-    print(f"   📊 20 MA calculated for {len(ma_20_values)} days")
+    print(f"   [CHART] 20 MA calculated for {len(ma_20_values)} days")
     
     if len(ma_20_values) == 0:
-        print(f"   ❌ No 20 MA values calculated - insufficient data!")
+        print(f"   [FAIL] No 20 MA values calculated - insufficient data!")
         return
     
     # 5. Check latest data point
     print(f"\n5. LATEST DATA POINT ANALYSIS:")
     latest = scanner_data.iloc[-1]
     
-    print(f"   📈 Latest date: {latest.name}")
-    print(f"   💰 Close price: {latest['close']:.2f}")
-    print(f"   📊 20 MA: {latest['ma_20']:.2f}")
+    print(f"   [TREND_UP] Latest date: {latest.name}")
+    print(f"   [MONEY] Close price: {latest['close']:.2f}")
+    print(f"   [CHART] 20 MA: {latest['ma_20']:.2f}")
     
     # Check if close is above 20 MA
     if latest['close'] > latest['ma_20']:
-        print(f"   ✅ Close is ABOVE 20 MA")
+        print(f"   [OK] Close is ABOVE 20 MA")
         above_ma = True
     else:
-        print(f"   ❌ Close is BELOW 20 MA")
+        print(f"   [FAIL] Close is BELOW 20 MA")
         above_ma = False
     
     # 6. Check 20 MA calculation validity
@@ -131,43 +131,43 @@ def check_stock_data(symbol: str, scan_date: date):
     required_start_position = latest_position - 19
     
     if required_start_position < 0:
-        print(f"   ❌ INSUFFICIENT DATA: Need {20} days, only have {latest_position + 1} days")
+        print(f"   [FAIL] INSUFFICIENT DATA: Need {20} days, only have {latest_position + 1} days")
         print(f"       This explains why the 20 MA might be artificially low!")
     else:
-        print(f"   ✅ SUFFICIENT DATA: Have {latest_position + 1} days, need {20} days")
+        print(f"   [OK] SUFFICIENT DATA: Have {latest_position + 1} days, need {20} days")
         
         # Show the actual data used for 20 MA calculation
         ma_data = scanner_data.iloc[required_start_position:latest_position + 1]
-        print(f"   📊 20 MA calculated using data from {ma_data.index[0].date()} to {ma_data.index[-1].date()}")
-        print(f"   📈 Close prices used: {ma_data['close'].tolist()}")
+        print(f"   [CHART] 20 MA calculated using data from {ma_data.index[0].date()} to {ma_data.index[-1].date()}")
+        print(f"   [TREND_UP] Close prices used: {ma_data['close'].tolist()}")
         
         # Calculate manual 20 MA to verify
         manual_ma = ma_data['close'].mean()
-        print(f"   🧮 Manual 20 MA calculation: {manual_ma:.2f}")
-        print(f"   📊 Scanner 20 MA value: {latest['ma_20']:.2f}")
+        print(f"   [ABACUS] Manual 20 MA calculation: {manual_ma:.2f}")
+        print(f"   [CHART] Scanner 20 MA value: {latest['ma_20']:.2f}")
         
         if abs(manual_ma - latest['ma_20']) < 0.01:
-            print(f"   ✅ 20 MA calculation is correct")
+            print(f"   [OK] 20 MA calculation is correct")
         else:
-            print(f"   ⚠️  20 MA calculation discrepancy detected")
+            print(f"   [WARN]  20 MA calculation discrepancy detected")
     
     # 7. Summary
     print(f"\n7. SUMMARY FOR {symbol}:")
-    print(f"   📊 Total data days: {len(scanner_data)}")
-    print(f"   📈 Above 20 MA: {above_ma}")
-    print(f"   📊 20 MA value: {latest['ma_20']:.2f}")
-    print(f"   💰 Close price: {latest['close']:.2f}")
+    print(f"   [CHART] Total data days: {len(scanner_data)}")
+    print(f"   [TREND_UP] Above 20 MA: {above_ma}")
+    print(f"   [CHART] 20 MA value: {latest['ma_20']:.2f}")
+    print(f"   [MONEY] Close price: {latest['close']:.2f}")
     
     if above_ma:
-        print(f"   🎯 This stock would PASS the 20 MA check in scanner")
+        print(f"   [TARGET] This stock would PASS the 20 MA check in scanner")
     else:
-        print(f"   🚫 This stock would FAIL the 20 MA check in scanner")
+        print(f"   [NO] This stock would FAIL the 20 MA check in scanner")
     
     return scanner_data
 
 def main():
     """Main test function"""
-    print("🔍 20 MA DATA CHECK TEST")
+    print("[SEARCH] 20 MA DATA CHECK TEST")
     print("=" * 60)
     
     # Test for 1st Feb 2026 (as mentioned in the issue)
@@ -184,7 +184,7 @@ def main():
             result = check_stock_data(symbol, scan_date)
             all_results[symbol] = result
         except Exception as e:
-            print(f"\n❌ Error checking {symbol}: {e}")
+            print(f"\n[FAIL] Error checking {symbol}: {e}")
             all_results[symbol] = None
     
     # Final summary
@@ -197,9 +197,9 @@ def main():
         if result is not None:
             latest = result.iloc[-1]
             above_ma = latest['close'] > latest['ma_20']
-            print(f"{symbol}: {'✅ PASS' if above_ma else '❌ FAIL'} - Close: {latest['close']:.2f}, 20 MA: {latest['ma_20']:.2f}")
+            print(f"{symbol}: {'[OK] PASS' if above_ma else '[FAIL] FAIL'} - Close: {latest['close']:.2f}, 20 MA: {latest['ma_20']:.2f}")
         else:
-            print(f"{symbol}: ❌ ERROR - Could not analyze")
+            print(f"{symbol}: [FAIL] ERROR - Could not analyze")
 
 if __name__ == "__main__":
     main()

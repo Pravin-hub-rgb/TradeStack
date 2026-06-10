@@ -45,7 +45,7 @@ class MinimalVolumeTest:
         # Get initial volume
         initial_volume = self.get_current_volume_simple()
         if initial_volume == 0:
-            print("❌ Failed to get initial volume")
+            print("[FAIL] Failed to get initial volume")
             return False
             
         print(f"Initial volume: {initial_volume:,}")
@@ -87,9 +87,9 @@ class MinimalVolumeTest:
         print(f"Final cumulative volume: {cumulative_volume:,}")
         
         if cumulative_volume > 0:
-            print("✅ Volume accumulation IS working!")
+            print("[OK] Volume accumulation IS working!")
         else:
-            print("❌ Volume accumulation is NOT working (0.0%)")
+            print("[FAIL] Volume accumulation is NOT working (0.0%)")
         
         return True
 
@@ -107,9 +107,9 @@ def main():
     success = test.run_test()
     
     if success:
-        print("\n✅ Test completed successfully")
+        print("\n[OK] Test completed successfully")
     else:
-        print("\n❌ Test failed")
+        print("\n[FAIL] Test failed")
     
     return success
 

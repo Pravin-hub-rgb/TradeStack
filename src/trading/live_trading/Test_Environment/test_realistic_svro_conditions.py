@@ -195,7 +195,7 @@ class RealisticSVROTest:
 
     def run_realistic_test(self):
         """Run the realistic SVRO test"""
-        print("🧪 Starting Realistic SVRO Test")
+        print("[TEST_TUBE] Starting Realistic SVRO Test")
         print("=" * 60)
         print("Testing: Real-world SVRO conditions with actual market data")
         print("Focus: Volume tracking, timing, and price action validation")
@@ -301,7 +301,7 @@ class RealisticSVROTest:
             }
             
             self.test_results.append(entry_info)
-            logger.info(f"🎯 ENTRY TRIGGERED: {test_stock['symbol']} ({test_stock['scenario']['name']})")
+            logger.info(f"[TARGET] ENTRY TRIGGERED: {test_stock['symbol']} ({test_stock['scenario']['name']})")
             logger.info(f"   Entry Price: {monitor_stock.entry_price:.2f}")
             logger.info(f"   Gap: {test_stock['scenario']['gap_pct']*100:.1f}%")
             logger.info(f"   Volume Ratio: {test_stock['scenario']['volume_ratio']*100:.1f}%")
@@ -344,59 +344,59 @@ class RealisticSVROTest:
         success = True
         if len(self.test_results) != total_expected_pass:
             success = False
-            print(f"  ❌ TEST FAILED: Expected {total_expected_pass} entries, got {len(self.test_results)}")
+            print(f"  [FAIL] TEST FAILED: Expected {total_expected_pass} entries, got {len(self.test_results)}")
         else:
-            print(f"  ✅ TEST PASSED: All expected scenarios behaved correctly")
+            print(f"  [OK] TEST PASSED: All expected scenarios behaved correctly")
 
         # Detailed scenario validation
         print(f"\nSCENARIO VALIDATION:")
         
         # Easy Pass should work
         if 'Easy Pass' in scenario_results:
-            print(f"  ✅ Easy Pass: WORKED (gap 2%, volume 10%)")
+            print(f"  [OK] Easy Pass: WORKED (gap 2%, volume 10%)")
         else:
-            print(f"  ❌ Easy Pass: FAILED (should have worked)")
+            print(f"  [FAIL] Easy Pass: FAILED (should have worked)")
             success = False
 
         # Tough Pass should work (barely)
         if 'Tough Pass' in scenario_results:
-            print(f"  ✅ Tough Pass: WORKED (gap 0.4%, volume 7.6%)")
+            print(f"  [OK] Tough Pass: WORKED (gap 0.4%, volume 7.6%)")
         else:
-            print(f"  ❌ Tough Pass: FAILED (should have barely worked)")
+            print(f"  [FAIL] Tough Pass: FAILED (should have barely worked)")
             success = False
 
         # Volume Failure should not work
         if 'Volume Failure' not in scenario_results:
-            print(f"  ✅ Volume Failure: CORRECTLY REJECTED (volume 5% < 7.5%)")
+            print(f"  [OK] Volume Failure: CORRECTLY REJECTED (volume 5% < 7.5%)")
         else:
-            print(f"  ❌ Volume Failure: INCORRECTLY ACCEPTED")
+            print(f"  [FAIL] Volume Failure: INCORRECTLY ACCEPTED")
             success = False
 
         # Low Violation should not work
         if 'Low Violation' not in scenario_results:
-            print(f"  ✅ Low Violation: CORRECTLY REJECTED (price dropped below 1%)")
+            print(f"  [OK] Low Violation: CORRECTLY REJECTED (price dropped below 1%)")
         else:
-            print(f"  ❌ Low Violation: INCORRECTLY ACCEPTED")
+            print(f"  [FAIL] Low Violation: INCORRECTLY ACCEPTED")
             success = False
 
         # Gap Boundary should work
         if 'Gap Boundary' in scenario_results:
-            print(f"  ✅ Gap Boundary: WORKED (exactly 0.3% gap)")
+            print(f"  [OK] Gap Boundary: WORKED (exactly 0.3% gap)")
         else:
-            print(f"  ❌ Gap Boundary: FAILED (should have worked at boundary)")
+            print(f"  [FAIL] Gap Boundary: FAILED (should have worked at boundary)")
             success = False
 
         print("\n" + "="*60)
         
         if success:
-            print("🎉 ALL REALISTIC SVRO TESTS PASSED!")
+            print("[DONE] ALL REALISTIC SVRO TESTS PASSED!")
             print("The continuation bot correctly handles:")
             print("  - Volume validation (7.5% threshold)")
             print("  - Gap validation (0.3% minimum)")
             print("  - Low violation monitoring (1% threshold)")
             print("  - Realistic price action patterns")
         else:
-            print("❌ SOME REALISTIC SVRO TESTS FAILED!")
+            print("[FAIL] SOME REALISTIC SVRO TESTS FAILED!")
             print("Check the SVRO logic for issues with:")
             print("  - Volume accumulation and validation")
             print("  - Gap boundary conditions")

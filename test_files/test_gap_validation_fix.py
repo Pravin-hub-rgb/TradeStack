@@ -24,7 +24,7 @@ from src.trading.live_trading.config import FLAT_GAP_THRESHOLD
 
 def test_gap_validation_fix():
     """Test that gap validation properly sets REJECTED state"""
-    print("🧪 TESTING GAP VALIDATION FIX")
+    print("[TEST_TUBE] TESTING GAP VALIDATION FIX")
     print("=" * 50)
     
     # Create a test stock that will fail gap validation
@@ -60,7 +60,7 @@ def test_gap_validation_fix():
     assert not stock.is_active, "Stock should not be active"
     assert stock.rejection_reason is not None, "Should have rejection reason"
     
-    print("✅ GAP VALIDATION FIX VERIFIED")
+    print("[OK] GAP VALIDATION FIX VERIFIED")
     print(f"   - Gap validation correctly failed: {not result}")
     print(f"   - State set to REJECTED: {stock.state == StockState.REJECTED}")
     print(f"   - Stock unsubscribed: {not stock.is_subscribed}")
@@ -70,7 +70,7 @@ def test_gap_validation_fix():
 
 def test_subscription_manager_with_rejected_stocks():
     """Test that we can identify rejected stocks"""
-    print("\n🧪 TESTING REJECTED STOCK IDENTIFICATION")
+    print("\n[TEST_TUBE] TESTING REJECTED STOCK IDENTIFICATION")
     print("=" * 50)
     
     # Create test stocks
@@ -97,7 +97,7 @@ def test_subscription_manager_with_rejected_stocks():
     assert len(rejected_stocks) == 1, f"Expected 1 rejected stock, got {len(rejected_stocks)}"
     assert rejected_stocks[0].symbol == "STOCK1", f"Expected STOCK1, got {rejected_stocks[0].symbol}"
     
-    print("✅ REJECTED STOCK IDENTIFICATION WORKS")
+    print("[OK] REJECTED STOCK IDENTIFICATION WORKS")
     print(f"   - Found {len(rejected_stocks)} rejected stock(s)")
     print(f"   - Correctly identified rejected stock: {rejected_stocks[0].symbol}")
     
@@ -105,7 +105,7 @@ def test_subscription_manager_with_rejected_stocks():
 
 def test_integration_phase_1():
     """Test that we can simulate Phase 1 unsubscribe behavior"""
-    print("\n🧪 TESTING PHASE 1 UNSUBSCRIBE SIMULATION")
+    print("\n[TEST_TUBE] TESTING PHASE 1 UNSUBSCRIBE SIMULATION")
     print("=" * 50)
     
     # Create test stocks
@@ -138,7 +138,7 @@ def test_integration_phase_1():
     assert not stock1.is_subscribed, "STOCK1 should be unsubscribed (rejected)"
     assert stock2.is_subscribed, "STOCK2 should remain subscribed (qualified)"
     
-    print("✅ PHASE 1 UNSUBSCRIBE SIMULATION WORKS")
+    print("[OK] PHASE 1 UNSUBSCRIBE SIMULATION WORKS")
     print(f"   - Rejected stock unsubscribed: {not stock1.is_subscribed}")
     print(f"   - Qualified stock remains subscribed: {stock2.is_subscribed}")
     
@@ -146,7 +146,7 @@ def test_integration_phase_1():
 
 def main():
     """Run all tests"""
-    print("🚀 TESTING GAP VALIDATION FIX")
+    print("[ROCKET] TESTING GAP VALIDATION FIX")
     print("=" * 60)
     
     try:
@@ -160,12 +160,12 @@ def main():
         test_integration_phase_1()
         
         print("\n" + "=" * 60)
-        print("🎉 ALL TESTS PASSED!")
-        print("✅ Gap validation fix is working correctly")
-        print("✅ Rejected stocks are properly marked as REJECTED state")
-        print("✅ Phase 1 can find and unsubscribe rejected stocks")
-        print("✅ Only qualified stocks remain subscribed")
-        print("\n📊 EXPECTED BEHAVIOR:")
+        print("[DONE] ALL TESTS PASSED!")
+        print("[OK] Gap validation fix is working correctly")
+        print("[OK] Rejected stocks are properly marked as REJECTED state")
+        print("[OK] Phase 1 can find and unsubscribe rejected stocks")
+        print("[OK] Only qualified stocks remain subscribed")
+        print("\n[CHART] EXPECTED BEHAVIOR:")
         print("   - Stocks failing gap validation will be unsubscribed at 12:31:30")
         print("   - Only qualified stocks will receive ticks during trading")
         print("   - WebSocket traffic will be reduced by ~93%")
@@ -173,7 +173,7 @@ def main():
         return True
         
     except Exception as e:
-        print(f"\n❌ TEST FAILED: {e}")
+        print(f"\n[FAIL] TEST FAILED: {e}")
         import traceback
         traceback.print_exc()
         return False

@@ -16,7 +16,7 @@ from Test_Environment.strong_start_test import run_strong_start_test
 
 def main():
     """Main test runner"""
-    print("🎯 STRONG START ENTRY TEST RUNNER")
+    print("[TARGET] STRONG START ENTRY TEST RUNNER")
     print("=" * 50)
     print()
     
@@ -25,17 +25,17 @@ def main():
         
         print("\n" + "="*50)
         if success:
-            print("🎉 STRONG START TEST COMPLETED SUCCESSFULLY!")
+            print("[DONE] STRONG START TEST COMPLETED SUCCESSFULLY!")
             print("The Strong Start entry logic is working correctly.")
         else:
-            print("❌ STRONG START TEST FAILED!")
+            print("[FAIL] STRONG START TEST FAILED!")
             print("There may be issues with the Strong Start entry logic.")
         print("="*50)
         
         return success
         
     except Exception as e:
-        print(f"❌ Test execution failed: {e}")
+        print(f"[FAIL] Test execution failed: {e}")
         import traceback
         traceback.print_exc()
         return False

@@ -32,7 +32,7 @@ def test_imports():
             exec(import_statement)
             print(f"✓ {name} import OK")
         except Exception as e:
-            print(f"✗ {name} import error: {e}")
+            print(f"[FAIL] {name} import error: {e}")
             print(f"  Full traceback:")
             traceback.print_exc()
             return False
@@ -60,17 +60,17 @@ def test_timing_config():
         if PREP_START == expected_prep_start:
             print("✓ PREP_START calculation correct")
         else:
-            print(f"✗ PREP_START calculation wrong: expected {expected_prep_start}, got {PREP_START}")
+            print(f"[FAIL] PREP_START calculation wrong: expected {expected_prep_start}, got {PREP_START}")
             
         if ENTRY_TIME == expected_entry_time:
             print("✓ ENTRY_TIME calculation correct")
         else:
-            print(f"✗ ENTRY_TIME calculation wrong: expected {expected_entry_time}, got {ENTRY_TIME}")
+            print(f"[FAIL] ENTRY_TIME calculation wrong: expected {expected_entry_time}, got {ENTRY_TIME}")
             
         return True
         
     except Exception as e:
-        print(f"✗ Timing config test error: {e}")
+        print(f"[FAIL] Timing config test error: {e}")
         traceback.print_exc()
         return False
 
@@ -95,7 +95,7 @@ def test_full_reversal_import():
         return True
         
     except Exception as e:
-        print(f"✗ Full reversal import error: {e}")
+        print(f"[FAIL] Full reversal import error: {e}")
         traceback.print_exc()
         return False
 
@@ -114,14 +114,14 @@ def main():
     full_import_ok = test_full_reversal_import()
     
     print("\n=== TEST SUMMARY ===")
-    print(f"Imports: {'✓ PASS' if imports_ok else '✗ FAIL'}")
-    print(f"Timing Config: {'✓ PASS' if timing_ok else '✗ FAIL'}")
-    print(f"Full Import: {'✓ PASS' if full_import_ok else '✗ FAIL'}")
+    print(f"Imports: {'✓ PASS' if imports_ok else '[FAIL] FAIL'}")
+    print(f"Timing Config: {'✓ PASS' if timing_ok else '[FAIL] FAIL'}")
+    print(f"Full Import: {'✓ PASS' if full_import_ok else '[FAIL] FAIL'}")
     
     if imports_ok and timing_ok and full_import_ok:
-        print("\n🎉 ALL TESTS PASSED! The reversal bot should work correctly.")
+        print("\n[DONE] ALL TESTS PASSED! The reversal bot should work correctly.")
     else:
-        print("\n❌ SOME TESTS FAILED! Need to fix the issues above.")
+        print("\n[FAIL] SOME TESTS FAILED! Need to fix the issues above.")
     
     return imports_ok and timing_ok and full_import_ok
 

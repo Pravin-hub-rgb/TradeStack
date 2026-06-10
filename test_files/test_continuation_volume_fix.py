@@ -83,7 +83,7 @@ class ContinuationVolumeTest:
             
             return validation_result
         else:
-            print("❌ No volume data available")
+            print("[FAIL] No volume data available")
             return False
     
     def test_check_volume_validations(self):
@@ -120,17 +120,17 @@ class ContinuationVolumeTest:
         print("\n" + "=" * 40)
         print("TEST RESULTS SUMMARY")
         print("=" * 40)
-        print(f"Direct volume validation: {'✅ PASS' if direct_result else '❌ FAIL'}")
-        print(f"check_volume_validations(): {'✅ PASS' if method_result else '❌ FAIL'}")
+        print(f"Direct volume validation: {'[OK] PASS' if direct_result else '[FAIL] FAIL'}")
+        print(f"check_volume_validations(): {'[OK] PASS' if method_result else '[FAIL] FAIL'}")
         print(f"Early volume accumulated: {self.monitor.stocks[self.test_instrument_key].early_volume:,}")
         print(f"Volume validated: {self.monitor.stocks[self.test_instrument_key].volume_validated}")
         
         if direct_result and method_result:
-            print("\n🎉 CONTINUATION BOT VOLUME FIX SUCCESSFUL!")
+            print("\n[DONE] CONTINUATION BOT VOLUME FIX SUCCESSFUL!")
             print("The bot now uses get_current_volume() instead of get_ltp_data()")
             print("Volume accumulation should work correctly during trading hours")
         else:
-            print("\n❌ CONTINUATION BOT VOLUME FIX FAILED")
+            print("\n[FAIL] CONTINUATION BOT VOLUME FIX FAILED")
             print("There may still be issues with volume accumulation")
         
         return direct_result and method_result
@@ -149,9 +149,9 @@ def main():
     success = test.run_test()
     
     if success:
-        print("\n✅ Test completed successfully - volume fix is working")
+        print("\n[OK] Test completed successfully - volume fix is working")
     else:
-        print("\n❌ Test failed - volume fix needs more work")
+        print("\n[FAIL] Test failed - volume fix needs more work")
     
     return success
 

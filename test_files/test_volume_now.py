@@ -52,12 +52,12 @@ def test_volume_now():
                         vol_str = f"{current_volume:,}"
                     
                     print(f"  Formatted volume: {vol_str}")
-                    print(f"  ✅ Volume API working for {symbol}")
+                    print(f"  [OK] Volume API working for {symbol}")
                 else:
-                    print(f"  ❌ No volume data for {symbol}")
+                    print(f"  [FAIL] No volume data for {symbol}")
                     
             except Exception as e:
-                print(f"  ❌ Error getting volume for {symbol}: {e}")
+                print(f"  [FAIL] Error getting volume for {symbol}: {e}")
             
             print()
         
@@ -65,7 +65,7 @@ def test_volume_now():
         return True
         
     except Exception as e:
-        print(f"❌ Error in volume test: {e}")
+        print(f"[FAIL] Error in volume test: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -79,10 +79,10 @@ def main():
     success = test_volume_now()
     
     if success:
-        print("✅ Volume API test completed successfully!")
+        print("[OK] Volume API test completed successfully!")
         print("The volume API is working and returning data.")
     else:
-        print("❌ Volume API test failed!")
+        print("[FAIL] Volume API test failed!")
     
     return success
 

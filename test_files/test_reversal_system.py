@@ -137,17 +137,17 @@ def test_priority_classification():
         else:
             priority = 'Skip'
 
-        status = "✓" if priority == stock['expected_priority'] else "✗"
+        status = "✓" if priority == stock['expected_priority'] else "[FAIL]"
         print(f"{status} {stock['symbol']}: {stock['days']} days → {priority}")
 
     print()
 
 if __name__ == "__main__":
-    print("🚀 Testing OOPS Reversal Trading System\n")
+    print("[ROCKET] Testing OOPS Reversal Trading System\n")
 
     test_load_watchlist()
     test_oops_trigger()
     test_strong_start_trigger()
     test_priority_classification()
 
-    print("✅ All tests completed!")
+    print("[OK] All tests completed!")

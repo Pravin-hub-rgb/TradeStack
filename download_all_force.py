@@ -12,18 +12,18 @@ from datetime import datetime, timedelta
 def force_download_all_stocks():
     """Force download 180 days for all NSE stocks, bypassing cache"""
 
-    print("🚀 FORCE DOWNLOAD ALL STOCKS")
+    print("[ROCKET] FORCE DOWNLOAD ALL STOCKS")
     print("=" * 40)
     print("Bypassing all cache checks")
     print("Downloading 180 days for ALL NSE stocks")
     print()
 
     # Get NSE stocks list
-    print("📡 Getting NSE stocks list...")
+    print("[SATELLITE] Getting NSE stocks list...")
     nse_stocks = data_fetcher.fetch_nse_stocks()
 
     if not nse_stocks:
-        print("❌ Failed to get NSE stocks list")
+        print("[FAIL] Failed to get NSE stocks list")
         return False
 
     print(f" Found {len(nse_stocks)} NSE stocks")
@@ -35,7 +35,7 @@ def force_download_all_stocks():
     # Download parameters
     end_date = datetime.now().date()
     start_date = end_date - timedelta(days=180)
-    print(f"📅 Date range: {start_date} to {end_date}")
+    print(f"[CALENDAR] Date range: {start_date} to {end_date}")
 
     # Process stocks
     total_processed = 0
@@ -45,20 +45,20 @@ def force_download_all_stocks():
     max_stocks = len(nse_stocks)  # All NSE stocks
     stocks_to_process = nse_stocks  # Process all stocks
 
-    print(f"🎯 Processing first {max_stocks} stocks...")
+    print(f"[TARGET] Processing first {max_stocks} stocks...")
     print()
 
     for i, stock in enumerate(stocks_to_process, 1):
         symbol = stock['symbol']
 
         try:
-            print(f"📥 [{i}/{max_stocks}] Downloading {symbol}...")
+            print(f"[OUTBOX] [{i}/{max_stocks}] Downloading {symbol}...")
 
             # Force download - bypass all cache checks
             data = upstox_fetcher.fetch_historical_data(symbol, start_date, end_date)
 
             if data.empty:
-                print(f"   ❌ No data for {symbol}")
+                print(f"   [FAIL] No data for {symbol}")
                 total_failed += 1
                 continue
 
@@ -73,32 +73,32 @@ def force_download_all_stocks():
             total_success += 1
 
         except Exception as e:
-            print(f"   ❌ Error with {symbol}: {str(e)[:50]}...")
+            print(f"   [FAIL] Error with {symbol}: {str(e)[:50]}...")
             total_failed += 1
 
         total_processed += 1
 
         # Progress summary every 10 stocks
         if i % 10 == 0:
-            print(f"  📈 Progress: {i}/{max_stocks} stocks processed")
+            print(f"  [TREND_UP] Progress: {i}/{max_stocks} stocks processed")
 
     print("\n" + "=" * 40)
     print("FINAL RESULTS:")
-    print(f"📊 Total processed: {total_processed}")
+    print(f"[CHART] Total processed: {total_processed}")
     print(f" Successful: {total_success}")
-    print(f"❌ Failed: {total_failed}")
-    print(f"📈 Success rate: {(total_success/total_processed*100):.1f}%" if total_processed > 0 else "N/A")
+    print(f"[FAIL] Failed: {total_failed}")
+    print(f"[TREND_UP] Success rate: {(total_success/total_processed*100):.1f}%" if total_processed > 0 else "N/A")
 
     if total_success > 0:
-        print("🎉 SUCCESS! Extended historical data downloaded!")
+        print("[DONE] SUCCESS! Extended historical data downloaded!")
         return True
     else:
-        print("⚠️  No stocks were downloaded successfully")
+        print("[WARN]  No stocks were downloaded successfully")
         return False
 
 if __name__ == "__main__":
     success = force_download_all_stocks()
     if success:
-        print("\n🚀 Ready to test continuation scanner!")
+        print("\n[ROCKET] Ready to test continuation scanner!")
     else:
-        print("\n⚠️  Download failed")
+        print("\n[WARN]  Download failed")

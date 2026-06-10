@@ -1,8 +1,11 @@
 {
-  "timestamp": "2026-03-28T09:05:05.674016",
+  "timestamp": "2026-06-10T13:06:32.158837",
   "mode": "continuation",
   "results": {
-    "NATCOPHARM": 981.97
+    "ALKYLAMINE": 1861.27,
+    "JAYKAY": 181.64,
+    "VIPIND": 318.68,
+    "ADFFOODS": 287.53
   },
-  "summary": "1 stocks calculated"
+  "summary": "4 stocks calculated"
 }

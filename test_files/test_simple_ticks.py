@@ -76,10 +76,10 @@ def test_simple_ticks():
         print(f"\nReceived {len(ticks_received)} ticks")
         
         if len(ticks_received) > 0:
-            print("✅ SUCCESS: Ticks are being received!")
+            print("[OK] SUCCESS: Ticks are being received!")
             print("Step 1 complete - we can receive ticks")
         else:
-            print("❌ NO TICKS RECEIVED")
+            print("[FAIL] NO TICKS RECEIVED")
             print("There's an issue with tick reception")
         
         # Cleanup
@@ -102,8 +102,8 @@ def test_simple_ticks():
 if __name__ == "__main__":
     success = test_simple_ticks()
     if success:
-        print("\n🎉 SIMPLE TICK LOGGING TEST PASSED!")
+        print("\n[DONE] SIMPLE TICK LOGGING TEST PASSED!")
         print("Ready for Step 2: Unsubscription test")
     else:
-        print("\n❌ SIMPLE TICK LOGGING TEST FAILED!")
+        print("\n[FAIL] SIMPLE TICK LOGGING TEST FAILED!")
         print("Need to fix tick reception first")

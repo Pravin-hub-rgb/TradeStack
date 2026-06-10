@@ -45,17 +45,17 @@ def test_timing_config():
         if time_diff_1 == 30:
             print("✓ PREP_START is 30 seconds before MARKET_OPEN")
         else:
-            print(f"✗ PREP_START timing is incorrect: expected 30s, got {time_diff_1}s")
+            print(f"[FAIL] PREP_START timing is incorrect: expected 30s, got {time_diff_1}s")
             
         if time_diff_2 == 300:  # 5 minutes
             print("✓ ENTRY_TIME is 5 minutes after MARKET_OPEN")
         else:
-            print(f"✗ ENTRY_TIME timing is incorrect: expected 300s, got {time_diff_2}s")
+            print(f"[FAIL] ENTRY_TIME timing is incorrect: expected 300s, got {time_diff_2}s")
             
         return True
         
     except Exception as e:
-        print(f"✗ Error testing timing config: {e}")
+        print(f"[FAIL] Error testing timing config: {e}")
         return False
 
 def test_current_timing():
@@ -108,7 +108,7 @@ def test_current_timing():
         return True
         
     except Exception as e:
-        print(f"✗ Error testing current timing: {e}")
+        print(f"[FAIL] Error testing current timing: {e}")
         return False
 
 def test_timing_logic():
@@ -155,7 +155,7 @@ def test_timing_logic():
         return True
         
     except Exception as e:
-        print(f"✗ Error testing timing logic: {e}")
+        print(f"[FAIL] Error testing timing logic: {e}")
         return False
 
 def main():
@@ -174,7 +174,7 @@ def main():
         print("✓ ALL TIMING TESTS PASSED")
         print("The timing fixes should work correctly.")
     else:
-        print("✗ SOME TIMING TESTS FAILED")
+        print("[FAIL] SOME TIMING TESTS FAILED")
         print("Please review the timing configuration and logic.")
     
     return success

@@ -52,7 +52,7 @@ class LiveVolumeTest:
                 self.previous_close = float(data['cp'])
                 print(f"✓ Previous close for {self.test_symbol}: Rs{self.previous_close:.2f}")
             else:
-                print(f"✗ No previous close data for {self.test_symbol}")
+                print(f"[FAIL] No previous close data for {self.test_symbol}")
                 return False
                 
             # Get instrument key
@@ -60,7 +60,7 @@ class LiveVolumeTest:
             if self.test_instrument_key:
                 print(f"✓ Instrument key: {self.test_instrument_key}")
             else:
-                print(f"✗ No instrument key for {self.test_symbol}")
+                print(f"[FAIL] No instrument key for {self.test_symbol}")
                 return False
                 
             # Add to monitor
@@ -70,7 +70,7 @@ class LiveVolumeTest:
             return True
             
         except Exception as e:
-            print(f"✗ Setup failed: {e}")
+            print(f"[FAIL] Setup failed: {e}")
             return False
     
     def get_current_volume(self):
@@ -171,7 +171,7 @@ class LiveVolumeTest:
                 if stock.early_volume > 0:
                     print("✓ Volume accumulation IS working!")
                 else:
-                    print("✗ Volume accumulation is NOT working (0.0%)")
+                    print("[FAIL] Volume accumulation is NOT working (0.0%)")
         
         return True
     
@@ -208,7 +208,7 @@ def main():
     if success:
         print("\n✓ Test completed successfully")
     else:
-        print("\n✗ Test failed")
+        print("\n[FAIL] Test failed")
     
     return success
 

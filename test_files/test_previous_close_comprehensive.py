@@ -20,26 +20,26 @@ logger = logging.getLogger(__name__)
 def test_ltp_vs_historical():
     """Test LTP vs Historical for potential discrepancies"""
     
-    print("🔍 Comprehensive Previous Close Test")
+    print("[SEARCH] Comprehensive Previous Close Test")
     print("=" * 50)
     
     try:
         from utils.upstox_fetcher import upstox_fetcher
-        logger.info("✅ Upstox fetcher imported successfully")
+        logger.info("[OK] Upstox fetcher imported successfully")
     except ImportError as e:
-        logger.error(f"❌ Failed to import upstox_fetcher: {e}")
+        logger.error(f"[FAIL] Failed to import upstox_fetcher: {e}")
         return False
     
     # Test symbols from the bug report
     test_symbols = ['ASHAPURMIN', 'GODREJPROP', 'IIFL', 'BALUFORGE', 'BHEL', 'DEVYANI']
     
-    print(f"\n📅 Current date: {datetime.now().date()}")
-    print(f"📅 Current time: {datetime.now().strftime('%H:%M:%S')}")
+    print(f"\n[CALENDAR] Current date: {datetime.now().date()}")
+    print(f"[CALENDAR] Current time: {datetime.now().strftime('%H:%M:%S')}")
     
     results = {}
     
     for symbol in test_symbols:
-        print(f"\n🧪 Testing {symbol}...")
+        print(f"\n[TEST_TUBE] Testing {symbol}...")
         
         try:
             # 1. Get LTP data
@@ -73,7 +73,7 @@ def test_ltp_vs_historical():
                 if ltp_close:
                     diff = abs(hist_close - ltp_close)
                     if diff > 0.01:
-                        print(f"   ⚠️  DISCREPANCY: ₹{diff:.2f}")
+                        print(f"   [WARN]  DISCREPANCY: ₹{diff:.2f}")
                         results[symbol] = {
                             'ltp': ltp_close,
                             'historical': hist_close,
@@ -81,7 +81,7 @@ def test_ltp_vs_historical():
                             'status': 'DISCREPANCY'
                         }
                     else:
-                        print(f"   ✅ MATCH")
+                        print(f"   [OK] MATCH")
                         results[symbol] = {
                             'ltp': ltp_close,
                             'historical': hist_close,
@@ -96,7 +96,7 @@ def test_ltp_vs_historical():
                         'status': 'LTP_FAILED'
                     }
             else:
-                print(f"   ❌ No historical data")
+                print(f"   [FAIL] No historical data")
                 results[symbol] = {
                     'ltp': ltp_close,
                     'historical': None,
@@ -105,7 +105,7 @@ def test_ltp_vs_historical():
                 }
                 
         except Exception as e:
-            logger.error(f"❌ Error testing {symbol}: {e}")
+            logger.error(f"[FAIL] Error testing {symbol}: {e}")
             results[symbol] = {
                 'ltp': None,
                 'historical': None,
@@ -114,7 +114,7 @@ def test_ltp_vs_historical():
             }
     
     # Summary
-    print(f"\n📋 Comprehensive Test Summary")
+    print(f"\n[CLIPBOARD] Comprehensive Test Summary")
     print("=" * 40)
     
     discrepancies = [s for s, r in results.items() if r['status'] == 'DISCREPANCY']
@@ -123,14 +123,14 @@ def test_ltp_vs_historical():
     historical_failed = [s for s, r in results.items() if r['status'] == 'HISTORICAL_FAILED']
     errors = [s for s, r in results.items() if r['status'] == 'ERROR']
     
-    print(f"✅ Matches: {len(matches)} - {', '.join(matches) if matches else 'None'}")
-    print(f"⚠️  Discrepancies: {len(discrepancies)} - {', '.join(discrepancies) if discrepancies else 'None'}")
-    print(f"❌ LTP Failed: {len(ltp_failed)} - {', '.join(ltp_failed) if ltp_failed else 'None'}")
-    print(f"❌ Historical Failed: {len(historical_failed)} - {', '.join(historical_failed) if historical_failed else 'None'}")
-    print(f"❌ Errors: {len(errors)} - {', '.join(errors) if errors else 'None'}")
+    print(f"[OK] Matches: {len(matches)} - {', '.join(matches) if matches else 'None'}")
+    print(f"[WARN]  Discrepancies: {len(discrepancies)} - {', '.join(discrepancies) if discrepancies else 'None'}")
+    print(f"[FAIL] LTP Failed: {len(ltp_failed)} - {', '.join(ltp_failed) if ltp_failed else 'None'}")
+    print(f"[FAIL] Historical Failed: {len(historical_failed)} - {', '.join(historical_failed) if historical_failed else 'None'}")
+    print(f"[FAIL] Errors: {len(errors)} - {', '.join(errors) if errors else 'None'}")
     
     if discrepancies:
-        print(f"\n🔍 Discrepancy Details:")
+        print(f"\n[SEARCH] Discrepancy Details:")
         for symbol in discrepancies:
             r = results[symbol]
             print(f"   {symbol}: LTP={r['ltp']:.2f}, Historical={r['historical']:.2f}, Diff={r['discrepancy']:.2f}")
@@ -140,7 +140,7 @@ def test_ltp_vs_historical():
 def test_api_endpoints():
     """Test different API endpoints to see which one has issues"""
     
-    print(f"\n🌐 Testing Different API Endpoints")
+    print(f"\n[GLOBE] Testing Different API Endpoints")
     print("=" * 40)
     
     symbol = 'ASHAPURMIN'
@@ -153,16 +153,16 @@ def test_api_endpoints():
         print(f"Instrument Key: {instrument_key}")
         
         # Test 1: LTP API (current method)
-        print(f"\n1️⃣ LTP API (current method):")
+        print(f"\n1 LTP API (current method):")
         ltp_data = upstox_fetcher.get_ltp_data(symbol)
         if ltp_data and 'cp' in ltp_data:
             print(f"   Previous close: ₹{ltp_data['cp']:.2f}")
             print(f"   LTP: ₹{ltp_data['ltp']:.2f}")
         else:
-            print(f"   ❌ Failed")
+            print(f"   [FAIL] Failed")
         
         # Test 2: Historical API (proposed fix)
-        print(f"\n2️⃣ Historical API (proposed fix):")
+        print(f"\n2 Historical API (proposed fix):")
         today = datetime.now().date()
         start_date = today - timedelta(days=3)
         end_date = today - timedelta(days=1)
@@ -173,21 +173,21 @@ def test_api_endpoints():
             print(f"   Previous close: ₹{latest_close:.2f}")
             print(f"   Data source: {df.index[-1]}")
         else:
-            print(f"   ❌ Failed")
+            print(f"   [FAIL] Failed")
         
         # Test 3: Direct HTTP LTP (fallback method)
-        print(f"\n3️⃣ Direct HTTP LTP (fallback):")
+        print(f"\n3 Direct HTTP LTP (fallback):")
         fallback_data = upstox_fetcher._get_ltp_data_fallback(symbol)
         if fallback_data and 'cp' in fallback_data:
             print(f"   Previous close: ₹{fallback_data['cp']:.2f}")
         else:
-            print(f"   ❌ Failed")
+            print(f"   [FAIL] Failed")
             
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[FAIL] Error: {e}")
 
 if __name__ == "__main__":
-    print("🚀 Starting Comprehensive Previous Close Test")
+    print("[ROCKET] Starting Comprehensive Previous Close Test")
     print("=" * 60)
     
     # Run comprehensive test
@@ -196,8 +196,8 @@ if __name__ == "__main__":
     # Test different endpoints
     test_api_endpoints()
     
-    print(f"\n🏁 Comprehensive test completed")
+    print(f"\n[FLAG] Comprehensive test completed")
     if success:
-        print("✅ No discrepancies found - LTP API is working correctly")
+        print("[OK] No discrepancies found - LTP API is working correctly")
     else:
-        print("⚠️  Discrepancies found - historical API fix may be needed")
+        print("[WARN]  Discrepancies found - historical API fix may be needed")

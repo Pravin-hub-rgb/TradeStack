@@ -47,10 +47,10 @@ def test_real_cache_volume():
         
         # Call preload_metadata to load cache data into memory
         stock_scorer.preload_metadata(test_stocks)
-        print(f"✅ Loaded metadata for {len(stock_scorer.stock_metadata)} stocks")
+        print(f"[OK] Loaded metadata for {len(stock_scorer.stock_metadata)} stocks")
         
     except Exception as e:
-        print(f"❌ Error loading cache data: {e}")
+        print(f"[FAIL] Error loading cache data: {e}")
         return False
     
     # Test each stock
@@ -65,14 +65,14 @@ def test_real_cache_volume():
             mean_volume = metadata.get('volume_baseline', 0)
             
             if mean_volume > 0:
-                print(f"✅ Real mean volume baseline found: {mean_volume:,} shares")
+                print(f"[OK] Real mean volume baseline found: {mean_volume:,} shares")
                 print(f"   ADR: {metadata.get('adr_percent', 'N/A'):.1f}% | Price: Rs{metadata.get('current_price', 'N/A'):.0f}")
             else:
-                print(f"❌ No mean volume baseline found for {stock_symbol}")
+                print(f"[FAIL] No mean volume baseline found for {stock_symbol}")
                 continue
                 
         except Exception as e:
-            print(f"❌ Error getting mean volume for {stock_symbol}: {e}")
+            print(f"[FAIL] Error getting mean volume for {stock_symbol}: {e}")
             continue
         
         # Test volume accumulation for 30 seconds
@@ -86,7 +86,7 @@ def test_real_cache_volume():
         # Get initial volume to track accumulation
         initial_volume = upstox_fetcher.get_current_volume(stock_symbol)
         if initial_volume == 0:
-            print(f"❌ Could not get initial volume reading for {stock_symbol}")
+            print(f"[FAIL] Could not get initial volume reading for {stock_symbol}")
             continue
         
         print(f"Initial volume reading: {initial_volume:,}")
@@ -116,15 +116,15 @@ def test_real_cache_volume():
                     
                     # Check if meets SVRO threshold (7.5%)
                     threshold_met = volume_pct >= 7.5
-                    status = "✅ PASS" if threshold_met else "❌ FAIL"
+                    status = "[OK] PASS" if threshold_met else "[FAIL] FAIL"
                     
                     print(f"{elapsed:2d}s  | {vol_str:>12} | {volume_pct:5.1f}% | {status}")
                     
                 else:
-                    print(f"{elapsed:2d}s  | {'No data':>12} | {'N/A':>5} | ❌ FAIL")
+                    print(f"{elapsed:2d}s  | {'No data':>12} | {'N/A':>5} | [FAIL] FAIL")
                     
             except Exception as e:
-                print(f"{elapsed:2d}s  | {'Error':>12} | {'N/A':>5} | ❌ FAIL ({e})")
+                print(f"{elapsed:2d}s  | {'Error':>12} | {'N/A':>5} | [FAIL] FAIL ({e})")
             
             # Wait 3 seconds between checks
             time.sleep(3)
@@ -145,9 +145,9 @@ def test_real_cache_volume():
                 print(f"Threshold met: {'YES' if final_pct >= 7.5 else 'NO'}")
                 print(f"Stock: {stock_symbol} | ADR: {metadata.get('adr_percent', 'N/A'):.1f}% | Price: Rs{metadata.get('current_price', 'N/A'):.0f}")
             else:
-                print("❌ Could not get final volume reading")
+                print("[FAIL] Could not get final volume reading")
         except Exception as e:
-            print(f"❌ Error in final reading: {e}")
+            print(f"[FAIL] Error in final reading: {e}")
     
     return True
 
@@ -162,10 +162,10 @@ def main():
     success = test_real_cache_volume()
     
     if success:
-        print("\n✅ Real cache volume test completed")
+        print("\n[OK] Real cache volume test completed")
         print("Now using REAL cache data instead of random 800K fallback!")
     else:
-        print("\n❌ Real cache volume test failed")
+        print("\n[FAIL] Real cache volume test failed")
         print("Check cache loading and Upstox API")
     
     return success

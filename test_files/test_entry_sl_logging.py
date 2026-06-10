@@ -65,8 +65,8 @@ def test_entry_sl_logging():
     
     print()
     print("Verification:")
-    print(f"  Expected Entry: Rs{expected_entry:.2f} ✅")
-    print(f"  Expected SL: Rs{expected_sl:.2f} ✅")
+    print(f"  Expected Entry: Rs{expected_entry:.2f} [OK]")
+    print(f"  Expected SL: Rs{expected_sl:.2f} [OK]")
     print(f"  Calculations correct: {abs(stock.entry_high - expected_entry) < 0.01 and abs(stock.entry_sl - expected_sl) < 0.01}")
 
 if __name__ == "__main__":

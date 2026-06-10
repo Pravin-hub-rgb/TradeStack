@@ -34,10 +34,10 @@ class TestGapValidatedStock:
         # Validate gap (continuation: gap > 0.5%)
         if gap_pct > 0.5:
             self.gap_validated = True
-            print(f"✅ GAP VALIDATED: {gap_pct:.2f}% > 0.5%")
+            print(f"[OK] GAP VALIDATED: {gap_pct:.2f}% > 0.5%")
         else:
             self.gap_validated = False
-            print(f"❌ GAP FAILED: {gap_pct:.2f}% <= 0.5%")
+            print(f"[FAIL] GAP FAILED: {gap_pct:.2f}% <= 0.5%")
         
         print(f"Initial High: Rs{self.daily_high:.2f}")
         print(f"Initial Low:  Rs{self.daily_low:.2f}")
@@ -52,13 +52,13 @@ class TestGapValidatedStock:
         if price > self.daily_high:
             old_high = self.daily_high
             self.daily_high = price
-            print(f"📈 HIGH UPDATED: {self.symbol} {old_high:.2f} → {price:.2f} ({price - old_high:+.2f})")
+            print(f"[TREND_UP] HIGH UPDATED: {self.symbol} {old_high:.2f} → {price:.2f} ({price - old_high:+.2f})")
         
         # Track low updates  
         if price < self.daily_low:
             old_low = self.daily_low
             self.daily_low = price
-            print(f"📉 LOW UPDATED: {self.symbol} {old_low:.2f} → {price:.2f} ({price - old_low:+.2f})")
+            print(f"[TREND_DOWN] LOW UPDATED: {self.symbol} {old_low:.2f} → {price:.2f} ({price - old_low:+.2f})")
         
         # Show current status
         gap_from_open = ((price - self.open_price) / self.open_price) * 100
@@ -81,7 +81,7 @@ class TestGapValidatedStock:
 def simulate_gap_validated_scenario():
     """Test scenario with gap-validated stocks that should update high/low"""
     
-    print("🧪 TESTING GAP-VALIDATED STOCKS HIGH/LOW TRACKING")
+    print("[TEST_TUBE] TESTING GAP-VALIDATED STOCKS HIGH/LOW TRACKING")
     print("=" * 60)
     print("This simulates gap-validated stocks that should continue receiving ticks")
     print("and updating high/low values properly")
@@ -111,7 +111,7 @@ def simulate_gap_validated_scenario():
         else:
             gap_failed_stocks.append(stock)
     
-    print(f"📊 INITIAL STATUS:")
+    print(f"[CHART] INITIAL STATUS:")
     print(f"   Gap-validated stocks: {len(gap_validated_stocks)}")
     print(f"   Gap-failed stocks:    {len(gap_failed_stocks)}")
     print()
@@ -121,7 +121,7 @@ def simulate_gap_validated_scenario():
     for stock in gap_failed_stocks:
         stock.is_active = False
         stock.is_subscribed = False
-        print(f"❌ UNSUBSCRIBED: {stock.symbol} (gap failed)")
+        print(f"[FAIL] UNSUBSCRIBED: {stock.symbol} (gap failed)")
     print()
     
     # Simulate monitoring window for gap-validated stocks only
@@ -129,7 +129,7 @@ def simulate_gap_validated_scenario():
     print("Simulating 60 seconds of price movement for gap-validated stocks...")
     
     for stock in gap_validated_stocks:
-        print(f"\n🚀 MONITORING {stock.symbol} (Gap-validated)")
+        print(f"\n[ROCKET] MONITORING {stock.symbol} (Gap-validated)")
         print("-" * 40)
         
         # Simulate price movement for gap-validated stock
@@ -145,7 +145,7 @@ def simulate_gap_validated_scenario():
                 print(f"   Progress: {i + 1}/{len(prices)} ticks processed")
         
         # Final status for this stock
-        print(f"\n🏁 FINAL STATUS FOR {stock.symbol}:")
+        print(f"\n[FLAG] FINAL STATUS FOR {stock.symbol}:")
         status = stock.get_status()
         print(f"   Previous Close: Rs{status['previous_close']:.2f}")
         print(f"   Opening Price:  Rs{status['open_price']:.2f}")
@@ -161,12 +161,12 @@ def simulate_gap_validated_scenario():
         print(f"   Violation Thresh: {low_violation_threshold:+.2f}%")
         
         if low_gap < low_violation_threshold:
-            print(f"   ❌ LOW VIOLATION: {low_gap:.2f}% < {low_violation_threshold:.2f}%")
+            print(f"   [FAIL] LOW VIOLATION: {low_gap:.2f}% < {low_violation_threshold:.2f}%")
         else:
-            print(f"   ✅ LOW PASSED: {low_gap:.2f}% >= {low_violation_threshold:.2f}%")
+            print(f"   [OK] LOW PASSED: {low_gap:.2f}% >= {low_violation_threshold:.2f}%")
         
         print()
-        print(f"📊 SUMMARY: {stock.symbol} had {len(prices)} price updates")
+        print(f"[CHART] SUMMARY: {stock.symbol} had {len(prices)} price updates")
         print(f"   High changed: {status['daily_high'] != status['open_price']}")
         print(f"   Low changed:  {status['daily_low'] != status['open_price']}")
         print()
@@ -185,14 +185,14 @@ def simulate_price_movement(base_price: float, duration_seconds: int = 30, tick_
     return prices
 
 if __name__ == "__main__":
-    print("🎯 GAP-VALIDATED STOCKS HIGH/LOW TRACKING TEST")
+    print("[TARGET] GAP-VALIDATED STOCKS HIGH/LOW TRACKING TEST")
     print("Testing the exact same logic used in continuation bot")
     print()
     
     # Run the test
     simulate_gap_validated_scenario()
     
-    print("✅ TEST COMPLETE")
+    print("[OK] TEST COMPLETE")
     print()
     print("EXPECTED BEHAVIOR IN LIVE BOT:")
     print("1. Gap-failed stocks should be unsubscribed immediately (disappear from logs)")

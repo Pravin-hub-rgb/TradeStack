@@ -45,7 +45,7 @@ def test_optimization_implementation():
             return False
             
     except Exception as e:
-        print(f"❌ Error reading run_continuation.py: {e}")
+        print(f"[FAIL] Error reading run_continuation.py: {e}")
         return False
     
     # Test 2: Check that integration.py has the deprecated Phase 1 method
@@ -67,7 +67,7 @@ def test_optimization_implementation():
             return False
             
     except Exception as e:
-        print(f"❌ Error reading integration.py: {e}")
+        print(f"[FAIL] Error reading integration.py: {e}")
         return False
     
     # Test 3: Check timing feasibility

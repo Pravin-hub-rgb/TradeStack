@@ -89,14 +89,14 @@ def test_complete_volume_fix():
                 print(f"Threshold: 7.5%")
                 
                 if volume_ratio >= 7.5:
-                    print("✅ Volume validation PASSED!")
+                    print("[OK] Volume validation PASSED!")
                     stock.volume_validated = True
                     stock.early_volume = cumulative_volume
                 else:
-                    print("❌ Volume validation FAILED!")
+                    print("[FAIL] Volume validation FAILED!")
                     stock.reject(f"Insufficient relative volume: {volume_ratio:.1f}% < 7.5%")
             else:
-                print("❌ No volume data available")
+                print("[FAIL] No volume data available")
                 stock.reject("No volume data available")
                 
         finally:
@@ -109,14 +109,14 @@ def test_complete_volume_fix():
         qualified_stocks = monitor.get_qualified_stocks()
         
         if qualified_stocks:
-            print(f"✅ {test_symbol} is QUALIFIED!")
+            print(f"[OK] {test_symbol} is QUALIFIED!")
             for stock in qualified_stocks:
                 print(f"   Gap validated: {stock.gap_validated}")
                 print(f"   Low violation checked: {stock.low_violation_checked}")
                 print(f"   Volume validated: {stock.volume_validated}")
                 print(f"   Volume: {stock.early_volume:,} shares ({(stock.early_volume/stock.volume_baseline*100):.1f}%)")
         else:
-            print(f"❌ {test_symbol} is REJECTED")
+            print(f"[FAIL] {test_symbol} is REJECTED")
             if stock.rejection_reason:
                 print(f"   Reason: {stock.rejection_reason}")
         
@@ -138,18 +138,18 @@ def test_complete_volume_fix():
         monitor.check_volume_validations()
         
         if not stock.volume_validated:
-            print("✅ Timing logic working: No validation before 9:20")
+            print("[OK] Timing logic working: No validation before 9:20")
         else:
-            print("❌ Timing logic failed: Validation ran before 9:20")
+            print("[FAIL] Timing logic failed: Validation ran before 9:20")
         
         # Test at 9:20 (should validate)
         dt.datetime.now = lambda tz=None: mock_datetime
         monitor.check_volume_validations()
         
         if stock.volume_validated:
-            print("✅ Timing logic working: Validation ran at 9:20")
+            print("[OK] Timing logic working: Validation ran at 9:20")
         else:
-            print("❌ Timing logic failed: No validation at 9:20")
+            print("[FAIL] Timing logic failed: No validation at 9:20")
         
         # Restore original datetime.now
         dt.datetime.now = original_now
@@ -157,7 +157,7 @@ def test_complete_volume_fix():
         return len(qualified_stocks) > 0
         
     except Exception as e:
-        print(f"❌ Error in complete volume fix test: {e}")
+        print(f"[FAIL] Error in complete volume fix test: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -172,14 +172,14 @@ def main():
     success = test_complete_volume_fix()
     
     if success:
-        print("\n✅ Complete volume fix test PASSED!")
+        print("\n[OK] Complete volume fix test PASSED!")
         print("The continuation bot should now:")
-        print("  ✅ NOT capture initial volume at market open")
-        print("  ✅ Validate volume only at 9:20")
-        print("  ✅ Use current volume directly as cumulative volume")
-        print("  ✅ Show proper volume validation instead of '0.0% (0)'")
+        print("  [OK] NOT capture initial volume at market open")
+        print("  [OK] Validate volume only at 9:20")
+        print("  [OK] Use current volume directly as cumulative volume")
+        print("  [OK] Show proper volume validation instead of '0.0% (0)'")
     else:
-        print("\n❌ Complete volume fix test FAILED!")
+        print("\n[FAIL] Complete volume fix test FAILED!")
     
     return success
 

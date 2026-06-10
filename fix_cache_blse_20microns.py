@@ -10,7 +10,7 @@ from src.utils.cache_manager import cache_manager
 def fix_missing_stocks():
     """Manually add Jan 6 data for BLSE and 20MICRONS"""
 
-    print("🔧 FIXING MISSING STOCK CACHE DATA")
+    print("[WRENCH] FIXING MISSING STOCK CACHE DATA")
     print("=" * 40)
 
     # Jan 6, 2026 data from successful download
@@ -64,7 +64,7 @@ def fix_missing_stocks():
                 print(f"   Cache now has {len(cached)} days, latest: {latest.date()}")
 
         except Exception as e:
-            print(f"❌ Failed to update {symbol}: {e}")
+            print(f"[FAIL] Failed to update {symbol}: {e}")
 
     print("\n" + "=" * 40)
     print("CACHE FIX COMPLETE")

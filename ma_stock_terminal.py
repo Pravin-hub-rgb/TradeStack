@@ -87,15 +87,15 @@ def run_continuation_scan():
 
 def prepare_data(args):
     """Run data preparation to download and cache latest market data"""
-    print("🚀 MA Stock Trader - Data Preparation")
+    print("[ROCKET] MA Stock Trader - Data Preparation")
     print("=" * 50)
     print("Downloading and caching latest market data...")
 
     days_back = args.days if hasattr(args, 'days') else 30
     max_stocks = args.stocks if hasattr(args, 'stocks') else 500
 
-    print(f"📊 Preparing data for last {days_back} days")
-    print(f"📈 Processing up to {max_stocks} stocks")
+    print(f"[CHART] Preparing data for last {days_back} days")
+    print(f"[TREND_UP] Processing up to {max_stocks} stocks")
 
     try:
         summary = data_fetcher.prepare_market_data(days_back=days_back, max_stocks=max_stocks)
@@ -105,15 +105,15 @@ def prepare_data(args):
             return
 
         print(f"\n Data preparation completed!")
-        print(f"📊 Total stocks processed: {summary['total_stocks']}")
-        print(f"🔄 Updated: {summary['updated']}")
-        print(f"⏭️  Skipped: {summary['skipped']}")
+        print(f"[CHART] Total stocks processed: {summary['total_stocks']}")
+        print(f"[REFRESH] Updated: {summary['updated']}")
+        print(f"[NEXT]  Skipped: {summary['skipped']}")
         print(f"  Errors: {summary['errors']}")
-        print(f"📅 Total trading days added: {summary['total_days_added']}")
+        print(f"[CALENDAR] Total trading days added: {summary['total_days_added']}")
 
         if summary['updated'] > 0:
-            print("\n💾 Cache updated with latest market data")
-            print("🎯 Ready for scanning with fresh data!")
+            print("\n[FLOPPY] Cache updated with latest market data")
+            print("[TARGET] Ready for scanning with fresh data!")
     except Exception as e:
         print(f"\n  Error during data preparation: {e}")
 
@@ -134,7 +134,7 @@ def main():
         return
 
     # Default: Run continuation scan
-    print("🚀 MA Stock Trader - Terminal Version")
+    print("[ROCKET] MA Stock Trader - Terminal Version")
     print("=" * 50)
     print("Continuation Scan")
     print("Running scan...")

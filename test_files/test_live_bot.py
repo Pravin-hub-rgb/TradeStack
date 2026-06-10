@@ -14,7 +14,7 @@ sys.path.append('src')
 
 def test_live_trading_bot():
     """Test the complete live trading bot"""
-    print("🧪 TESTING COMPLETE LIVE TRADING BOT")
+    print("[TEST_TUBE] TESTING COMPLETE LIVE TRADING BOT")
     print("=" * 50)
     print(f"Time: Testing with closed market")
     print("This will test the full bot logic without actual trading")
@@ -42,7 +42,7 @@ def test_live_trading_bot():
             content = f.read().strip()
             symbols = [s.strip() for s in content.split(',') if s.strip()]
     except Exception as e:
-        print(f"❌ Error loading stocks: {e}")
+        print(f"[FAIL] Error loading stocks: {e}")
         return False
 
     print(f"1. Loaded {len(symbols)} stocks: {symbols}")
@@ -54,11 +54,11 @@ def test_live_trading_bot():
             data = upstox_fetcher.get_latest_data(symbol)
             if data and 'close' in data:
                 prev_closes[symbol] = data['close']
-                print(f"   ✅ {symbol}: ₹{data['close']:.2f}")
+                print(f"   [OK] {symbol}: ₹{data['close']:.2f}")
             else:
-                print(f"   ❌ {symbol}: No data")
+                print(f"   [FAIL] {symbol}: No data")
         except Exception as e:
-            print(f"   ❌ {symbol}: Error - {e}")
+            print(f"   [FAIL] {symbol}: Error - {e}")
 
     # Add stocks to monitor
     instrument_keys = []
@@ -71,9 +71,9 @@ def test_live_trading_bot():
                 stock_symbols[key] = symbol
                 monitor.add_stock(symbol, key, prev_close)
             else:
-                print(f"   ❌ {symbol}: No instrument key")
+                print(f"   [FAIL] {symbol}: No instrument key")
         except Exception as e:
-            print(f"   ❌ {symbol}: Error getting key - {e}")
+            print(f"   [FAIL] {symbol}: Error getting key - {e}")
 
     print(f"\n2. Monitor Status: {len(monitor.stocks)} stocks added")
 
@@ -94,10 +94,10 @@ def test_live_trading_bot():
         if stock.symbol in test_prices and test_prices[stock.symbol]:
             stock.set_open_price(test_prices[stock.symbol])
             if stock.validate_gap_up():
-                print(f"   ✅ {stock.symbol}: Gap up valid")
+                print(f"   [OK] {stock.symbol}: Gap up valid")
                 qualified_count += 1
             else:
-                print(f"   ❌ {stock.symbol}: Gap up invalid")
+                print(f"   [FAIL] {stock.symbol}: Gap up invalid")
 
     print(f"\n4. Qualification Results: {qualified_count} stocks qualified")
 
@@ -108,7 +108,7 @@ def test_live_trading_bot():
     ready_count = 0
     for stock in monitor.stocks.values():
         if stock.entry_ready:
-            print(f"   🎯 {stock.symbol}: Entry ₹{stock.entry_high:.2f}, SL ₹{stock.entry_sl:.2f}")
+            print(f"   [TARGET] {stock.symbol}: Entry ₹{stock.entry_high:.2f}, SL ₹{stock.entry_sl:.2f}")
             ready_count += 1
 
     print(f"\n6. Entry Preparation: {ready_count} stocks ready for trading")
@@ -128,12 +128,12 @@ def test_live_trading_bot():
         'selected_stocks': len(selected)
     })
 
-    print("✅ Paper trader logging tested")
+    print("[OK] Paper trader logging tested")
 
     print("\n" + "=" * 50)
-    print("🎉 LIVE TRADING BOT TEST COMPLETED!")
-    print("✅ All components working correctly")
-    print("✅ Bot ready for live market tomorrow")
+    print("[DONE] LIVE TRADING BOT TEST COMPLETED!")
+    print("[OK] All components working correctly")
+    print("[OK] Bot ready for live market tomorrow")
     print("=" * 50)
 
     return True

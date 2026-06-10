@@ -172,7 +172,7 @@ class ReversalStockState(StateMachineMixin):
         # Transition to QUALIFIED state
         self._transition_to(StockState.QUALIFIED, "low violation check passed")
         
-        # ✅ FIX: For OOPS stocks, set entry price and ready immediately when qualified
+        # [OK] FIX: For OOPS stocks, set entry price and ready immediately when qualified
         if self.situation == 'reversal_s2':  # OOPS
             self.entry_price = self.previous_close  # Set entry to previous close
             self.entry_ready = True  # Mark as ready for entry
@@ -381,7 +381,7 @@ class ReversalStockMonitor:
                 candidate_type = stock.get_candidate_type()
                 logger.info(f"   {stock.symbol}: {candidate_type} - Gap: {gap_pct:+.1f}%")
 
-        # ✅ FIXED: Only show actively monitored stocks (not rejected ones)
+        # [OK] FIXED: Only show actively monitored stocks (not rejected ones)
         active_stocks = self.get_active_stocks()
         logger.info(f"REVERSAL STOCK STATUS ({len(active_stocks)} actively monitored):")
         for stock in active_stocks:

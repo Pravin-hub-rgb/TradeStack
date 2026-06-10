@@ -36,10 +36,10 @@ def test_metadata_loading_with_timeout(symbols: List[str], timeout_seconds: int 
             from src.scanner.stock_scorer import stock_scorer
             stock_scorer.preload_metadata(symbols, prev_closes={})
             loading_success = True
-            print("✅ Metadata loading completed successfully")
+            print("[OK] Metadata loading completed successfully")
         except Exception as e:
             exception_caught = e
-            print(f"❌ Metadata loading failed: {e}")
+            print(f"[FAIL] Metadata loading failed: {e}")
         finally:
             loading_complete.set()
 
@@ -54,13 +54,13 @@ def test_metadata_loading_with_timeout(symbols: List[str], timeout_seconds: int 
 
     if completed:
         if loading_success:
-            print(f"✅ Completed in {end_time - start_time:.1f} seconds")
+            print(f"[OK] Completed in {end_time - start_time:.1f} seconds")
             return True
         else:
-            print(f"❌ Failed in {end_time - start_time:.1f} seconds: {exception_caught}")
+            print(f"[FAIL] Failed in {end_time - start_time:.1f} seconds: {exception_caught}")
             return False
     else:
-        print(f"⏰ Timed out after {timeout_seconds} seconds")
+        print(f"[ALARM] Timed out after {timeout_seconds} seconds")
         return False
 
     return loading_success
@@ -89,18 +89,18 @@ if __name__ == "__main__":
                 success = test_metadata_loading_with_timeout(symbols, timeout_seconds=30)
 
                 if success:
-                    print("🎉 Test PASSED - metadata loading works within timeout")
+                    print("[DONE] Test PASSED - metadata loading works within timeout")
                     sys.exit(0)
                 else:
-                    print("💥 Test FAILED - metadata loading hangs or fails")
+                    print("[BOOM] Test FAILED - metadata loading hangs or fails")
                     sys.exit(1)
             else:
-                print("❌ Reversal list is empty")
+                print("[FAIL] Reversal list is empty")
                 sys.exit(1)
         else:
-            print(f"❌ Reversal list file not found: {reversal_file}")
+            print(f"[FAIL] Reversal list file not found: {reversal_file}")
             sys.exit(1)
 
     except Exception as e:
-        print(f"❌ Test script error: {e}")
+        print(f"[FAIL] Test script error: {e}")
         sys.exit(1)

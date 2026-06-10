@@ -187,7 +187,7 @@ def run_reversal_bot():
                 time_module.sleep(wait_seconds)
 
         print("MARKET OPEN! Waiting 5 seconds for stable data...")
-        time_module.sleep(5)  # ⏰ FIXED: 5-second delay
+        time_module.sleep(5)  # [ALARM] FIXED: 5-second delay
 
         # MODULAR: Get opening prices and validate gaps
         ohlc_data = upstox_fetcher.get_current_ohlc([stock_symbols[key] for key in instrument_keys])

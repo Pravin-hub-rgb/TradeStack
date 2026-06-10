@@ -20,24 +20,24 @@ def test_iep_module():
         from src.trading.live_trading.continuation_modules.continuation_timing_module import ContinuationTimingManager
         from src.trading.live_trading.config import PREP_START
         
-        print("✅ Successfully imported all modules")
-        print(f"✅ PREP_START time: {PREP_START}")
+        print("[OK] Successfully imported all modules")
+        print(f"[OK] PREP_START time: {PREP_START}")
         
         # Test IEP manager initialization
-        print(f"✅ IEP Manager initialized with UpstoxFetcher")
+        print(f"[OK] IEP Manager initialized with UpstoxFetcher")
         
         # Test timing manager initialization
         timing_manager = ContinuationTimingManager(globals())
-        print("✅ Timing Manager initialized")
+        print("[OK] Timing Manager initialized")
         
         # Test with sample symbols
         test_symbols = ['CHOLAFIN', 'ANURAS']  # Known symbols from manual mappings
         
-        print(f"✅ Testing with symbols: {test_symbols}")
+        print(f"[OK] Testing with symbols: {test_symbols}")
         
         # Test IEP fetching (this will only work during pre-market hours)
-        print("ℹ️  Note: IEP fetching will only work during pre-market hours (9:00-9:15 AM)")
-        print("ℹ️  Testing module structure and imports...")
+        print("ℹ  Note: IEP fetching will only work during pre-market hours (9:00-9:15 AM)")
+        print("ℹ  Testing module structure and imports...")
         
         # Test method availability
         assert hasattr(iep_manager, 'fetch_iep_batch'), "fetch_iep_batch method missing"
@@ -46,19 +46,19 @@ def test_iep_module():
         assert hasattr(timing_manager, 'schedule_iep_fetch'), "schedule_iep_fetch method missing"
         assert hasattr(timing_manager, '_execute_iep_fetch'), "_execute_iep_fetch method missing"
         
-        print("✅ All required methods are available")
+        print("[OK] All required methods are available")
         
         # Test timing logic (removed is_pre_market_session test since it was removed)
-        print("✅ Timing logic test skipped (is_pre_market_session method removed)")
+        print("[OK] Timing logic test skipped (is_pre_market_session method removed)")
         
-        print("✅ IEP MODULE TEST PASSED")
+        print("[OK] IEP MODULE TEST PASSED")
         return True
         
     except ImportError as e:
-        print(f"❌ Import error: {e}")
+        print(f"[FAIL] Import error: {e}")
         return False
     except Exception as e:
-        print(f"❌ Test error: {e}")
+        print(f"[FAIL] Test error: {e}")
         return False
 
 def test_continuation_bot_integration():
@@ -68,30 +68,30 @@ def test_continuation_bot_integration():
     try:
         # Test that continuation bot can import the new modules
         from src.trading.live_trading.run_continuation import run_continuation_bot
-        print("✅ Continuation bot imports successfully")
+        print("[OK] Continuation bot imports successfully")
         
         # Test that the bot has the new imports
         import src.trading.live_trading.run_continuation as continuation_module
         
         # Check if the new imports are present in the module
         if hasattr(continuation_module, 'iep_manager'):
-            print("✅ iep_manager imported in continuation bot")
+            print("[OK] iep_manager imported in continuation bot")
         else:
-            print("⚠️  iep_manager not found in continuation bot")
+            print("[WARN]  iep_manager not found in continuation bot")
             
         if hasattr(continuation_module, 'ContinuationTimingManager'):
-            print("✅ ContinuationTimingManager imported in continuation bot")
+            print("[OK] ContinuationTimingManager imported in continuation bot")
         else:
-            print("⚠️  ContinuationTimingManager not found in continuation bot")
+            print("[WARN]  ContinuationTimingManager not found in continuation bot")
         
-        print("✅ CONTINUATION BOT INTEGRATION TEST PASSED")
+        print("[OK] CONTINUATION BOT INTEGRATION TEST PASSED")
         return True
         
     except ImportError as e:
-        print(f"❌ Import error: {e}")
+        print(f"[FAIL] Import error: {e}")
         return False
     except Exception as e:
-        print(f"❌ Integration test error: {e}")
+        print(f"[FAIL] Integration test error: {e}")
         return False
 
 def main():
@@ -104,18 +104,18 @@ def main():
     
     print("\n" + "=" * 50)
     print("TEST RESULTS:")
-    print(f"IEP Module Test: {'✅ PASSED' if test1_passed else '❌ FAILED'}")
-    print(f"Integration Test: {'✅ PASSED' if test2_passed else '❌ FAILED'}")
+    print(f"IEP Module Test: {'[OK] PASSED' if test1_passed else '[FAIL] FAILED'}")
+    print(f"Integration Test: {'[OK] PASSED' if test2_passed else '[FAIL] FAILED'}")
     
     if test1_passed and test2_passed:
-        print("\n🎉 ALL TESTS PASSED! IEP integration is ready.")
+        print("\n[DONE] ALL TESTS PASSED! IEP integration is ready.")
         print("\nNext steps:")
         print("1. Run the continuation bot during pre-market hours (9:00-9:15 AM)")
         print("2. The bot will fetch IEP at PREP_START time (9:14:30)")
         print("3. Gap validation will happen immediately after IEP fetch")
         print("4. No more waiting for 1-minute candles at 9:16!")
     else:
-        print("\n❌ Some tests failed. Please check the errors above.")
+        print("\n[FAIL] Some tests failed. Please check the errors above.")
     
     return test1_passed and test2_passed
 

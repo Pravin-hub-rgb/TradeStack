@@ -90,7 +90,7 @@ class StockClassifier:
                 symbols.append(symbol)
                 situations[symbol] = situation
 
-            # ✅ REMOVED: Skip verbose logging for pure first-come-first-serve
+            # [OK] REMOVED: Skip verbose logging for pure first-come-first-serve
             # Classification is handled internally, no need to print details
 
             return symbols, situations

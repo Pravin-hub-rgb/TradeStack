@@ -39,9 +39,9 @@ def validate_volume_requirements(stocks: Dict[str, 'ContinuationStockState'],
                 validation_results[stock.symbol] = is_valid
 
                 if is_valid:
-                    logger.info(f"VOLUME VALIDATION: ✅ {stock.symbol} passes volume requirements")
+                    logger.info(f"VOLUME VALIDATION: [OK] {stock.symbol} passes volume requirements")
                 else:
-                    logger.info(f"VOLUME VALIDATION: ❌ {stock.symbol} fails volume requirements - {stock.rejection_reason}")
+                    logger.info(f"VOLUME VALIDATION: [FAIL] {stock.symbol} fails volume requirements - {stock.rejection_reason}")
 
             except Exception as e:
                 logger.error(f"VOLUME VALIDATION: Error checking {stock.symbol}: {e}")
@@ -108,9 +108,9 @@ def check_volume_threshold(symbol: str,
     meets_threshold = current_volume >= threshold
 
     if meets_threshold:
-        logger.info(f"VOLUME THRESHOLD: ✅ {symbol} meets threshold - {current_volume:.0f} >= {threshold:.0f}")
+        logger.info(f"VOLUME THRESHOLD: [OK] {symbol} meets threshold - {current_volume:.0f} >= {threshold:.0f}")
     else:
-        logger.info(f"VOLUME THRESHOLD: ❌ {symbol} below threshold - {current_volume:.0f} < {threshold:.0f}")
+        logger.info(f"VOLUME THRESHOLD: [FAIL] {symbol} below threshold - {current_volume:.0f} < {threshold:.0f}")
 
     return meets_threshold
 

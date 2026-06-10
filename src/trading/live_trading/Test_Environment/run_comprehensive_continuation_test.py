@@ -399,7 +399,7 @@ class ComprehensiveContinuationTest:
 
     def run_test(self):
         """Run the comprehensive continuation bot test"""
-        print("🚀 Starting Comprehensive Continuation Bot Test")
+        print("[ROCKET] Starting Comprehensive Continuation Bot Test")
         print("Testing: All continuation bot features with comprehensive scenarios")
         print("Setup: Monolithic architecture with SVRO entry system")
         print("Scenarios: Success, failure, edge cases, stress tests")
@@ -450,11 +450,11 @@ class ComprehensiveContinuationTest:
         print("="*60)
 
         if not self.test_results:
-            print("❌ No entries triggered")
+            print("[FAIL] No entries triggered")
             return
 
         for stock in self.test_results:
-            print(f"\n{stock.symbol} - ✅ TRIGGERED")
+            print(f"\n{stock.symbol} - [OK] TRIGGERED")
             print(f"  Entry Price: {stock.entry_price:.2f}")
             print(f"  Entry High: {stock.entry_high:.2f}")
             print(f"  Entry SL: {stock.entry_sl:.2f}")
@@ -463,7 +463,7 @@ class ComprehensiveContinuationTest:
             print(f"  VAH Validation: {'Passed' if hasattr(stock, 'vah_validated') and stock.vah_validated else 'Failed'}")
 
         print(f"\nTotal Entries: {len(self.test_results)}")
-        print("🎉 COMPREHENSIVE CONTINUATION BOT TEST COMPLETED!")
+        print("[DONE] COMPREHENSIVE CONTINUATION BOT TEST COMPLETED!")
 
     def get_test_summary(self):
         """Get comprehensive test summary"""

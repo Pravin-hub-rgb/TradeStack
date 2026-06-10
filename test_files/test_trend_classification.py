@@ -49,7 +49,7 @@ def test_atherenerg_classification():
         result = analyzer.analyze_reversal_setup(symbol, None, data)
 
         if result:
-            logger.info(f"✅ {symbol} qualified as reversal candidate")
+            logger.info(f"[OK] {symbol} qualified as reversal candidate")
             logger.info(f"Period: {result['period']} days")
             logger.info(f"Red days: {result['red_days']}")
             logger.info(f"Green days: {result['green_days']}")
@@ -61,7 +61,7 @@ def test_atherenerg_classification():
             oldest_day_index = len(data) - period
             oldest_day_data = data.iloc[oldest_day_index]
 
-            logger.info(f"\n🔍 Trend Classification Debug:")
+            logger.info(f"\n[SEARCH] Trend Classification Debug:")
             logger.info(f"Oldest day index: {oldest_day_index}")
             logger.info(f"Oldest day date: {oldest_day_data.name}")
             logger.info(f"Oldest day close: {oldest_day_data['close']}")
@@ -76,12 +76,12 @@ def test_atherenerg_classification():
 
             # Show recent MA trend
             recent_ma = data['close'].rolling(20).mean().tail(10)
-            logger.info(f"\n📈 Recent MA_20 trend (last 10 days):")
+            logger.info(f"\n[TREND_UP] Recent MA_20 trend (last 10 days):")
             for i, ma_val in enumerate(recent_ma):
                 logger.info(f"  Day {i}: {ma_val:.2f}")
 
         else:
-            logger.info(f"❌ {symbol} did not qualify as reversal candidate")
+            logger.info(f"[FAIL] {symbol} did not qualify as reversal candidate")
 
     except Exception as e:
         logger.error(f"Error testing {symbol}: {e}")
@@ -120,9 +120,9 @@ def test_multiple_symbols():
             result = analyzer.analyze_reversal_setup(symbol, None, data)
 
             if result:
-                logger.info(f"✅ {symbol}: {result['trend_context']} - {result['decline_percent']*100:.2f}% decline over {result['period']} days")
+                logger.info(f"[OK] {symbol}: {result['trend_context']} - {result['decline_percent']*100:.2f}% decline over {result['period']} days")
             else:
-                logger.info(f"❌ {symbol}: No reversal pattern found")
+                logger.info(f"[FAIL] {symbol}: No reversal pattern found")
 
         except Exception as e:
             logger.error(f"Error with {symbol}: {e}")

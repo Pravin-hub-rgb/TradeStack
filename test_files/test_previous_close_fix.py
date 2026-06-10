@@ -20,33 +20,33 @@ logger = logging.getLogger(__name__)
 def test_historical_candle_api():
     """Test the historical candle API for getting previous close"""
     
-    print("🧪 Testing Historical Candle API for Previous Close")
+    print("[TEST_TUBE] Testing Historical Candle API for Previous Close")
     print("=" * 60)
     
     # Import Upstox fetcher
     try:
         from utils.upstox_fetcher import upstox_fetcher
-        logger.info("✅ Upstox fetcher imported successfully")
+        logger.info("[OK] Upstox fetcher imported successfully")
     except ImportError as e:
-        logger.error(f"❌ Failed to import upstox_fetcher: {e}")
+        logger.error(f"[FAIL] Failed to import upstox_fetcher: {e}")
         return False
     
     # Test symbols
     test_symbols = ['ASHAPURMIN', 'GODREJPROP', 'IIFL', 'BALUFORGE']
     
-    print(f"\n📅 Current date: {datetime.now().date()}")
-    print(f"📅 Expected previous trading day: {datetime.now().date() - timedelta(days=1)}")
+    print(f"\n[CALENDAR] Current date: {datetime.now().date()}")
+    print(f"[CALENDAR] Expected previous trading day: {datetime.now().date() - timedelta(days=1)}")
     
     results = {}
     
     for symbol in test_symbols:
-        print(f"\n🔍 Testing {symbol}...")
+        print(f"\n[SEARCH] Testing {symbol}...")
         
         try:
             # Get instrument key
             instrument_key = upstox_fetcher.get_instrument_key(symbol)
             if not instrument_key:
-                logger.error(f"❌ No instrument key found for {symbol}")
+                logger.error(f"[FAIL] No instrument key found for {symbol}")
                 results[symbol] = None
                 continue
             
@@ -63,7 +63,7 @@ def test_historical_candle_api():
             df = upstox_fetcher.fetch_historical_data(symbol, start_date, end_date)
             
             if not df.empty:
-                print(f"   ✅ Found {len(df)} days of data")
+                print(f"   [OK] Found {len(df)} days of data")
                 
                 # Show all available data
                 for date_idx, row in df.iterrows():
@@ -73,21 +73,21 @@ def test_historical_candle_api():
                 last_close = float(df.iloc[-1]['close'])
                 results[symbol] = last_close
                 
-                print(f"   ✅ Previous close: ₹{last_close:.2f}")
+                print(f"   [OK] Previous close: ₹{last_close:.2f}")
             else:
-                logger.error(f"❌ No historical data found for {symbol}")
+                logger.error(f"[FAIL] No historical data found for {symbol}")
                 results[symbol] = None
                 
         except Exception as e:
-            logger.error(f"❌ Error testing {symbol}: {e}")
+            logger.error(f"[FAIL] Error testing {symbol}: {e}")
             results[symbol] = None
     
     # Compare with current LTP method
-    print(f"\n📊 Comparison with Current LTP Method")
+    print(f"\n[CHART] Comparison with Current LTP Method")
     print("-" * 40)
     
     for symbol in test_symbols:
-        print(f"\n📈 {symbol}:")
+        print(f"\n[TREND_UP] {symbol}:")
         
         # Get current LTP data
         try:
@@ -110,20 +110,20 @@ def test_historical_candle_api():
             if ltp_close:
                 diff = abs(hist_close - ltp_close)
                 if diff > 0.01:  # More than 1 paisa difference
-                    print(f"   ⚠️  Difference: ₹{diff:.2f} - Historical API gives different result!")
+                    print(f"   [WARN]  Difference: ₹{diff:.2f} - Historical API gives different result!")
                 else:
-                    print(f"   ✅ Same result")
+                    print(f"   [OK] Same result")
             else:
-                print(f"   ⚠️  Cannot compare - LTP method failed")
+                print(f"   [WARN]  Cannot compare - LTP method failed")
         else:
             print(f"   Historical close: Not available")
     
     # Summary
-    print(f"\n📋 Test Summary")
+    print(f"\n[CLIPBOARD] Test Summary")
     print("=" * 30)
     
     successful_symbols = [s for s in test_symbols if results.get(s) is not None]
-    print(f"✅ Successful: {len(successful_symbols)}/{len(test_symbols)} symbols")
+    print(f"[OK] Successful: {len(successful_symbols)}/{len(test_symbols)} symbols")
     
     if successful_symbols:
         print(f"   Symbols with historical data: {', '.join(successful_symbols)}")
@@ -139,17 +139,17 @@ def test_historical_candle_api():
                     discrepancies.append(symbol)
         
         if discrepancies:
-            print(f"⚠️  Discrepancies found in: {', '.join(discrepancies)}")
+            print(f"[WARN]  Discrepancies found in: {', '.join(discrepancies)}")
             print("   These symbols will benefit from the historical API fix!")
         else:
-            print("✅ No discrepancies found - both methods give same results")
+            print("[OK] No discrepancies found - both methods give same results")
     
     return len(successful_symbols) > 0
 
 def test_specific_problem_symbol():
     """Test the specific problem symbol ASHAPURMIN"""
     
-    print(f"\n🎯 Testing Specific Problem: ASHAPURMIN")
+    print(f"\n[TARGET] Testing Specific Problem: ASHAPURMIN")
     print("=" * 50)
     
     symbol = 'ASHAPURMIN'
@@ -194,21 +194,21 @@ def test_specific_problem_symbol():
                         diff = abs(last_close - ltp_close)
                         print(f"   Difference: ₹{diff:.2f}")
                         if diff > 0.01:
-                            print("   ✅ Historical API fixes the stale data issue!")
+                            print("   [OK] Historical API fixes the stale data issue!")
                         else:
-                            print("   ✅ Both methods agree")
+                            print("   [OK] Both methods agree")
                 else:
-                    print("   ❌ No historical data available")
+                    print("   [FAIL] No historical data available")
             else:
-                print(f"   ❌ Historical API error: {response_data.get('error', 'Unknown error')}")
+                print(f"   [FAIL] Historical API error: {response_data.get('error', 'Unknown error')}")
         else:
-            print("   ❌ No instrument key found")
+            print("   [FAIL] No instrument key found")
             
     except Exception as e:
-        print(f"   ❌ Error: {e}")
+        print(f"   [FAIL] Error: {e}")
 
 if __name__ == "__main__":
-    print("🚀 Starting Previous Close Fix Test")
+    print("[ROCKET] Starting Previous Close Fix Test")
     print("=" * 60)
     
     # Test the historical candle API
@@ -217,8 +217,8 @@ if __name__ == "__main__":
     # Test the specific problem symbol
     test_specific_problem_symbol()
     
-    print(f"\n🏁 Test completed")
+    print(f"\n[FLAG] Test completed")
     if success:
-        print("✅ Historical API test successful - ready for implementation")
+        print("[OK] Historical API test successful - ready for implementation")
     else:
-        print("❌ Historical API test failed - check token/API access")
+        print("[FAIL] Historical API test failed - check token/API access")

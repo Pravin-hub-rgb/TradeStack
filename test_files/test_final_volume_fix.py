@@ -72,14 +72,14 @@ def test_final_volume_fix():
             print(f"Threshold: 7.5%")
             
             if volume_ratio >= 7.5:
-                print("✅ Volume validation PASSED!")
+                print("[OK] Volume validation PASSED!")
                 stock.volume_validated = True
                 stock.early_volume = cumulative_volume
             else:
-                print("❌ Volume validation FAILED!")
+                print("[FAIL] Volume validation FAILED!")
                 stock.reject(f"Insufficient relative volume: {volume_ratio:.1f}% < 7.5%")
         else:
-            print("❌ No volume data available")
+            print("[FAIL] No volume data available")
             stock.reject("No volume data available")
         
         # Check qualification status
@@ -88,21 +88,21 @@ def test_final_volume_fix():
         qualified_stocks = monitor.get_qualified_stocks()
         
         if qualified_stocks:
-            print(f"✅ {test_symbol} is QUALIFIED!")
+            print(f"[OK] {test_symbol} is QUALIFIED!")
             for stock in qualified_stocks:
                 print(f"   Gap validated: {stock.gap_validated}")
                 print(f"   Low violation checked: {stock.low_violation_checked}")
                 print(f"   Volume validated: {stock.volume_validated}")
                 print(f"   Volume: {stock.early_volume:,} shares ({(stock.early_volume/stock.volume_baseline*100):.1f}%)")
         else:
-            print(f"❌ {test_symbol} is REJECTED")
+            print(f"[FAIL] {test_symbol} is REJECTED")
             if stock.rejection_reason:
                 print(f"   Reason: {stock.rejection_reason}")
         
         return len(qualified_stocks) > 0
         
     except Exception as e:
-        print(f"❌ Error in final volume fix test: {e}")
+        print(f"[FAIL] Error in final volume fix test: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -116,16 +116,16 @@ def main():
     success = test_final_volume_fix()
     
     if success:
-        print("\n✅ Final volume fix test PASSED!")
+        print("\n[OK] Final volume fix test PASSED!")
         print("The continuation bot should now:")
-        print("  ✅ NOT capture initial volume at market open")
-        print("  ✅ Validate volume only at 9:20")
-        print("  ✅ Use current volume directly as cumulative volume")
-        print("  ✅ Show proper volume validation instead of '0.0% (0)'")
+        print("  [OK] NOT capture initial volume at market open")
+        print("  [OK] Validate volume only at 9:20")
+        print("  [OK] Use current volume directly as cumulative volume")
+        print("  [OK] Show proper volume validation instead of '0.0% (0)'")
         print()
-        print("🎉 VOLUME FIX COMPLETE! 🎉")
+        print("[DONE] VOLUME FIX COMPLETE! [DONE]")
     else:
-        print("\n❌ Final volume fix test FAILED!")
+        print("\n[FAIL] Final volume fix test FAILED!")
     
     return success
 

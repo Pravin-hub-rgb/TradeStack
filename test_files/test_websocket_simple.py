@@ -24,7 +24,7 @@ def load_config():
     """Load Upstox configuration"""
     config_file = "upstox_config.json"
     if not os.path.exists(config_file):
-        print(f"❌ Config file not found: {config_file}")
+        print(f"[FAIL] Config file not found: {config_file}")
         return None
 
     with open(config_file, 'r') as f:
@@ -32,7 +32,7 @@ def load_config():
 
 def test_single_stock_websocket():
     """Test WebSocket connection with single stock"""
-    print("🔬 Minimal WebSocket Test - Single Stock")
+    print("[MICROSCOPE] Minimal WebSocket Test - Single Stock")
     print("=" * 50)
 
     # Load config
@@ -42,16 +42,16 @@ def test_single_stock_websocket():
 
     access_token = config.get('access_token')
     if not access_token:
-        print("❌ No access token found")
+        print("[FAIL] No access token found")
         return False
 
-    print(f"✅ Loaded access token (ends with: ...{access_token[-4:]})")
+    print(f"[OK] Loaded access token (ends with: ...{access_token[-4:]})")
 
     # Pick a single stock - RELIANCE
     test_symbol = "RELIANCE"
     test_instrument_key = "NSE_EQ|INE002A01018"
 
-    print(f"🎯 Testing with: {test_symbol} ({test_instrument_key})")
+    print(f"[TARGET] Testing with: {test_symbol} ({test_instrument_key})")
 
     try:
         # Setup configuration (stock credentials)
@@ -71,14 +71,14 @@ def test_single_stock_websocket():
             nonlocal connected
             connected = True
             current_time = datetime.now(IST).strftime('%H:%M:%S')
-            print(f"✅ WebSocket OPENED at {current_time}")
+            print(f"[OK] WebSocket OPENED at {current_time}")
 
             # Subscribe to single stock
             try:
                 streamer.subscribe([test_instrument_key], "full")
-                print(f"📡 Subscribed to {test_symbol} at {datetime.now(IST).strftime('%H:%M:%S')}")
+                print(f"[SATELLITE] Subscribed to {test_symbol} at {datetime.now(IST).strftime('%H:%M:%S')}")
             except Exception as e:
-                print(f"❌ Subscription failed: {e}")
+                print(f"[FAIL] Subscription failed: {e}")
 
         def on_message(message):
             nonlocal message_count
@@ -102,9 +102,9 @@ def test_single_stock_websocket():
                                         ltp = ltpc_data.get('ltp')
 
                             if ltp:
-                                print(f"📊 {current_time} | {test_symbol}: ₹{float(ltp):.2f} (dict msg #{message_count})")
+                                print(f"[CHART] {current_time} | {test_symbol}: ₹{float(ltp):.2f} (dict msg #{message_count})")
                             else:
-                                print(f"📊 {current_time} | {test_symbol}: No LTP data (dict msg #{message_count})")
+                                print(f"[CHART] {current_time} | {test_symbol}: No LTP data (dict msg #{message_count})")
 
                 # Handle binary protobuf messages (like option bot)
                 elif isinstance(message, bytes):
@@ -126,24 +126,24 @@ def test_single_stock_websocket():
                                             ltp = float(ltpc.ltp)
 
                                 if ltp:
-                                    print(f"📊 {current_time} | {test_symbol}: ₹{ltp:.2f} (protobuf msg #{message_count})")
+                                    print(f"[CHART] {current_time} | {test_symbol}: ₹{ltp:.2f} (protobuf msg #{message_count})")
                                 else:
-                                    print(f"📊 {current_time} | {test_symbol}: No LTP data (protobuf msg #{message_count})")
+                                    print(f"[CHART] {current_time} | {test_symbol}: No LTP data (protobuf msg #{message_count})")
 
                     except ImportError:
-                        print(f"⚠️ Protobuf decoder not available for binary msg #{message_count}")
+                        print(f"[WARN] Protobuf decoder not available for binary msg #{message_count}")
                     except Exception as e:
-                        print(f"❌ Protobuf decode error: {e}")
+                        print(f"[FAIL] Protobuf decode error: {e}")
 
                 else:
-                    print(f"📨 Received {type(message)} message (#{message_count})")
+                    print(f"[INBOX] Received {type(message)} message (#{message_count})")
 
             except Exception as e:
-                print(f"❌ Message processing error: {e}")
+                print(f"[FAIL] Message processing error: {e}")
 
         def on_error(error):
             current_time = datetime.now(IST).strftime('%H:%M:%S')
-            print(f"❌ WebSocket ERROR at {current_time}: {error}")
+            print(f"[FAIL] WebSocket ERROR at {current_time}: {error}")
 
         def on_close(*args):
             nonlocal connected
@@ -151,7 +151,7 @@ def test_single_stock_websocket():
             current_time = datetime.now(IST).strftime('%H:%M:%S')
             close_code = args[0] if args else "unknown"
             close_reason = args[1] if len(args) > 1 else "unknown"
-            print(f"⚠️ WebSocket CLOSED at {current_time} - Code: {close_code}, Reason: {close_reason}")
+            print(f"[WARN] WebSocket CLOSED at {current_time} - Code: {close_code}, Reason: {close_reason}")
 
         # Register callbacks
         streamer.on("open", on_open)
@@ -160,7 +160,7 @@ def test_single_stock_websocket():
         streamer.on("close", on_close)
 
         # Connect with graceful error handling
-        print(f"🔌 Connecting to Upstox WebSocket at {datetime.now(IST).strftime('%H:%M:%S')}...")
+        print(f"[PLUG] Connecting to Upstox WebSocket at {datetime.now(IST).strftime('%H:%M:%S')}...")
 
         try:
             streamer.connect()
@@ -170,51 +170,51 @@ def test_single_stock_websocket():
             start_time = time.time()
             max_wait = 30  # 30 seconds max
 
-            print("⏳ Waiting for connection and first tick...")
+            print("[WAIT] Waiting for connection and first tick...")
 
             while time.time() - start_time < max_wait:
                 time.sleep(1)
 
                 if connected and message_count > 0:
-                    print("✅ SUCCESS: WebSocket connected and receiving data!")
+                    print("[OK] SUCCESS: WebSocket connected and receiving data!")
                     return True
 
                 if not connected and time.time() - start_time > 10:
                     # If not connected after 10 seconds, likely failed
-                    print("❌ FAILED: WebSocket not connected after 10 seconds")
+                    print("[FAIL] FAILED: WebSocket not connected after 10 seconds")
                     break
 
             if message_count == 0:
-                print("❌ FAILED: No data received - WebSocket subscription blocked")
+                print("[FAIL] FAILED: No data received - WebSocket subscription blocked")
                 return False
 
             return True
 
         except KeyboardInterrupt:
-            print("🛑 Test interrupted by user")
+            print("[STOP] Test interrupted by user")
             return False
         except Exception as e:
-            print(f"❌ Connection error: {e}")
+            print(f"[FAIL] Connection error: {e}")
             return False
         finally:
             # GRACEFUL WEBSOCKET CLEANUP (prevents lingering connections)
-            print("🧹 Performing graceful WebSocket cleanup...")
+            print("[BROOM] Performing graceful WebSocket cleanup...")
             try:
                 streamer.disconnect()
-                print("✅ WebSocket disconnected gracefully")
+                print("[OK] WebSocket disconnected gracefully")
                 time.sleep(2)  # Give server time to process disconnect
             except Exception as cleanup_err:
-                print(f"⚠️ Cleanup warning: {cleanup_err}")
+                print(f"[WARN] Cleanup warning: {cleanup_err}")
 
     except Exception as e:
-        print(f"❌ Connection failed with error: {e}")
+        print(f"[FAIL] Connection failed with error: {e}")
         import traceback
         print("Full traceback:")
         traceback.print_exc()
         return False
 
 if __name__ == "__main__":
-    print("🧪 Starting WebSocket Diagnostic Test")
+    print("[TEST_TUBE] Starting WebSocket Diagnostic Test")
     print("This will test basic WebSocket connection with single stock")
     print("Using stock app credentials (not option app)")
     print()
@@ -224,9 +224,9 @@ if __name__ == "__main__":
     print()
     print("=" * 50)
     if success:
-        print("🎉 TEST PASSED: WebSocket working correctly")
+        print("[DONE] TEST PASSED: WebSocket working correctly")
         print("The 403 error may be related to multiple stocks or specific stocks")
     else:
-        print("💥 TEST FAILED: WebSocket connection blocked")
+        print("[BOOM] TEST FAILED: WebSocket connection blocked")
         print("Issue confirmed - contact Upstox support with logs above")
     print("=" * 50)

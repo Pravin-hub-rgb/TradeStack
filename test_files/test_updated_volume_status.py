@@ -121,10 +121,10 @@ def main():
     success = test_updated_volume_status()
     
     if success:
-        print("\n✅ Updated volume status logging test completed successfully")
+        print("\n[OK] Updated volume status logging test completed successfully")
         print("The continuation bot will now show detailed volume information in the summary status")
     else:
-        print("\n❌ Updated volume status logging test failed")
+        print("\n[FAIL] Updated volume status logging test failed")
     
     return success
 

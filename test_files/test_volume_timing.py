@@ -75,7 +75,7 @@ def test_volume_timing():
         print()
         
         if time_diff >= 0 and time_diff <= 1800:  # Within 30 minutes after ENTRY_TIME
-            print("✅ Within volume validation window - should validate now")
+            print("[OK] Within volume validation window - should validate now")
             
             # Test volume validation
             print("Testing volume validation...")
@@ -94,14 +94,14 @@ def test_volume_timing():
                 print(f"Threshold: 7.5%")
                 
                 if volume_ratio >= 7.5:
-                    print("✅ Volume validation PASSED!")
+                    print("[OK] Volume validation PASSED!")
                     stock.volume_validated = True
                     stock.early_volume = cumulative_volume
                 else:
-                    print("❌ Volume validation FAILED!")
+                    print("[FAIL] Volume validation FAILED!")
                     stock.reject(f"Insufficient relative volume: {volume_ratio:.1f}% < 7.5%")
             else:
-                print("❌ No volume data available")
+                print("[FAIL] No volume data available")
                 stock.reject("No volume data available")
             
             # Check qualification status
@@ -110,26 +110,26 @@ def test_volume_timing():
             qualified_stocks = monitor.get_qualified_stocks()
             
             if qualified_stocks:
-                print(f"✅ {test_symbol} is QUALIFIED!")
+                print(f"[OK] {test_symbol} is QUALIFIED!")
                 for stock in qualified_stocks:
                     print(f"   Gap validated: {stock.gap_validated}")
                     print(f"   Low violation checked: {stock.low_violation_checked}")
                     print(f"   Volume validated: {stock.volume_validated}")
                     print(f"   Volume: {stock.early_volume:,} shares ({(stock.early_volume/stock.volume_baseline*100):.1f}%)")
             else:
-                print(f"❌ {test_symbol} is REJECTED")
+                print(f"[FAIL] {test_symbol} is REJECTED")
                 if stock.rejection_reason:
                     print(f"   Reason: {stock.rejection_reason}")
             
             return len(qualified_stocks) > 0
             
         else:
-            print("❌ Outside volume validation window")
+            print("[FAIL] Outside volume validation window")
             print("   Volume validation should only run at ENTRY_TIME + 2 minutes")
             return False
         
     except Exception as e:
-        print(f"❌ Error in volume timing test: {e}")
+        print(f"[FAIL] Error in volume timing test: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -143,10 +143,10 @@ def main():
     success = test_volume_timing()
     
     if success:
-        print("\n✅ Volume timing test PASSED!")
+        print("\n[OK] Volume timing test PASSED!")
         print("Volume validation is working at the correct time with actual ENTRY_TIME")
     else:
-        print("\n❌ Volume timing test FAILED!")
+        print("\n[FAIL] Volume timing test FAILED!")
     
     return success
 

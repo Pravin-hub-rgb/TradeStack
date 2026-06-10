@@ -97,7 +97,7 @@ class VolumeTrackingTest:
 
     def test_volume_accumulation(self):
         """Test volume accumulation over time"""
-        print("🧪 Testing Volume Accumulation")
+        print("[TEST_TUBE] Testing Volume Accumulation")
         print("=" * 50)
         print("Testing: Cumulative volume tracking during market open window")
         print("Focus: 7.5% of mean volume baseline requirement")
@@ -165,7 +165,7 @@ class VolumeTrackingTest:
                 if not monitor_stock.volume_validated:
                     is_valid = monitor_stock.validate_volume(self.volume_baseline)
                     if is_valid:
-                        logger.info(f"  ✅ Volume validation PASSED at tick {tick}")
+                        logger.info(f"  [OK] Volume validation PASSED at tick {tick}")
                         logger.info(f"     Final Volume: {monitor_stock.early_volume:,.0f}")
                         logger.info(f"     Volume Ratio: {monitor_stock.early_volume/self.volume_baseline:.1%}")
                         break
@@ -187,7 +187,7 @@ class VolumeTrackingTest:
 
             results.append(result)
 
-            status = "✅ PASS" if passed else "❌ FAIL"
+            status = "[OK] PASS" if passed else "[FAIL] FAIL"
             logger.info(f"  {status} {scenario['name']}: Expected {scenario['expected_valid']}, Got {final_valid}")
             if not passed:
                 logger.info(f"       Rejection: {monitor_stock.rejection_reason}")
@@ -196,7 +196,7 @@ class VolumeTrackingTest:
 
     def test_volume_timing(self):
         """Test volume accumulation timing during market open window"""
-        print("\n🧪 Testing Volume Timing")
+        print("\n[TEST_TUBE] Testing Volume Timing")
         print("=" * 50)
         print("Testing: Volume accumulation during 9:15-9:20 window")
         print("Focus: Realistic volume patterns during market open")
@@ -264,7 +264,7 @@ class VolumeTrackingTest:
                         monitor_stock.validate_volume(self.volume_baseline)
                         if monitor_stock.volume_validated:
                             validation_times.append(tick)
-                            logger.info(f"  ✅ Volume validation PASSED at tick {tick}")
+                            logger.info(f"  [OK] Volume validation PASSED at tick {tick}")
                             logger.info(f"     Volume: {monitor_stock.early_volume:,.0f}")
                             logger.info(f"     Ratio: {current_ratio:.1%}")
 
@@ -288,7 +288,7 @@ class VolumeTrackingTest:
                     'validated': True
                 }
             else:
-                logger.info(f"  ❌ Volume validation NEVER PASSED")
+                logger.info(f"  [FAIL] Volume validation NEVER PASSED")
                 timing_result = {
                     'pattern': pattern['name'],
                     'validation_tick': None,
@@ -304,7 +304,7 @@ class VolumeTrackingTest:
 
     def run_comprehensive_volume_test(self):
         """Run comprehensive volume tracking tests"""
-        print("🧪 Starting Comprehensive Volume Tracking Test")
+        print("[TEST_TUBE] Starting Comprehensive Volume Tracking Test")
         print("=" * 60)
         print("Testing: All aspects of volume tracking for SVRO system")
         print("Focus: 7.5% threshold, timing, and realistic patterns")
@@ -331,10 +331,10 @@ class VolumeTrackingTest:
         print("="*60)
 
         # Accumulation test results
-        print("\n📊 VOLUME ACCUMULATION TESTS:")
+        print("\n[CHART] VOLUME ACCUMULATION TESTS:")
         accumulation_passed = 0
         for result in accumulation_results:
-            status = "✅ PASS" if result['passed'] else "❌ FAIL"
+            status = "[OK] PASS" if result['passed'] else "[FAIL] FAIL"
             print(f"  {status} {result['scenario']}")
             print(f"     Target: {result['target_volume']:,.0f}")
             print(f"     Final: {result['final_volume']:,.0f}")
@@ -348,10 +348,10 @@ class VolumeTrackingTest:
             print()
 
         # Timing test results
-        print("\n⏰ VOLUME TIMING TESTS:")
+        print("\n[ALARM] VOLUME TIMING TESTS:")
         timing_passed = 0
         for result in timing_results:
-            status = "✅ PASS" if result['validated'] else "❌ FAIL"
+            status = "[OK] PASS" if result['validated'] else "[FAIL] FAIL"
             print(f"  {status} {result['pattern']}")
             if result['validation_time']:
                 print(f"     Validation Time: {result['validation_time'].strftime('%H:%M:%S')}")
@@ -373,24 +373,24 @@ class VolumeTrackingTest:
         print(f"  Success Rate: {total_passed/total_tests*100:.1f}%")
 
         # Volume threshold validation
-        print(f"\n🎯 VOLUME THRESHOLD VALIDATION:")
+        print(f"\n[TARGET] VOLUME THRESHOLD VALIDATION:")
         threshold_tests = [r for r in accumulation_results if 'Threshold' in r['scenario']]
         if threshold_tests:
             threshold_result = threshold_tests[0]
             if threshold_result['passed']:
-                print(f"  ✅ 7.5% threshold correctly validated")
+                print(f"  [OK] 7.5% threshold correctly validated")
             else:
-                print(f"  ❌ 7.5% threshold validation FAILED")
+                print(f"  [FAIL] 7.5% threshold validation FAILED")
                 print(f"     Reason: {threshold_result['rejection_reason']}")
 
         # Volume timing validation
-        print(f"\n⏱️  VOLUME TIMING VALIDATION:")
+        print(f"\n[STOPWATCH]  VOLUME TIMING VALIDATION:")
         valid_timing = [r for r in timing_results if r['validated']]
         if valid_timing:
-            print(f"  ✅ Volume validation works with realistic timing patterns")
+            print(f"  [OK] Volume validation works with realistic timing patterns")
             print(f"  Average validation time: {sum(r['validation_tick'] for r in valid_timing)/len(valid_timing):.1f} ticks")
         else:
-            print(f"  ❌ Volume validation failed with all timing patterns")
+            print(f"  [FAIL] Volume validation failed with all timing patterns")
 
         # Final assessment
         success = (accumulation_passed == len(accumulation_results) and 
@@ -398,14 +398,14 @@ class VolumeTrackingTest:
 
         print("\n" + "="*60)
         if success:
-            print("🎉 COMPREHENSIVE VOLUME TRACKING TESTS PASSED!")
+            print("[DONE] COMPREHENSIVE VOLUME TRACKING TESTS PASSED!")
             print("The SVRO volume validation system correctly:")
             print("  - Validates 7.5% volume threshold")
             print("  - Handles different volume accumulation patterns")
             print("  - Works with realistic market timing")
             print("  - Rejects insufficient volume scenarios")
         else:
-            print("❌ SOME VOLUME TRACKING TESTS FAILED!")
+            print("[FAIL] SOME VOLUME TRACKING TESTS FAILED!")
             print("Issues detected with:")
             if accumulation_passed < len(accumulation_results):
                 print("  - Volume threshold validation")

@@ -14,7 +14,7 @@ sys.path.insert(0, 'src')
 def test_phase_1_unsubscription():
     """Test that Phase 1 unsubscription works correctly"""
     
-    print("🧪 TESTING PHASE 1 UNSUBSCRIPTION")
+    print("[TEST_TUBE] TESTING PHASE 1 UNSUBSCRIPTION")
     print("=" * 50)
     print("This tests the exact same logic used in the live continuation bot")
     print()
@@ -23,9 +23,9 @@ def test_phase_1_unsubscription():
     try:
         from src.trading.live_trading.continuation_modules.integration import ContinuationIntegration
         from src.trading.live_trading.continuation_stock_monitor import StockMonitor
-        print("✅ Successfully imported continuation modules")
+        print("[OK] Successfully imported continuation modules")
     except ImportError as e:
-        print(f"❌ Failed to import modules: {e}")
+        print(f"[FAIL] Failed to import modules: {e}")
         return
     
     # Create mock data streamer and monitor
@@ -34,7 +34,7 @@ def test_phase_1_unsubscription():
             self.subscribed_keys = set()
         
         def unsubscribe(self, keys):
-            print(f"   📡 UNSUBSCRIBED {len(keys)} keys: {keys}")
+            print(f"   [SATELLITE] UNSUBSCRIBED {len(keys)} keys: {keys}")
             self.subscribed_keys.difference_update(keys)
     
     class MockStock:
@@ -77,7 +77,7 @@ def test_phase_1_unsubscription():
     for stock in test_stocks.values():
         integration.subscription_manager.subscribed_keys.add(stock.instrument_key)
     
-    print(f"📊 INITIAL STATUS:")
+    print(f"[CHART] INITIAL STATUS:")
     print(f"   Total stocks: {len(test_stocks)}")
     print(f"   Subscribed: {len(integration.subscription_manager.subscribed_keys)}")
     print(f"   Gap-validated: {sum(1 for s in test_stocks.values() if s.gap_validated)}")
@@ -85,12 +85,12 @@ def test_phase_1_unsubscription():
     print()
     
     # Run Phase 1 unsubscription
-    print("🚀 RUNNING PHASE 1: UNSUBSCRIBE GAP+VAH REJECTED STOCKS")
+    print("[ROCKET] RUNNING PHASE 1: UNSUBSCRIBE GAP+VAH REJECTED STOCKS")
     integration.phase_1_unsubscribe_after_gap_and_vah()
     print()
     
     # Check results
-    print("📊 POST-PHASE 1 STATUS:")
+    print("[CHART] POST-PHASE 1 STATUS:")
     print(f"   Subscribed: {len(integration.subscription_manager.subscribed_keys)}")
     print(f"   Unsubscribed: {len(test_stocks) - len(integration.subscription_manager.subscribed_keys)}")
     
@@ -105,36 +105,36 @@ def test_phase_1_unsubscription():
     expected_subscribed = ['ROSSTECH', 'SHANTIGOLD']  # Only gap-validated stocks
     expected_unsubscribed = [s for s in test_stocks.keys() if s not in expected_subscribed]
     
-    print("✅ VERIFICATION:")
+    print("[OK] VERIFICATION:")
     if set(subscribed_symbols) == set(expected_subscribed):
-        print(f"   ✅ Correctly subscribed: {subscribed_symbols}")
+        print(f"   [OK] Correctly subscribed: {subscribed_symbols}")
     else:
-        print(f"   ❌ Expected subscribed: {expected_subscribed}")
-        print(f"   ❌ Actually subscribed: {subscribed_symbols}")
+        print(f"   [FAIL] Expected subscribed: {expected_subscribed}")
+        print(f"   [FAIL] Actually subscribed: {subscribed_symbols}")
     
     if set(unsubscribed_symbols) == set(expected_unsubscribed):
-        print(f"   ✅ Correctly unsubscribed: {unsubscribed_symbols}")
+        print(f"   [OK] Correctly unsubscribed: {unsubscribed_symbols}")
     else:
-        print(f"   ❌ Expected unsubscribed: {expected_unsubscribed}")
-        print(f"   ❌ Actually unsubscribed: {unsubscribed_symbols}")
+        print(f"   [FAIL] Expected unsubscribed: {expected_unsubscribed}")
+        print(f"   [FAIL] Actually unsubscribed: {unsubscribed_symbols}")
     
     print()
-    print("🎯 EXPECTED BEHAVIOR IN LIVE BOT:")
+    print("[TARGET] EXPECTED BEHAVIOR IN LIVE BOT:")
     print("1. Gap-failed stocks should be unsubscribed immediately")
     print("2. Gap-validated stocks should remain subscribed")
     print("3. Unsubscribed stocks should NOT appear in logs")
     print("4. Tick handler should filter out unsubscribed stocks")
     
     if set(subscribed_symbols) == set(expected_subscribed) and set(unsubscribed_symbols) == set(expected_unsubscribed):
-        print("\n🎉 PHASE 1 UNSUBSCRIPTION TEST PASSED!")
+        print("\n[DONE] PHASE 1 UNSUBSCRIPTION TEST PASSED!")
         return True
     else:
-        print("\n❌ PHASE 1 UNSUBSCRIPTION TEST FAILED!")
+        print("\n[FAIL] PHASE 1 UNSUBSCRIPTION TEST FAILED!")
         return False
 
 if __name__ == "__main__":
     success = test_phase_1_unsubscription()
     if success:
-        print("\n✅ Ready to test with live bot!")
+        print("\n[OK] Ready to test with live bot!")
     else:
-        print("\n❌ Fix needed before live testing!")
+        print("\n[FAIL] Fix needed before live testing!")

@@ -36,7 +36,7 @@ class MockStockScorer:
                 'current_price': {'RELIANCE': 2950, 'TCS': 3450, 'INFY': 1670, 'HDFCBANK': 1650, 'BAJFINANCE': 850, 'ICICIBANK': 1100}.get(symbol, 500),
                 'volume_baseline': 1000000  # 10 lakh default
             }
-        print(f"✅ Mock metadata preloaded for {len(symbols)} stocks")
+        print(f"[OK] Mock metadata preloaded for {len(symbols)} stocks")
 
     def calculate_adr_score(self, adr_percent):
         """Calculate ADR score (0-10 points)"""
@@ -143,7 +143,7 @@ logger = logging.getLogger(__name__)
 def test_stock_selection_system():
     """Comprehensive test of the stock selection system"""
 
-    print("🚀 TESTING STOCK SELECTION SYSTEM")
+    print("[ROCKET] TESTING STOCK SELECTION SYSTEM")
     print("=" * 60)
 
     # Test data - real stocks with realistic parameters
@@ -167,26 +167,26 @@ def test_stock_selection_system():
         'ICICIBANK': 52000,    # Lower interest
     }
 
-    print(f"📊 Testing with {len(test_stocks)} stocks:")
+    print(f"[CHART] Testing with {len(test_stocks)} stocks:")
     for stock in test_stocks:
         print(f"   • {stock}")
     print()
 
     # Phase 1: Preload Metadata
-    print("📥 PHASE 1: Preloading Stock Metadata")
+    print("[OUTBOX] PHASE 1: Preloading Stock Metadata")
     print("-" * 40)
 
     try:
         stock_scorer.preload_metadata(test_stocks)
-        print("✅ Metadata preloaded successfully")
+        print("[OK] Metadata preloaded successfully")
     except Exception as e:
-        print(f"❌ Error preloading metadata: {e}")
+        print(f"[FAIL] Error preloading metadata: {e}")
         return False
 
     print()
 
     # Phase 2: Calculate Individual Scores
-    print("🧮 PHASE 2: Calculating Individual Stock Scores")
+    print("[ABACUS] PHASE 2: Calculating Individual Stock Scores")
     print("-" * 50)
 
     stock_scores = []
@@ -197,7 +197,7 @@ def test_stock_selection_system():
 
             stock_scores.append(score_data)
 
-            print(f"🎯 {symbol}:")
+            print(f"[TARGET] {symbol}:")
             print(f"   ADR: {score_data['adr_percent']:.1f}% (Score: {score_data['adr_score']}/10)")
             print(f"   Price: ₹{score_data['current_price']:.0f} (Score: {score_data['price_score']}/10)")
             print(f"   Volume: {volume:,.0f} / {score_data['volume_baseline']:,.0f} = {(volume/score_data['volume_baseline']*100):.1f}% (Score: {score_data['volume_score']}/10)")
@@ -205,30 +205,30 @@ def test_stock_selection_system():
             print()
 
         except Exception as e:
-            print(f"❌ Error calculating score for {symbol}: {e}")
+            print(f"[FAIL] Error calculating score for {symbol}: {e}")
             continue
 
     # Phase 3: Ranking and Selection
-    print("🏆 PHASE 3: Final Ranking and Selection")
+    print("[TROPHY] PHASE 3: Final Ranking and Selection")
     print("-" * 40)
 
     if stock_scores:
         # Sort by total score (highest first)
         ranked_stocks = stock_scorer.rank_stocks(stock_scores)
 
-        print("📈 COMPLETE RANKING:")
+        print("[TREND_UP] COMPLETE RANKING:")
         print("Rank | Symbol      | Total | ADR | Price | Volume")
         print("-----|-------------|-------|-----|-------|--------")
 
         for i, stock in enumerate(ranked_stocks, 1):
-            rank_indicator = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else "  "
+            rank_indicator = "[GOLD]" if i == 1 else "[SILVER]" if i == 2 else "[BRONZE]" if i == 3 else "  "
             print("2d")
 
         print()
-        print("🎯 TOP 2 SELECTIONS FOR TRADING:")
+        print("[TARGET] TOP 2 SELECTIONS FOR TRADING:")
         top_2 = ranked_stocks[:2]
         for i, stock in enumerate(top_2, 1):
-            medal = "🥇" if i == 1 else "🥈"
+            medal = "[GOLD]" if i == 1 else "[SILVER]"
             print(f"   {medal} {stock['symbol']} (Score: {stock['total_score']}/30)")
 
             # Show why it was selected
@@ -246,24 +246,24 @@ def test_stock_selection_system():
         print()
 
         # Phase 4: Direct Selection Test (using our scorer)
-        print("🔧 PHASE 4: Direct Selection Test")
+        print("[WRENCH] PHASE 4: Direct Selection Test")
         print("-" * 35)
 
         try:
             # Test direct selection using our scorer
             top_selections = stock_scorer.get_top_stocks(test_stocks, early_volumes, max_select=2)
 
-            print("✅ Direct Selection Test Results:")
+            print("[OK] Direct Selection Test Results:")
             print(f"   Selected {len(top_selections)} stocks using quality scoring")
             for i, stock_data in enumerate(top_selections, 1):
-                medal = "🥇" if i == 1 else "🥈"
+                medal = "[GOLD]" if i == 1 else "[SILVER]"
                 print(f"   {medal} {stock_data['symbol']}: Score {stock_data['total_score']}/30")
 
         except Exception as e:
-            print(f"❌ Direct selection test failed: {e}")
+            print(f"[FAIL] Direct selection test failed: {e}")
 
     print()
-    print("🎉 STOCK SELECTION SYSTEM TEST COMPLETED!")
+    print("[DONE] STOCK SELECTION SYSTEM TEST COMPLETED!")
     print("=" * 60)
 
     # Summary
@@ -272,14 +272,14 @@ def test_stock_selection_system():
         max_score = max(s['total_score'] for s in stock_scores)
         min_score = min(s['total_score'] for s in stock_scores)
 
-        print("📊 TEST SUMMARY:")
+        print("[CHART] TEST SUMMARY:")
         print(f"   • Stocks Tested: {len(stock_scores)}")
         print(f"   • Average Score: {avg_score:.1f}/30")
         print(f"   • Score Range: {min_score}-{max_score}")
         print(f"   • Top Score: {ranked_stocks[0]['symbol']} ({ranked_stocks[0]['total_score']}/30)")
         print("   • Selection Method: Quality Score (ADR + Price + Volume)")
     print()
-    print("✅ System ready for live trading!")
+    print("[OK] System ready for live trading!")
 
     return True
 
@@ -287,7 +287,7 @@ def test_stock_selection_system():
 def demo_score_calculation():
     """Demonstrate individual score calculations"""
 
-    print("\n🧮 SCORE CALCULATION DEMO")
+    print("\n[ABACUS] SCORE CALCULATION DEMO")
     print("-" * 30)
 
     test_cases = [
@@ -322,15 +322,15 @@ if __name__ == "__main__":
         demo_score_calculation()
 
         if success:
-            print("✅ ALL TESTS PASSED!")
+            print("[OK] ALL TESTS PASSED!")
             sys.exit(0)
         else:
-            print("❌ TESTS FAILED!")
+            print("[FAIL] TESTS FAILED!")
             sys.exit(1)
 
     except KeyboardInterrupt:
-        print("\n🛑 Test interrupted by user")
+        print("\n[STOP] Test interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Test error: {e}")
+        print(f"\n[FAIL] Test error: {e}")
         sys.exit(1)

@@ -46,7 +46,7 @@ def test_iep_for_all_stocks():
                 price = iep_prices[symbol]
                 print(f"  ✓ {symbol}: Rs{price:.2f}")
             else:
-                print(f"  ✗ {symbol}: No IEP data")
+                print(f"  [FAIL] {symbol}: No IEP data")
         
         # Test individual stock fetching as fallback
         print(f"\nTesting individual stock fetching for failed stocks...")
@@ -58,9 +58,9 @@ def test_iep_for_all_stocks():
                 if price:
                     print(f"  ✓ {symbol} (individual): Rs{price:.2f}")
                 else:
-                    print(f"  ✗ {symbol} (individual): No data")
+                    print(f"  [FAIL] {symbol} (individual): No data")
             except Exception as e:
-                print(f"  ✗ {symbol} (individual): Error - {e}")
+                print(f"  [FAIL] {symbol} (individual): Error - {e}")
         
         print(f"\n=== TEST COMPLETED ===")
         return True

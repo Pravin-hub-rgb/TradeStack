@@ -13,7 +13,7 @@ sys.path.insert(0, 'src')
 def test_real_chain_reaction():
     """Test that stocks are immediately rejected, unsubscribed, and stop receiving ticks"""
     
-    print("🧪 REAL CHAIN REACTION TEST")
+    print("[TEST_TUBE] REAL CHAIN REACTION TEST")
     print("=" * 50)
     print("Testing immediate rejection, unsubscription, and tick filtering")
     print()
@@ -23,9 +23,9 @@ def test_real_chain_reaction():
         from src.trading.live_trading.continuation_stock_monitor import StockState
         from src.trading.live_trading.continuation_modules.subscription_manager import ContinuationSubscriptionManager
         from src.trading.live_trading.simple_data_streamer import SimpleStockStreamer
-        print("✅ Successfully imported all modules")
+        print("[OK] Successfully imported all modules")
     except ImportError as e:
-        print(f"❌ Failed to import modules: {e}")
+        print(f"[FAIL] Failed to import modules: {e}")
         return
     
     # Create a mock data streamer
@@ -35,7 +35,7 @@ def test_real_chain_reaction():
         
         def unsubscribe(self, instrument_keys):
             self.unsubscribed_keys.extend(instrument_keys)
-            print(f"   📡 MOCK UNSUBSCRIBE called for: {instrument_keys}")
+            print(f"   [SATELLITE] MOCK UNSUBSCRIBE called for: {instrument_keys}")
     
     # Create test components
     mock_data_streamer = MockDataStreamer()
@@ -49,7 +49,7 @@ def test_real_chain_reaction():
     # Add stock to subscription manager tracking
     subscription_manager.subscribed_keys.add('TESTSTOCK')
     
-    print(f"📊 INITIAL STATUS:")
+    print(f"[CHART] INITIAL STATUS:")
     print(f"   Stock: {test_stock.symbol}")
     print(f"   Open Price: {test_stock.open_price}")
     print(f"   VAH Price: {test_stock.vah_price}")
@@ -59,7 +59,7 @@ def test_real_chain_reaction():
     print()
     
     # Test Gap Validation (should trigger immediate unsubscription)
-    print("🚀 TESTING GAP VALIDATION (IMMEDIATE UNSUBSCRIPTION)")
+    print("[ROCKET] TESTING GAP VALIDATION (IMMEDIATE UNSUBSCRIPTION)")
     gap_result = test_stock.validate_gap()
     print(f"   Gap validation result: {gap_result}")
     print(f"   is_active after gap validation: {test_stock.is_active}")
@@ -68,53 +68,53 @@ def test_real_chain_reaction():
     print()
     
     # Test that stock was marked for unsubscription
-    print("✅ VERIFICATION 1 - IMMEDIATE REJECTION:")
+    print("[OK] VERIFICATION 1 - IMMEDIATE REJECTION:")
     if not test_stock.is_active and not test_stock.is_subscribed:
-        print("   ✅ Stock correctly rejected and marked as unsubscribed")
+        print("   [OK] Stock correctly rejected and marked as unsubscribed")
     else:
-        print("   ❌ Stock not properly rejected")
+        print("   [FAIL] Stock not properly rejected")
         return False
     
     # Test that subscription manager would unsubscribe
-    print("✅ VERIFICATION 2 - UNSUBSCRIPTION LOGIC:")
+    print("[OK] VERIFICATION 2 - UNSUBSCRIPTION LOGIC:")
     if 'TESTSTOCK' in subscription_manager.subscribed_keys:
-        print("   ✅ Stock still in subscribed list (ready for unsubscription)")
+        print("   [OK] Stock still in subscribed list (ready for unsubscription)")
     else:
-        print("   ❌ Stock not in subscribed list")
+        print("   [FAIL] Stock not in subscribed list")
         return False
     
     # Test tick filtering (should be blocked)
-    print("🚀 TESTING TICK FILTERING")
+    print("[ROCKET] TESTING TICK FILTERING")
     initial_price = test_stock.current_price
     
     # Simulate tick handler check (like in integration.py)
     if not test_stock.is_subscribed:
-        print("   ✅ Tick handler correctly SKIPS processing (is_subscribed = False)")
+        print("   [OK] Tick handler correctly SKIPS processing (is_subscribed = False)")
         tick_processed = False
     else:
-        print("   ❌ Tick handler would process tick (is_subscribed = True)")
+        print("   [FAIL] Tick handler would process tick (is_subscribed = True)")
         tick_processed = True
     
     if not tick_processed:
-        print("   ✅ Ticks are correctly filtered - stock won't receive data")
+        print("   [OK] Ticks are correctly filtered - stock won't receive data")
     else:
-        print("   ❌ Ticks would still be processed")
+        print("   [FAIL] Ticks would still be processed")
         return False
     
     print()
-    print("🎉 REAL CHAIN REACTION TEST PASSED!")
-    print("✅ Stocks are immediately rejected when they fail validation")
-    print("✅ Stocks are immediately marked as unsubscribed")
-    print("✅ Ticks are immediately filtered - no more data processing")
-    print("✅ WebSocket unsubscription will happen via subscription manager")
+    print("[DONE] REAL CHAIN REACTION TEST PASSED!")
+    print("[OK] Stocks are immediately rejected when they fail validation")
+    print("[OK] Stocks are immediately marked as unsubscribed")
+    print("[OK] Ticks are immediately filtered - no more data processing")
+    print("[OK] WebSocket unsubscription will happen via subscription manager")
     
     return True
 
 if __name__ == "__main__":
     success = test_real_chain_reaction()
     if success:
-        print("\n🎉 CHAIN REACTION IS WORKING!")
+        print("\n[DONE] CHAIN REACTION IS WORKING!")
         print("Your continuation bot will now immediately unsubscribe stocks that fail validation!")
     else:
-        print("\n❌ CHAIN REACTION TEST FAILED!")
+        print("\n[FAIL] CHAIN REACTION TEST FAILED!")
         print("Fix needed before live testing!")

@@ -13,20 +13,20 @@ def delete_all_cache():
     """Delete all cached data"""
     cache_dir = Path('data/cache')
     if cache_dir.exists():
-        print(f"🗑️  Deleting cache directory: {cache_dir}")
+        print(f"[DELETE]  Deleting cache directory: {cache_dir}")
         shutil.rmtree(cache_dir)
         print(" Cache deleted")
     else:
-        print("ℹ️  No cache directory found")
+        print("ℹ  No cache directory found")
 
     # Recreate empty cache directory
     cache_dir.mkdir(parents=True, exist_ok=True)
-    print("📁 Cache directory recreated")
+    print("[FOLDER] Cache directory recreated")
 
 def download_extended_data_for_all_stocks():
     """Download 180 days of data for all NSE stocks"""
 
-    print("🚀 DOWNLOADING EXTENDED HISTORICAL DATA")
+    print("[ROCKET] DOWNLOADING EXTENDED HISTORICAL DATA")
     print("=" * 50)
     print("Target: 180 days (July 2025 - Jan 2026)")
     print("All NSE stocks")
@@ -44,10 +44,10 @@ def download_extended_data_for_all_stocks():
         print("=" * 30)
 
         if 'error' in result:
-            print(f"❌ ERROR: {result['error']}")
+            print(f"[FAIL] ERROR: {result['error']}")
             return False
 
-        print(f"📊 Results:")
+        print(f"[CHART] Results:")
         print(f"   Total stocks processed: {result.get('total_stocks', 0)}")
         print(f"   Stocks updated: {result.get('updated', 0)}")
         print(f"   Stocks skipped: {result.get('skipped', 0)}")
@@ -67,17 +67,17 @@ def download_extended_data_for_all_stocks():
 
             if estimated_working >= 110:
                 print("    SUCCESS: Got 110+ working days!")
-                print("   🎉 Continuation scanner will now work!")
+                print("   [DONE] Continuation scanner will now work!")
                 return True
             else:
-                print(f"   ❌ INSUFFICIENT: Only ~{estimated_working} working days (need 110+)")
+                print(f"   [FAIL] INSUFFICIENT: Only ~{estimated_working} working days (need 110+)")
                 return False
         else:
-            print("   ❌ No stocks were updated")
+            print("   [FAIL] No stocks were updated")
             return False
 
     except Exception as e:
-        print(f"\n❌ ERROR: {e}")
+        print(f"\n[FAIL] ERROR: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -85,7 +85,7 @@ def download_extended_data_for_all_stocks():
 def main():
     """Main function: delete cache + download fresh extended data"""
 
-    print("🔄 FRESH EXTENDED HISTORICAL DATA DOWNLOAD")
+    print("[REFRESH] FRESH EXTENDED HISTORICAL DATA DOWNLOAD")
     print("=" * 60)
     print("Step 1: Delete all existing cache")
     print("Step 2: Download 180 days fresh data")
@@ -100,10 +100,10 @@ def main():
     success = download_extended_data_for_all_stocks()
 
     if success:
-        print("\n🎉 SUCCESS! Fresh extended data downloaded!")
+        print("\n[DONE] SUCCESS! Fresh extended data downloaded!")
         print("You can now run continuation scans and get proper results!")
     else:
-        print("\n⚠️  Download failed - check the errors above")
+        print("\n[WARN]  Download failed - check the errors above")
 
 if __name__ == "__main__":
     main()

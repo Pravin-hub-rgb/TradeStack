@@ -114,8 +114,8 @@ if __name__ == "__main__":
     test_rejection_reasons()
     
     if success:
-        print("✅ All tests passed!")
+        print("[OK] All tests passed!")
         sys.exit(0)
     else:
-        print("❌ Some tests failed!")
+        print("[FAIL] Some tests failed!")
         sys.exit(1)

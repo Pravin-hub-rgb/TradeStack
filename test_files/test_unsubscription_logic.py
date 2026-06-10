@@ -107,12 +107,12 @@ def test_unsubscription_logic():
         # If our fix works, TEST1 should have exited early and not processed the tick
         
         if not test1.is_subscribed and test2.is_subscribed:
-            print("  ✅ SUCCESS: Unsubscription logic works correctly!")
+            print("  [OK] SUCCESS: Unsubscription logic works correctly!")
             print("     - TEST1 is properly unsubscribed (is_subscribed=False)")
             print("     - TEST2 is still subscribed (is_subscribed=True)")
             print("     - The early exit check should prevent TEST1 from processing ticks")
         else:
-            print("  ❌ FAILURE: Unsubscription logic did not work!")
+            print("  [FAIL] FAILURE: Unsubscription logic did not work!")
             print(f"     - Expected TEST1.is_subscribed=False, got {test1.is_subscribed}")
             print(f"     - Expected TEST2.is_subscribed=True, got {test2.is_subscribed}")
         
@@ -135,7 +135,7 @@ def test_unsubscription_logic():
 if __name__ == "__main__":
     success = test_unsubscription_logic()
     if success:
-        print("\n🎉 UNSUBSCRIPTION LOGIC TEST PASSED!")
+        print("\n[DONE] UNSUBSCRIPTION LOGIC TEST PASSED!")
         print("The fix is working correctly at the subscription management level.")
     else:
-        print("\n❌ UNSUBSCRIPTION LOGIC TEST FAILED!")
+        print("\n[FAIL] UNSUBSCRIPTION LOGIC TEST FAILED!")

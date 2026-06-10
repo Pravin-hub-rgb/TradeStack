@@ -47,7 +47,7 @@ def test_ohlc_api():
                 symbol_map[key] = symbol
                 print(f"✓ {symbol}: {key}")
             else:
-                print(f"✗ {symbol}: No instrument key")
+                print(f"[FAIL] {symbol}: No instrument key")
         
         if not instrument_keys:
             print("ERROR: No valid instrument keys found")
@@ -134,11 +134,11 @@ def test_ohlc_api():
                 if open_price is not None:
                     print(f"✓ SUCCESS: Opening price for {single_symbol}: Rs{float(open_price):.2f}")
                 else:
-                    print(f"✗ ERROR: No opening price for {single_symbol}")
+                    print(f"[FAIL] ERROR: No opening price for {single_symbol}")
             else:
-                print(f"✗ ERROR: API status not success: {response_data}")
+                print(f"[FAIL] ERROR: API status not success: {response_data}")
         else:
-            print(f"✗ ERROR: HTTP {response.status_code}: {response.text}")
+            print(f"[FAIL] ERROR: HTTP {response.status_code}: {response.text}")
         
         print()
         
@@ -172,11 +172,11 @@ def test_ohlc_api():
                     if open_price is not None:
                         print(f"✓ {symbol}: Open = Rs{float(open_price):.2f}")
                     else:
-                        print(f"✗ {symbol}: No opening price")
+                        print(f"[FAIL] {symbol}: No opening price")
             else:
-                print(f"✗ ERROR: Batch API status not success: {response_data}")
+                print(f"[FAIL] ERROR: Batch API status not success: {response_data}")
         else:
-            print(f"✗ ERROR: Batch HTTP {response.status_code}: {response.text}")
+            print(f"[FAIL] ERROR: Batch HTTP {response.status_code}: {response.text}")
         
         print()
         
@@ -242,10 +242,10 @@ if __name__ == "__main__":
     success = test_ohlc_api()
     
     if success:
-        print("\n🎉 OHLC API TEST COMPLETED!")
+        print("\n[DONE] OHLC API TEST COMPLETED!")
         print("Ready to integrate into the reversal bot.")
     else:
-        print("\n❌ OHLC API TEST FAILED!")
+        print("\n[FAIL] OHLC API TEST FAILED!")
         print("Need to investigate further.")
     
     print("\nTest completed.")

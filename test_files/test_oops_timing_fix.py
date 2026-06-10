@@ -28,7 +28,7 @@ def test_oops_timing_and_optimization():
         monitor.add_stock("TEST_OOPS", "test_oops_key", 100.0, "reversal_s2")  # OOPS
         monitor.add_stock("TEST_SS", "test_ss_key", 100.0, "reversal_s1")      # Strong Start
         
-        print("✅ Created test stocks: OOPS and Strong Start")
+        print("[OK] Created test stocks: OOPS and Strong Start")
         
         # Get stocks
         oops_stock = monitor.stocks["test_oops_key"]
@@ -42,7 +42,7 @@ def test_oops_timing_and_optimization():
         oops_valid = oops_stock.validate_gap()
         ss_valid = ss_stock.validate_gap()
         
-        print(f"✅ Gap validation: OOPS={oops_valid}, Strong Start={ss_valid}")
+        print(f"[OK] Gap validation: OOPS={oops_valid}, Strong Start={ss_valid}")
         
         # For Strong Start, we need to simulate low violation check
         # Set daily_low to be above the threshold (no violation)
@@ -52,34 +52,34 @@ def test_oops_timing_and_optimization():
         # Test 1: OOPS should be ready immediately after gap validation
         print("\n=== TEST 1: OOPS Ready at Market Open ===")
         oops_stock.entry_ready = True
-        print(f"✅ OOPS marked ready: {oops_stock.entry_ready}")
+        print(f"[OK] OOPS marked ready: {oops_stock.entry_ready}")
         
         # Test 2: Strong Start should NOT be ready until prepare_entries()
         print("\n=== TEST 2: Strong Start Not Ready Until prepare_entries() ===")
-        print(f"✅ Strong Start ready before prepare_entries(): {ss_stock.entry_ready}")
+        print(f"[OK] Strong Start ready before prepare_entries(): {ss_stock.entry_ready}")
         
         # Test 3: prepare_entries() should only process Strong Start
         print("\n=== TEST 3: prepare_entries() Optimization ===")
         monitor.prepare_entries()
         
         # Check results
-        print(f"✅ OOPS entry_high after prepare_entries(): {oops_stock.entry_high}")
-        print(f"✅ OOPS entry_sl after prepare_entries(): {oops_stock.entry_sl}")
-        print(f"✅ Strong Start entry_high after prepare_entries(): {ss_stock.entry_high}")
-        print(f"✅ Strong Start entry_sl after prepare_entries(): {ss_stock.entry_sl}")
-        print(f"✅ Strong Start ready after prepare_entries(): {ss_stock.entry_ready}")
+        print(f"[OK] OOPS entry_high after prepare_entries(): {oops_stock.entry_high}")
+        print(f"[OK] OOPS entry_sl after prepare_entries(): {oops_stock.entry_sl}")
+        print(f"[OK] Strong Start entry_high after prepare_entries(): {ss_stock.entry_high}")
+        print(f"[OK] Strong Start entry_sl after prepare_entries(): {ss_stock.entry_sl}")
+        print(f"[OK] Strong Start ready after prepare_entries(): {ss_stock.entry_ready}")
         
         # Verify optimization worked
         if oops_stock.entry_high is None and oops_stock.entry_sl is None:
-            print("✅ OOPS optimization working: No unnecessary entry_high/entry_sl processing")
+            print("[OK] OOPS optimization working: No unnecessary entry_high/entry_sl processing")
         else:
-            print("❌ OOPS optimization failed: Unnecessary processing occurred")
+            print("[FAIL] OOPS optimization failed: Unnecessary processing occurred")
             return False
         
         if ss_stock.entry_high is not None and ss_stock.entry_sl is not None and ss_stock.entry_ready:
-            print("✅ Strong Start processing working correctly")
+            print("[OK] Strong Start processing working correctly")
         else:
-            print("❌ Strong Start processing failed")
+            print("[FAIL] Strong Start processing failed")
             return False
         
         # Test 4: Timing simulation
@@ -99,14 +99,14 @@ def test_oops_timing_and_optimization():
         print(f"   Strong Start ready: {entry_time_ss_ready}")
         
         print("\n=== ALL TESTS PASSED ===")
-        print("✅ OOPS timing fix working: Ready at market open")
-        print("✅ Entry_high optimization working: OOPS skip unnecessary processing")
-        print("✅ Strong Start processing working correctly")
+        print("[OK] OOPS timing fix working: Ready at market open")
+        print("[OK] Entry_high optimization working: OOPS skip unnecessary processing")
+        print("[OK] Strong Start processing working correctly")
         
         return True
         
     except Exception as e:
-        print(f"❌ Test failed with error: {e}")
+        print(f"[FAIL] Test failed with error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -118,10 +118,10 @@ if __name__ == "__main__":
     success = test_oops_timing_and_optimization()
     
     if success:
-        print("\n🎉 ALL TESTS PASSED! 🎉")
+        print("\n[DONE] ALL TESTS PASSED! [DONE]")
         print("The OOPS timing and optimization fixes are working correctly.")
         sys.exit(0)
     else:
-        print("\n❌ SOME TESTS FAILED")
+        print("\n[FAIL] SOME TESTS FAILED")
         print("Please check the implementation and fix any issues.")
         sys.exit(1)

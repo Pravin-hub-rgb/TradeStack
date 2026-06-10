@@ -13,13 +13,13 @@ import pytz
 
 def test_ltpc_opening_price_capture():
     """Test LTPC opening price capture logic"""
-    print("🧪 Testing LTPC Opening Price Capture Logic\n")
+    print("[TEST_TUBE] Testing LTPC Opening Price Capture Logic\n")
 
     # Create data streamer instance
     streamer = StockDataStreamer(['NSE_EQ|INE002A01018'], {'NSE_EQ|INE002A01018': 'BSE'})
 
     # Test the opening price capture logic with mock LTPC data
-    print("📊 Simulating LTPC ticks after market open...")
+    print("[CHART] Simulating LTPC ticks after market open...")
 
     # Mock LTPC data (what would come from WebSocket)
     mock_ltpc_data = [
@@ -30,11 +30,11 @@ def test_ltpc_opening_price_capture():
 
     # Simulate market open time
     from src.trading.live_trading.config import MARKET_OPEN
-    print(f"🎯 Market open time set to: {MARKET_OPEN}")
+    print(f"[TARGET] Market open time set to: {MARKET_OPEN}")
 
     # Test opening price capture
     for i, ltpc in enumerate(mock_ltpc_data):
-        print(f"\n📡 Processing LTPC tick #{i+1}: LTP = ₹{ltpc['ltp']}")
+        print(f"\n[SATELLITE] Processing LTPC tick #{i+1}: LTP = ₹{ltpc['ltp']}")
 
         # Simulate the logic from data_streamer.py
         ltp = ltpc['ltp']
@@ -47,15 +47,15 @@ def test_ltpc_opening_price_capture():
                 streamer.market_opened = True
                 if 'BSE' not in streamer.opening_prices:
                     streamer.opening_prices['BSE'] = float(ltp)
-                    print(f"   ✅ OPENING PRICE CAPTURED: ₹{ltp} for BSE")
+                    print(f"   [OK] OPENING PRICE CAPTURED: ₹{ltp} for BSE")
                     break  # First tick should capture opening price
             else:
-                print("   ⏳ Waiting for market open...")
+                print("   [WAIT] Waiting for market open...")
         else:
-            print("   ℹ️ Market already opened, opening price already captured")
+            print("   ℹ Market already opened, opening price already captured")
 
     # Check final state
-    print("\n📈 Final State:")
+    print("\n[TREND_UP] Final State:")
     print(f"   Market opened: {streamer.market_opened}")
     print(f"   Opening prices captured: {len(streamer.opening_prices)}")
     if 'BSE' in streamer.opening_prices:
@@ -66,7 +66,7 @@ def test_ltpc_opening_price_capture():
     gap_analysis_ready = all(symbol in streamer.opening_prices for symbol in reversal_symbols)
     print(f"   Gap analysis ready: {gap_analysis_ready}")
 
-    print("\n✅ LTPC Opening Price Capture Test Completed!")
+    print("\n[OK] LTPC Opening Price Capture Test Completed!")
 
 if __name__ == "__main__":
     test_ltpc_opening_price_capture()

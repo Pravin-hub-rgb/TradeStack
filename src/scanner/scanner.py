@@ -127,7 +127,7 @@ class Scanner:
                 continue
 
         available_stocks = len(stocks_with_data)
-        logger.info(f"✅ Found {available_stocks} stocks with cached data for {scan_date} (from {total_checked} NSE stocks)")
+        logger.info(f"[OK] Found {available_stocks} stocks with cached data for {scan_date} (from {total_checked} NSE stocks)")
 
         if available_stocks == 0:
             logger.error("CRITICAL: No stocks have cached data!")

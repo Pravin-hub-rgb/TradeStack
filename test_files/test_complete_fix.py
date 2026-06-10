@@ -14,7 +14,7 @@ sys.path.insert(0, 'src')
 
 def test_subscription_manager_fixes():
     """Test Bug #1: State comparison fixes in subscription_manager.py"""
-    print("🧪 TESTING BUG #1: State Comparison Fixes")
+    print("[TEST_TUBE] TESTING BUG #1: State Comparison Fixes")
     print("=" * 50)
     
     try:
@@ -40,29 +40,29 @@ def test_subscription_manager_fixes():
         
         # Test get_rejected_stocks
         rejected = subscription_manager.get_rejected_stocks()
-        print(f"✅ get_rejected_stocks() returned: {rejected}")
+        print(f"[OK] get_rejected_stocks() returned: {rejected}")
         assert "test1" in rejected, "test1 should be in rejected stocks"
         
         # Test get_unselected_stocks
         unselected = subscription_manager.get_unselected_stocks()
-        print(f"✅ get_unselected_stocks() returned: {unselected}")
+        print(f"[OK] get_unselected_stocks() returned: {unselected}")
         assert "test2" in unselected, "test2 should be in unselected stocks"
         
         # Test get_exited_stocks
         exited = subscription_manager.get_exited_stocks()
-        print(f"✅ get_exited_stocks() returned: {exited}")
+        print(f"[OK] get_exited_stocks() returned: {exited}")
         assert "test3" in exited, "test3 should be in exited stocks"
         
-        print("✅ ALL STATE COMPARISON TESTS PASSED")
+        print("[OK] ALL STATE COMPARISON TESTS PASSED")
         return True
         
     except Exception as e:
-        print(f"❌ STATE COMPARISON TEST FAILED: {e}")
+        print(f"[FAIL] STATE COMPARISON TEST FAILED: {e}")
         return False
 
 def test_integration_tick_handler():
     """Test Bug #2: Unsubscribe call removed from integration.py"""
-    print("\n🧪 TESTING BUG #2: Unsubscribe Call Removed")
+    print("\n[TEST_TUBE] TESTING BUG #2: Unsubscribe Call Removed")
     print("=" * 50)
     
     try:
@@ -91,16 +91,16 @@ def test_integration_tick_handler():
             if 'unsubscribe_exited' in line and 'def' not in line:
                 assert False, f"simplified_tick_handler should not call unsubscribe_exited: {line.strip()}"
         
-        print("✅ TICK HANDLER DOES NOT CALL UNSUBSCRIBE_EXITED")
+        print("[OK] TICK HANDLER DOES NOT CALL UNSUBSCRIBE_EXITED")
         return True
         
     except Exception as e:
-        print(f"❌ TICK HANDLER TEST FAILED: {e}")
+        print(f"[FAIL] TICK HANDLER TEST FAILED: {e}")
         return False
 
 def test_integration_creation_timing():
     """Test Bug #3: Integration created early and phase methods exist"""
-    print("\n🧪 TESTING BUG #3: Integration Timing and Phase Methods")
+    print("\n[TEST_TUBE] TESTING BUG #3: Integration Timing and Phase Methods")
     print("=" * 50)
     
     try:
@@ -120,17 +120,17 @@ def test_integration_creation_timing():
         assert hasattr(integration, 'phase_2_unsubscribe_after_low_violation'), "phase_2 method should exist"
         assert hasattr(integration, 'phase_3_unsubscribe_after_selection'), "phase_3 method should exist"
         
-        print("✅ ALL PHASE METHODS EXIST")
-        print("✅ INTEGRATION CAN BE CREATED EARLY")
+        print("[OK] ALL PHASE METHODS EXIST")
+        print("[OK] INTEGRATION CAN BE CREATED EARLY")
         return True
         
     except Exception as e:
-        print(f"❌ INTEGRATION TIMING TEST FAILED: {e}")
+        print(f"[FAIL] INTEGRATION TIMING TEST FAILED: {e}")
         return False
 
 def test_complete_fix_integration():
     """Test that all fixes work together"""
-    print("\n🧪 TESTING COMPLETE FIX INTEGRATION")
+    print("\n[TEST_TUBE] TESTING COMPLETE FIX INTEGRATION")
     print("=" * 50)
     
     try:
@@ -140,7 +140,7 @@ def test_complete_fix_integration():
         from src.trading.live_trading.reversal_modules.state_machine import StockState
         from src.trading.live_trading.reversal_modules.tick_processor import ReversalTickProcessor
         
-        print("✅ ALL MODULES IMPORT SUCCESSFULLY")
+        print("[OK] ALL MODULES IMPORT SUCCESSFULLY")
         
         # Test that the integration can be created and used
         from src.trading.live_trading.simple_data_streamer import SimpleStockStreamer
@@ -152,24 +152,24 @@ def test_complete_fix_integration():
         paper_trader = PaperTrader()
         integration = ReversalIntegration(data_streamer, monitor, paper_trader)
         
-        print("✅ INTEGRATION CREATION SUCCESSFUL")
+        print("[OK] INTEGRATION CREATION SUCCESSFUL")
         
         # Test that phase methods can be called
         integration.phase_1_unsubscribe_after_gap_validation()
         integration.phase_2_unsubscribe_after_low_violation()
         integration.phase_3_unsubscribe_after_selection([])
         
-        print("✅ ALL PHASE METHODS CAN BE CALLED")
-        print("✅ COMPLETE FIX INTEGRATION TEST PASSED")
+        print("[OK] ALL PHASE METHODS CAN BE CALLED")
+        print("[OK] COMPLETE FIX INTEGRATION TEST PASSED")
         return True
         
     except Exception as e:
-        print(f"❌ COMPLETE INTEGRATION TEST FAILED: {e}")
+        print(f"[FAIL] COMPLETE INTEGRATION TEST FAILED: {e}")
         return False
 
 def main():
     """Run all tests"""
-    print("🚀 RUNNING COMPLETE 4-BUG FIX VERIFICATION")
+    print("[ROCKET] RUNNING COMPLETE 4-BUG FIX VERIFICATION")
     print("=" * 60)
     
     tests = [
@@ -185,11 +185,11 @@ def main():
             result = test()
             results.append(result)
         except Exception as e:
-            print(f"❌ TEST CRASHED: {e}")
+            print(f"[FAIL] TEST CRASHED: {e}")
             results.append(False)
     
     print("\n" + "=" * 60)
-    print("📊 TEST RESULTS SUMMARY")
+    print("[CHART] TEST RESULTS SUMMARY")
     print("=" * 60)
     
     passed = sum(results)
@@ -198,15 +198,15 @@ def main():
     print(f"Tests Passed: {passed}/{total}")
     
     if passed == total:
-        print("🎉 ALL TESTS PASSED! The 4-bug fix is working correctly.")
-        print("\n✅ EXPECTED BEHAVIOR:")
+        print("[DONE] ALL TESTS PASSED! The 4-bug fix is working correctly.")
+        print("\n[OK] EXPECTED BEHAVIOR:")
         print("  - Stocks rejected at gap validation will be unsubscribed at 12:31:30")
         print("  - Stocks violating low will be unsubscribed at 12:33:00")
         print("  - Non-selected stocks will be unsubscribed after selection")
         print("  - Only selected stocks will receive ticks during trading")
         print("  - 93% WebSocket traffic reduction will be achieved")
     else:
-        print("❌ SOME TESTS FAILED. Please check the errors above.")
+        print("[FAIL] SOME TESTS FAILED. Please check the errors above.")
     
     return passed == total
 

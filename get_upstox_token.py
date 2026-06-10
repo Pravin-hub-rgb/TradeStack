@@ -45,7 +45,7 @@ def exchange_code_for_token(auth_code: str) -> dict:
         return None
 
 if __name__ == "__main__":
-    print("🔑 Upstox Token Exchange Helper")
+    print("[KEY] Upstox Token Exchange Helper")
     print("=" * 40)
     print("Paste your authorization code (from the URL after logging in):")
 

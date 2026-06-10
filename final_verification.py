@@ -81,7 +81,7 @@ def final_verification():
 
     print('\n' + '=' * 50)
     if with_jan6 == total_cached and without_jan6 == 0:
-        print('🎉 VERIFICATION COMPLETE: ALL STOCKS HAVE JAN 6 DATA!')
+        print('[DONE] VERIFICATION COMPLETE: ALL STOCKS HAVE JAN 6 DATA!')
         print(' 100% coverage achieved')
         print(' NSE bhavcopy integration successful')
         print(' System ready for production')

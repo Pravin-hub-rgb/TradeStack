@@ -60,18 +60,18 @@ def test_gap_validation_timing():
             assert test_stock.rejection_reason is not None, "Rejection reason should be set"
             assert "Gap up" in test_stock.rejection_reason, "Should contain gap up reason"
             
-            print("✅ GAP VALIDATION TIMING TEST PASSED!")
+            print("[OK] GAP VALIDATION TIMING TEST PASSED!")
             print("   - Gap validation happens immediately when opening price is set")
             print("   - Gap up stocks are rejected immediately (not delayed until entry time)")
             print("   - Rejection reason is properly logged")
             
             return True
         else:
-            print("❌ Gap validation test failed - gap up not detected")
+            print("[FAIL] Gap validation test failed - gap up not detected")
             return False
             
     except Exception as e:
-        print(f"❌ Gap validation test failed: {e}")
+        print(f"[FAIL] Gap validation test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -93,16 +93,16 @@ def test_timing_flow():
         expected_entry = (datetime.combine(datetime.today(), MARKET_OPEN) + timedelta(minutes=1)).time()
         
         if ENTRY_TIME == expected_entry:
-            print("✅ TIMING FLOW TEST PASSED!")
+            print("[OK] TIMING FLOW TEST PASSED!")
             print("   - Entry time correctly calculated as Market Open + 1 minute")
             print("   - API poll delay set to 5 seconds for opening price capture")
             return True
         else:
-            print(f"❌ Timing flow test failed - expected {expected_entry}, got {ENTRY_TIME}")
+            print(f"[FAIL] Timing flow test failed - expected {expected_entry}, got {ENTRY_TIME}")
             return False
             
     except Exception as e:
-        print(f"❌ Timing flow test failed: {e}")
+        print(f"[FAIL] Timing flow test failed: {e}")
         return False
 
 def main():
@@ -118,17 +118,17 @@ def main():
     timing_test_passed = test_timing_flow()
     
     print("\n=== FINAL RESULTS ===")
-    print(f"Gap Validation Timing: {'✅ PASS' if gap_test_passed else '❌ FAIL'}")
-    print(f"Timing Flow: {'✅ PASS' if timing_test_passed else '❌ FAIL'}")
+    print(f"Gap Validation Timing: {'[OK] PASS' if gap_test_passed else '[FAIL] FAIL'}")
+    print(f"Timing Flow: {'[OK] PASS' if timing_test_passed else '[FAIL] FAIL'}")
     
     if gap_test_passed and timing_test_passed:
-        print("\n🎉 ALL TESTS PASSED!")
-        print("✅ Gap validation and rejections now happen immediately when opening prices are captured")
-        print("✅ No more delayed rejections at entry time")
-        print("✅ Clean output with proper timing")
+        print("\n[DONE] ALL TESTS PASSED!")
+        print("[OK] Gap validation and rejections now happen immediately when opening prices are captured")
+        print("[OK] No more delayed rejections at entry time")
+        print("[OK] Clean output with proper timing")
         return True
     else:
-        print("\n❌ SOME TESTS FAILED!")
+        print("\n[FAIL] SOME TESTS FAILED!")
         return False
 
 if __name__ == "__main__":

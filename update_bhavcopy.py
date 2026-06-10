@@ -9,7 +9,7 @@ from src.utils.bhavcopy_integrator import update_latest_bhavcopy
 
 def main():
     """Update latest bhavcopy data"""
-    print("📈 NSE BHAVCOPY UPDATE")
+    print("[TREND_UP] NSE BHAVCOPY UPDATE")
     print("Updates cache with latest available bhavcopy data")
     print()
 
@@ -17,10 +17,10 @@ def main():
     result = update_latest_bhavcopy()
 
     if result['status'] == 'SUCCESS':
-        print(f"\n🎉 SUCCESS! Updated cache with {result['date']} data")
+        print(f"\n[DONE] SUCCESS! Updated cache with {result['date']} data")
         print("Your scanner will now use the latest market data!")
     else:
-        print(f"\n❌ FAILED: {result.get('error', 'Unknown error')}")
+        print(f"\n[FAIL] FAILED: {result.get('error', 'Unknown error')}")
         print("Check NSE website availability or try again later")
 
 if __name__ == "__main__":

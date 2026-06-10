@@ -40,7 +40,7 @@ def test_scanner_small():
         candidates = scanner.run_continuation_scan(date.today())
         
         if candidates:
-            logger.info(f"🎉 Found {len(candidates)} continuation candidates!")
+            logger.info(f"[DONE] Found {len(candidates)} continuation candidates!")
             for candidate in candidates:
                 logger.info(f"  - {candidate['symbol']}: {candidate['notes']}")
         else:
@@ -51,13 +51,13 @@ def test_scanner_small():
         reversal_candidates = scanner.run_reversal_scan(date.today())
         
         if reversal_candidates:
-            logger.info(f"🎉 Found {len(reversal_candidates)} reversal candidates!")
+            logger.info(f"[DONE] Found {len(reversal_candidates)} reversal candidates!")
             for candidate in reversal_candidates:
                 logger.info(f"  - {candidate['symbol']}: {candidate['notes']}")
         else:
             logger.info("No reversal candidates found (this is normal)")
             
-        logger.info("✅ Scanner test completed successfully!")
+        logger.info("[OK] Scanner test completed successfully!")
         
     except Exception as e:
         logger.error(f"Scanner test failed: {e}", exc_info=True)

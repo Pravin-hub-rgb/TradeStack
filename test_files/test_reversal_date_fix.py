@@ -18,7 +18,7 @@ from src.utils.data_fetcher import data_fetcher
 
 def test_reversal_scanner_date_detection():
     """Test that reversal scanner uses the correct date (1 Feb 2026)"""
-    print("🔍 TESTING REVERSAL SCANNER DATE DETECTION")
+    print("[SEARCH] TESTING REVERSAL SCANNER DATE DETECTION")
     print("=" * 60)
     
     try:
@@ -32,7 +32,7 @@ def test_reversal_scanner_date_detection():
             nonlocal detected_date
             if message.startswith("SCAN_DATE:"):
                 detected_date = message.split(":", 1)[1]
-                print(f"   📅 Reversal scanner detected date: {detected_date}")
+                print(f"   [CALENDAR] Reversal scanner detected date: {detected_date}")
         
         results = scanner.run_reversal_scan(
             scan_date=None,  # Auto-detect
@@ -40,9 +40,9 @@ def test_reversal_scanner_date_detection():
         )
         
         if detected_date:
-            print(f"✅ Reversal scanner used date: {detected_date}")
+            print(f"[OK] Reversal scanner used date: {detected_date}")
         else:
-            print("❌ Could not detect reversal scanner date")
+            print("[FAIL] Could not detect reversal scanner date")
         
         print(f"   Found {len(results)} reversal candidates")
         
@@ -55,21 +55,21 @@ def test_reversal_scanner_date_detection():
             symbol = stock.get('symbol', '')
             if symbol in target_stocks:
                 found_stocks.append(symbol)
-                print(f"   🎯 FOUND {symbol} in reversal results!")
+                print(f"   [TARGET] FOUND {symbol} in reversal results!")
                 print(f"      Close: {stock.get('close', 'N/A')}")
                 print(f"      Period: {stock.get('period', 'N/A')}")
                 print(f"      Decline: {stock.get('decline_percent', 'N/A')}%")
         
         if found_stocks:
-            print(f"\n❌ POTENTIAL ISSUE: Reversal scanner returned {found_stocks}")
+            print(f"\n[FAIL] POTENTIAL ISSUE: Reversal scanner returned {found_stocks}")
             print("   This might indicate the scanner is still using old data")
         else:
-            print(f"\n✅ GOOD: Reversal scanner correctly filtered out {target_stocks}")
+            print(f"\n[OK] GOOD: Reversal scanner correctly filtered out {target_stocks}")
         
         return detected_date, len(results)
         
     except Exception as e:
-        print(f"❌ Error testing reversal scanner date: {e}")
+        print(f"[FAIL] Error testing reversal scanner date: {e}")
         import traceback
         traceback.print_exc()
         return None, 0
@@ -77,7 +77,7 @@ def test_reversal_scanner_date_detection():
 def test_reversal_scanner_different_dates():
     """Test reversal scanner with different dates to see the difference"""
     print("\n" + "="*60)
-    print("🔍 TESTING REVERSAL SCANNER WITH DIFFERENT DATES")
+    print("[SEARCH] TESTING REVERSAL SCANNER WITH DIFFERENT DATES")
     print("=" * 60)
     
     # Test dates
@@ -104,7 +104,7 @@ def test_reversal_scanner_different_dates():
                 )
                 
                 if data.empty:
-                    print(f"   ❌ No data for {symbol}")
+                    print(f"   [FAIL] No data for {symbol}")
                     continue
                 
                 # Calculate technical indicators
@@ -116,7 +116,7 @@ def test_reversal_scanner_different_dates():
                 has_date = target_timestamp in data.index
                 
                 if not has_date:
-                    print(f"   ❌ Date {test_date} not found in data")
+                    print(f"   [FAIL] Date {test_date} not found in data")
                     continue
                 
                 # Get the row for the specific date
@@ -138,12 +138,12 @@ def test_reversal_scanner_different_dates():
                 print(f"   Price filter pass: {price_pass}")
                 
         except Exception as e:
-            print(f"   ❌ Error testing {symbol}: {e}")
+            print(f"   [FAIL] Error testing {symbol}: {e}")
 
 def test_reversal_api_endpoint():
     """Test the reversal API endpoint to see if it's also fixed"""
     print("\n" + "="*60)
-    print("🔍 TESTING REVERSAL API ENDPOINT")
+    print("[SEARCH] TESTING REVERSAL API ENDPOINT")
     print("=" * 60)
     
     try:
@@ -170,7 +170,7 @@ def test_reversal_api_endpoint():
             result = response.json()
             operation_id = result.get('operation_id')
             
-            print(f"✅ API call successful")
+            print(f"[OK] API call successful")
             print(f"   Operation ID: {operation_id}")
             
             # Poll for results
@@ -192,7 +192,7 @@ def test_reversal_api_endpoint():
                     
                     if status == 'completed':
                         results_count = status_data.get('result', {}).get('results_count', 0)
-                        print(f"✅ Reversal scan completed!")
+                        print(f"[OK] Reversal scan completed!")
                         print(f"   Found {results_count} candidates")
                         
                         # Check if MMFL/TENNIND are in results
@@ -204,41 +204,41 @@ def test_reversal_api_endpoint():
                                 symbol = stock.get('symbol', '')
                                 if symbol in target_stocks:
                                     found_stocks.append(symbol)
-                                    print(f"   🎯 FOUND {symbol} in API results!")
+                                    print(f"   [TARGET] FOUND {symbol} in API results!")
                                     print(f"      Close: {stock.get('close', 'N/A')}")
                                     print(f"      Period: {stock.get('period', 'N/A')}")
                                     print(f"      Decline: {stock.get('decline_percent', 'N/A')}%")
                         
                         if found_stocks:
-                            print(f"\n❌ POTENTIAL ISSUE: API returned {found_stocks}")
+                            print(f"\n[FAIL] POTENTIAL ISSUE: API returned {found_stocks}")
                         else:
-                            print(f"\n✅ GOOD: API correctly filtered out {target_stocks}")
+                            print(f"\n[OK] GOOD: API correctly filtered out {target_stocks}")
                         
                         return True
                     
                     elif status == 'error':
                         error = status_data.get('error', 'Unknown error')
-                        print(f"❌ Scan failed: {error}")
+                        print(f"[FAIL] Scan failed: {error}")
                         return False
                         
                 else:
-                    print(f"❌ Status check failed: {status_response.status_code}")
+                    print(f"[FAIL] Status check failed: {status_response.status_code}")
                     return False
             
-            print("❌ Scan timed out")
+            print("[FAIL] Scan timed out")
             return False
             
         else:
-            print(f"❌ API call failed: {response.status_code}")
+            print(f"[FAIL] API call failed: {response.status_code}")
             return False
             
     except Exception as e:
-        print(f"❌ Error testing reversal API: {e}")
+        print(f"[FAIL] Error testing reversal API: {e}")
         return False
 
 def main():
     """Main test function"""
-    print("🔍 REVERSAL SCANNER DATE FIX VERIFICATION")
+    print("[SEARCH] REVERSAL SCANNER DATE FIX VERIFICATION")
     print("=" * 60)
     print("Testing to verify that the reversal scanner is also fixed")
     print("and using the correct date (1 Feb 2026) instead of 30 Jan 2026")
@@ -257,19 +257,19 @@ def main():
     print("=" * 60)
     
     if detected_date and "2026-02-01" in detected_date:
-        print("✅ SUCCESS: Reversal scanner is using the correct date (1 Feb 2026)")
+        print("[OK] SUCCESS: Reversal scanner is using the correct date (1 Feb 2026)")
     else:
-        print("❌ ISSUE: Reversal scanner may still be using wrong date")
+        print("[FAIL] ISSUE: Reversal scanner may still be using wrong date")
     
     if candidate_count > 0:
-        print(f"✅ SUCCESS: Reversal scanner found {candidate_count} candidates")
+        print(f"[OK] SUCCESS: Reversal scanner found {candidate_count} candidates")
     else:
-        print("⚠️  WARNING: Reversal scanner found no candidates")
+        print("[WARN]  WARNING: Reversal scanner found no candidates")
     
     if api_success:
-        print("✅ SUCCESS: Reversal API endpoint is working correctly")
+        print("[OK] SUCCESS: Reversal API endpoint is working correctly")
     else:
-        print("❌ ISSUE: Reversal API endpoint may have issues")
+        print("[FAIL] ISSUE: Reversal API endpoint may have issues")
 
 if __name__ == "__main__":
     main()

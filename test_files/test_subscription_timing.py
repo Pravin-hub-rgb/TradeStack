@@ -64,7 +64,7 @@ def validate_optimization_feasibility():
     print(f'Subscription at: {subscription_time}')
     print(f'Time difference: {time_diff} seconds')
     print(f'Validation completes {time_diff} seconds BEFORE subscription')
-    print('✅ VALIDATION HAPPENS FIRST - OPTIMIZATION IS FEASIBLE')
+    print('[OK] VALIDATION HAPPENS FIRST - OPTIMIZATION IS FEASIBLE')
     
     return True
 

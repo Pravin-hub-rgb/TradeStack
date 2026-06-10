@@ -17,7 +17,7 @@ ACCESS_TOKEN = config['access_token']
 def test_websocket_connection():
     """Test if WebSocket connection works with current token"""
 
-    print("🔍 Testing Upstox WebSocket Token...")
+    print("[SEARCH] Testing Upstox WebSocket Token...")
 
     # Create WebSocket client
     configuration = upstox_client.Configuration()
@@ -34,23 +34,23 @@ def test_websocket_connection():
         def on_open():
             nonlocal connected
             connected = True
-            print("✅ WebSocket connected successfully!")
+            print("[OK] WebSocket connected successfully!")
             streamer.disconnect()
 
         def on_error(error):
             nonlocal error_received
             error_received = True
-            print(f"❌ WebSocket error: {error}")
+            print(f"[FAIL] WebSocket error: {error}")
 
         def on_close(*args):
-            print("🔌 WebSocket closed")
+            print("[PLUG] WebSocket closed")
 
         # Register callbacks
         streamer.on("open", on_open)
         streamer.on("error", on_error)
         streamer.on("close", on_close)
 
-        print("🚀 Attempting WebSocket connection...")
+        print("[ROCKET] Attempting WebSocket connection...")
         streamer.connect()
 
         # Wait for connection result
@@ -61,24 +61,24 @@ def test_websocket_connection():
             time.sleep(0.5)
 
         if connected:
-            print("🎉 SUCCESS: WebSocket token is valid!")
+            print("[DONE] SUCCESS: WebSocket token is valid!")
             return True
         elif error_received:
-            print("💥 FAILED: WebSocket token rejected")
+            print("[BOOM] FAILED: WebSocket token rejected")
             return False
         else:
-            print("⏰ TIMEOUT: No response from WebSocket")
+            print("[ALARM] TIMEOUT: No response from WebSocket")
             streamer.disconnect()
             return False
 
     except Exception as e:
-        print(f"💥 EXCEPTION: {e}")
+        print(f"[BOOM] EXCEPTION: {e}")
         return False
 
 def test_http_api():
     """Test if HTTP API works with current token"""
 
-    print("\n🔍 Testing Upstox HTTP API...")
+    print("\n[SEARCH] Testing Upstox HTTP API...")
 
     configuration = upstox_client.Configuration()
     configuration.access_token = ACCESS_TOKEN
@@ -92,16 +92,16 @@ def test_http_api():
         api_version = "v3"
 
         result = api_instance.get_market_quote_ltp(instrument_key, api_version)
-        print(f"✅ HTTP API works! LTP: {result.data.last_price}")
+        print(f"[OK] HTTP API works! LTP: {result.data.last_price}")
 
         return True
 
     except Exception as e:
-        print(f"❌ HTTP API failed: {e}")
+        print(f"[FAIL] HTTP API failed: {e}")
         return False
 
 if __name__ == "__main__":
-    print("🧪 Upstox Token Validation Test\n")
+    print("[TEST_TUBE] Upstox Token Validation Test\n")
 
     # Test HTTP API first
     http_works = test_http_api()
@@ -109,17 +109,17 @@ if __name__ == "__main__":
     # Test WebSocket
     ws_works = test_websocket_connection()
 
-    print("\n📊 RESULTS:")
-    print(f"   HTTP API: {'✅ Working' if http_works else '❌ Failed'}")
-    print(f"   WebSocket: {'✅ Working' if ws_works else '❌ Failed'}")
+    print("\n[CHART] RESULTS:")
+    print(f"   HTTP API: {'[OK] Working' if http_works else '[FAIL] Failed'}")
+    print(f"   WebSocket: {'[OK] Working' if ws_works else '[FAIL] Failed'}")
 
     if http_works and not ws_works:
-        print("\n🔍 DIAGNOSIS: Token works for HTTP but not WebSocket")
+        print("\n[SEARCH] DIAGNOSIS: Token works for HTTP but not WebSocket")
         print("   Possible causes:")
         print("   - Another application using WebSocket with same token")
         print("   - WebSocket rate limits")
         print("   - Token permissions issue")
     elif not http_works and not ws_works:
-        print("\n🔍 DIAGNOSIS: Token is expired/invalid")
+        print("\n[SEARCH] DIAGNOSIS: Token is expired/invalid")
     else:
-        print("\n🎉 SUCCESS: Token works for both HTTP and WebSocket!")
+        print("\n[DONE] SUCCESS: Token works for both HTTP and WebSocket!")

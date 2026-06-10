@@ -29,18 +29,18 @@ class TestStock:
         # Validate gap (continuation: gap > 0.5%)
         if gap_pct > 0.5:
             self.gap_validated = True
-            print(f"✅ {symbol}: GAP VALIDATED ({gap_pct:.2f}%)")
+            print(f"[OK] {symbol}: GAP VALIDATED ({gap_pct:.2f}%)")
         else:
             self.gap_validated = False
             self.is_active = False
             self.is_subscribed = False
             self.rejection_reason = f"Gap: {gap_pct:.2f}% <= 0.5%"
-            print(f"❌ {symbol}: GAP REJECTED ({gap_pct:.2f}%) - UNSUBSCRIBED")
+            print(f"[FAIL] {symbol}: GAP REJECTED ({gap_pct:.2f}%) - UNSUBSCRIBED")
 
 def test_gap_rejected_unsubscribe():
     """Test that gap-rejected stocks are properly unsubscribed"""
     
-    print("🧪 TESTING GAP-REJECTED STOCK UNSUBSCRIPTION")
+    print("[TEST_TUBE] TESTING GAP-REJECTED STOCK UNSUBSCRIPTION")
     print("=" * 50)
     print("This tests the exact same logic used in continuation bot")
     print("Gap-rejected stocks should disappear from monitoring")
@@ -66,7 +66,7 @@ def test_gap_rejected_unsubscribe():
         stocks[symbol] = stock
     
     print()
-    print("📊 INITIAL STATUS AFTER GAP VALIDATION:")
+    print("[CHART] INITIAL STATUS AFTER GAP VALIDATION:")
     
     # Count subscribed vs unsubscribed
     subscribed_stocks = []
@@ -80,11 +80,11 @@ def test_gap_rejected_unsubscribe():
     
     print(f"   Subscribed stocks: {len(subscribed_stocks)}")
     for stock in subscribed_stocks:
-        print(f"      ✅ {stock.symbol} (Gap validated)")
+        print(f"      [OK] {stock.symbol} (Gap validated)")
     
     print(f"   Unsubscribed stocks: {len(unsubscribed_stocks)}")
     for stock in unsubscribed_stocks:
-        print(f"      ❌ {stock.symbol} ({stock.rejection_reason})")
+        print(f"      [FAIL] {stock.symbol} ({stock.rejection_reason})")
     
     print()
     print("=== SIMULATING TICK HANDLER FILTERING ===")
@@ -96,11 +96,11 @@ def test_gap_rejected_unsubscribe():
     for symbol, stock in stocks.items():
         # This is the key check from the tick handler
         if not stock.is_subscribed:
-            print(f"   ⏭️  {symbol}: SKIPPED (not subscribed)")
+            print(f"   [NEXT]  {symbol}: SKIPPED (not subscribed)")
             continue
         
         # If we reach here, stock is subscribed and will be processed
-        print(f"   ✅ {symbol}: PROCESSED (subscribed)")
+        print(f"   [OK] {symbol}: PROCESSED (subscribed)")
     
     print()
     print("=== SIMULATING LOG OUTPUT ===")
@@ -115,12 +115,12 @@ def test_gap_rejected_unsubscribe():
     
     # Unsubscribed stocks should NOT appear in logs
     print()
-    print("❌ STOCKS THAT SHOULD NOT APPEAR IN LOGS:")
+    print("[FAIL] STOCKS THAT SHOULD NOT APPEAR IN LOGS:")
     for stock in unsubscribed_stocks:
         print(f"   {stock.symbol} - Should be completely gone from monitoring")
     
     print()
-    print("✅ TEST COMPLETE")
+    print("[OK] TEST COMPLETE")
     print()
     print("EXPECTED BEHAVIOR IN LIVE BOT:")
     print("1. Gap-rejected stocks should be unsubscribed immediately")

@@ -143,7 +143,7 @@ class DailyBhavcopyUpdater:
 
             # Progress logging
             progress = (end_idx / len(stock_list)) * 100
-            logger.info(f"  📈 Overall progress: {progress:.1f}% ({self.stats['stocks_updated']}/{len(stock_list)})")
+            logger.info(f"  [TREND_UP] Overall progress: {progress:.1f}% ({self.stats['stocks_updated']}/{len(stock_list)})")
             # Small delay between batches to avoid overwhelming system
             time.sleep(0.1)
 
@@ -182,11 +182,11 @@ class DailyBhavcopyUpdater:
                 # Update cache for this individual stock
                 cache_manager.update_with_bhavcopy(symbol, stock_df)
 
-                logger.debug(f"✅ {symbol}: Updated with {target_date} data")
+                logger.debug(f"[OK] {symbol}: Updated with {target_date} data")
                 results['updated'] += 1
 
             except Exception as e:
-                logger.error(f"❌ {symbol}: Update failed - {e}")
+                logger.error(f"[FAIL] {symbol}: Update failed - {e}")
                 results['failed'] += 1
 
         return results
@@ -247,10 +247,10 @@ def update_daily_bhavcopy(target_date: Optional[date] = None) -> Dict:
 
 if __name__ == "__main__":
     # Test run - update yesterday's data
-    print("🕐 Starting daily bhavcopy update...")
+    print("[CLOCK1] Starting daily bhavcopy update...")
     result = update_daily_bhavcopy()
 
-    print("📊 UPDATE RESULTS:")
+    print("[CHART] UPDATE RESULTS:")
     print(f"Status: {result['status']}")
     print(f"Duration: {result.get('duration_seconds', 'N/A'):.1f} seconds")
     print(f"Stocks Processed: {result['stocks_processed']}")

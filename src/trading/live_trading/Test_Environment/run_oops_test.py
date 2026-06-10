@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
 def main():
     """Run the OOPS entry test"""
-    print("🎯 OOPS Entry Test Runner")
+    print("[TARGET] OOPS Entry Test Runner")
     print("=" * 50)
     print()
     
@@ -33,20 +33,20 @@ def main():
         
         # Check results
         if results['triggered_entries'] > 0:
-            print("\n✅ OOPS ENTRY TEST PASSED!")
+            print("\n[OK] OOPS ENTRY TEST PASSED!")
             print("The reversal bot correctly triggered entry when price crossed previous close.")
         else:
-            print("\n❌ OOPS ENTRY TEST FAILED!")
+            print("\n[FAIL] OOPS ENTRY TEST FAILED!")
             print("No entries were triggered. Check the entry logic.")
             
         return results['triggered_entries'] > 0
         
     except ImportError as e:
-        print(f"❌ Import error: {e}")
+        print(f"[FAIL] Import error: {e}")
         print("Make sure all required modules are available")
         return False
     except Exception as e:
-        print(f"❌ Test failed with error: {e}")
+        print(f"[FAIL] Test failed with error: {e}")
         return False
 
 if __name__ == "__main__":

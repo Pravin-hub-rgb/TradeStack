@@ -50,18 +50,18 @@ def test_gap_validation_logic():
             assert test_stock.rejection_reason is not None, "Rejection reason should be set"
             assert "Gap up" in test_stock.rejection_reason, "Should contain gap up reason"
             
-            print("✅ GAP VALIDATION LOGIC TEST PASSED!")
+            print("[OK] GAP VALIDATION LOGIC TEST PASSED!")
             print("   - Gap validation happens immediately when opening price is set")
             print("   - Gap up stocks are rejected immediately (not delayed until entry time)")
             print("   - Rejection reason is properly logged")
             
             return True
         else:
-            print("❌ Gap validation test failed - gap up not detected")
+            print("[FAIL] Gap validation test failed - gap up not detected")
             return False
             
     except Exception as e:
-        print(f"❌ Gap validation test failed: {e}")
+        print(f"[FAIL] Gap validation test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -84,16 +84,16 @@ def test_timing_config():
         actual_entry = (ENTRY_TIME.hour * 3600 + ENTRY_TIME.minute * 60 + ENTRY_TIME.second)
         
         if actual_entry == expected_entry:
-            print("✅ TIMING CONFIGURATION TEST PASSED!")
+            print("[OK] TIMING CONFIGURATION TEST PASSED!")
             print("   - Entry time correctly calculated as Market Open + 1 minute")
             print("   - API poll delay set to 5 seconds for opening price capture")
             return True
         else:
-            print(f"❌ Timing configuration test failed")
+            print(f"[FAIL] Timing configuration test failed")
             return False
             
     except Exception as e:
-        print(f"❌ Timing configuration test failed: {e}")
+        print(f"[FAIL] Timing configuration test failed: {e}")
         return False
 
 def main():
@@ -109,22 +109,22 @@ def main():
     timing_test_passed = test_timing_config()
     
     print("\n=== FINAL RESULTS ===")
-    print(f"Gap Validation Logic: {'✅ PASS' if gap_test_passed else '❌ FAIL'}")
-    print(f"Timing Configuration: {'✅ PASS' if timing_test_passed else '❌ FAIL'}")
+    print(f"Gap Validation Logic: {'[OK] PASS' if gap_test_passed else '[FAIL] FAIL'}")
+    print(f"Timing Configuration: {'[OK] PASS' if timing_test_passed else '[FAIL] FAIL'}")
     
     if gap_test_passed and timing_test_passed:
-        print("\n🎉 ALL TESTS PASSED!")
-        print("✅ Gap validation and rejections now happen immediately when opening prices are captured")
-        print("✅ No more delayed rejections at entry time")
-        print("✅ Clean output with proper timing")
-        print("\n📝 SUMMARY OF FIX:")
+        print("\n[DONE] ALL TESTS PASSED!")
+        print("[OK] Gap validation and rejections now happen immediately when opening prices are captured")
+        print("[OK] No more delayed rejections at entry time")
+        print("[OK] Clean output with proper timing")
+        print("\n[NOTE] SUMMARY OF FIX:")
         print("   - Modified handle_tick() method in old_main.py")
         print("   - Added immediate gap validation when opening price is set")
         print("   - Gap up stocks are rejected immediately for reversal trading")
         print("   - Rejections happen at 2:05:00, not delayed until 2:06:00")
         return True
     else:
-        print("\n❌ SOME TESTS FAILED!")
+        print("\n[FAIL] SOME TESTS FAILED!")
         return False
 
 if __name__ == "__main__":

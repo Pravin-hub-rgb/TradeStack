@@ -53,7 +53,7 @@ class VolumeTrackingTest:
                 self.previous_close = float(data['cp'])
                 print(f"✓ Previous close for {self.test_symbol}: Rs{self.previous_close:.2f}")
             else:
-                print(f"✗ No previous close data for {self.test_symbol}")
+                print(f"[FAIL] No previous close data for {self.test_symbol}")
                 return False
                 
             # Get instrument key
@@ -61,7 +61,7 @@ class VolumeTrackingTest:
             if self.test_instrument_key:
                 print(f"✓ Instrument key: {self.test_instrument_key}")
             else:
-                print(f"✗ No instrument key for {self.test_symbol}")
+                print(f"[FAIL] No instrument key for {self.test_symbol}")
                 return False
                 
             # Add to monitor
@@ -71,7 +71,7 @@ class VolumeTrackingTest:
             return True
             
         except Exception as e:
-            print(f"✗ Setup failed: {e}")
+            print(f"[FAIL] Setup failed: {e}")
             return False
     
     def get_current_volume(self):
@@ -190,14 +190,14 @@ class VolumeTrackingTest:
                     if relative_volume >= SVRO_MIN_VOLUME_RATIO:
                         print(f"✓ PASS: Volume validation would succeed")
                     else:
-                        print(f"✗ FAIL: Volume validation would fail - {relative_volume*100:.1f}% < {SVRO_MIN_VOLUME_RATIO*100:.1f}%")
+                        print(f"[FAIL] FAIL: Volume validation would fail - {relative_volume*100:.1f}% < {SVRO_MIN_VOLUME_RATIO*100:.1f}%")
                 else:
-                    print(f"✗ Volume baseline is zero or invalid")
+                    print(f"[FAIL] Volume baseline is zero or invalid")
             else:
-                print(f"✗ Could not get metadata for {self.test_symbol}")
+                print(f"[FAIL] Could not get metadata for {self.test_symbol}")
                 
         except Exception as e:
-            print(f"✗ Volume baseline test failed: {e}")
+            print(f"[FAIL] Volume baseline test failed: {e}")
     
     def test_volume_tracking_integration(self):
         """Test volume tracking integration with stock monitor"""
@@ -278,7 +278,7 @@ def main():
     if success:
         print("\n✓ Test completed successfully")
     else:
-        print("\n✗ Test failed")
+        print("\n[FAIL] Test failed")
     
     return success
 

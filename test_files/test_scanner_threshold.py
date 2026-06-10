@@ -34,7 +34,7 @@ def test_actual_scanner_threshold(symbol: str, scan_date: date):
         cached_data = cache_manager.load_cached_data(symbol)
         
         if cached_data is None or cached_data.empty:
-            print(f"   ❌ No cached data found")
+            print(f"   [FAIL] No cached data found")
             return None
         
         # Get data for date range
@@ -45,14 +45,14 @@ def test_actual_scanner_threshold(symbol: str, scan_date: date):
         )
         
         if scanner_data.empty:
-            print(f"   ❌ Scanner data fetch returned empty")
+            print(f"   [FAIL] Scanner data fetch returned empty")
             return None
         
         # Calculate technical indicators
         scanner_data = data_fetcher.calculate_technical_indicators(scanner_data)
         latest = scanner_data.iloc[-1]
         
-        print(f"   📈 Latest data:")
+        print(f"   [TREND_UP] Latest data:")
         print(f"      Date: {latest.name}")
         print(f"      Close: {latest['close']:.2f}")
         print(f"      20 MA: {latest['ma_20']:.2f}")
@@ -104,14 +104,14 @@ def test_actual_scanner_threshold(symbol: str, scan_date: date):
         }
         
     except Exception as e:
-        print(f"\n❌ Error testing {symbol}: {e}")
+        print(f"\n[FAIL] Error testing {symbol}: {e}")
         import traceback
         traceback.print_exc()
         return None
 
 def main():
     """Main test function"""
-    print("🔍 SCANNER THRESHOLD TEST")
+    print("[SEARCH] SCANNER THRESHOLD TEST")
     print("=" * 60)
     
     # Test for 1st Feb 2026

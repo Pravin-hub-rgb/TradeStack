@@ -227,7 +227,7 @@ class DummySVROTickStreamer:
             test_stock.entry_high = monitor_stock.entry_high
             test_stock.entry_sl = monitor_stock.entry_sl
             
-            logger.info(f"🎯 SVRO ENTRY TRIGGERED: {test_stock.symbol}")
+            logger.info(f"[TARGET] SVRO ENTRY TRIGGERED: {test_stock.symbol}")
             logger.info(f"   Entry Price: {test_stock.entry_price:.2f}")
             logger.info(f"   Trigger Price: {price:.2f}")
             logger.info(f"   Entry High: {test_stock.entry_high:.2f}")
@@ -292,7 +292,7 @@ class DummySVROTickStreamer:
         print("-" * 60)
         
         for instrument_key, details in results['stock_details'].items():
-            status = "✅ TRIGGERED" if details['entry_triggered'] else "❌ NO ENTRY"
+            status = "[OK] TRIGGERED" if details['entry_triggered'] else "[FAIL] NO ENTRY"
             print(f"{details['symbol']} ({details['situation']}) - {status}")
             print(f"  Prev Close: {details['previous_close']:.2f}")
             print(f"  Open Price: {details['open_price']:.2f}")
@@ -358,7 +358,7 @@ def create_svro_volume_test_scenario():
 
 def run_svro_success_test():
     """Run the SVRO success test scenario"""
-    print("🚀 Starting SVRO Success Test")
+    print("[ROCKET] Starting SVRO Success Test")
     print("Testing: SVRO stock should enter when price crosses entry high with sufficient volume")
     print("Setup: Previous Close = 100.00, Open Price = 102.00 (gap up 2%)")
     print("Expected: Entry when price >= entry high with volume >= 7.5% of baseline")
@@ -379,13 +379,13 @@ def run_svro_success_test():
             # Check if any entries were triggered
             results = streamer.get_test_results()
             if results['triggered_entries'] > 0:
-                print(f"\n🎯 SVRO Entry triggered! Stopping test early.")
+                print(f"\n[TARGET] SVRO Entry triggered! Stopping test early.")
                 break
             
             time.sleep(1)
             
     except KeyboardInterrupt:
-        print("\n⏹️  Test interrupted by user")
+        print("\n[STOP_SQ]  Test interrupted by user")
     
     finally:
         # Stop streaming
@@ -404,8 +404,8 @@ if __name__ == "__main__":
     
     # Exit with appropriate code
     if results['triggered_entries'] > 0:
-        print("\n🎉 SVRO success test PASSED!")
+        print("\n[DONE] SVRO success test PASSED!")
         sys.exit(0)
     else:
-        print("\n❌ SVRO success test FAILED!")
+        print("\n[FAIL] SVRO success test FAILED!")
         sys.exit(1)

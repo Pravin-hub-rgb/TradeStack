@@ -17,7 +17,7 @@ from reversal_stock_monitor import ReversalStockMonitor
 def test_monitoring_fix():
     """Test that only actively monitored stocks are shown in qualification status"""
     
-    print("🧪 TESTING MONITORING FIX")
+    print("[TEST_TUBE] TESTING MONITORING FIX")
     print("=" * 50)
     
     # Create monitor
@@ -57,12 +57,12 @@ def test_monitoring_fix():
     print("Getting qualified stocks (should only show actively monitored stocks):")
     qualified = monitor.get_qualified_stocks()
     
-    print(f"\n✅ RESULTS:")
+    print(f"\n[OK] RESULTS:")
     print(f"   Total stocks added: 4")
     print(f"   Actively monitored: {len(monitor.get_active_stocks())}")
     print(f"   Qualified stocks: {len(qualified)}")
     
-    print(f"\n📊 EXPECTED BEHAVIOR:")
+    print(f"\n[CHART] EXPECTED BEHAVIOR:")
     print(f"   - Only SIGNATURE and POONAWALLA should be shown in status")
     print(f"   - ANANTRAJ and GODREJPROP should NOT appear (they were rejected)")
     print(f"   - This prevents confusion about which stocks are actually being monitored")
@@ -71,7 +71,7 @@ def test_monitoring_fix():
     active_symbols = [stock.symbol for stock in monitor.get_active_stocks()]
     qualified_symbols = [stock.symbol for stock in qualified]
     
-    print(f"\n🔍 VERIFICATION:")
+    print(f"\n[SEARCH] VERIFICATION:")
     print(f"   Active stocks: {active_symbols}")
     print(f"   Qualified stocks: {qualified_symbols}")
     
@@ -79,20 +79,20 @@ def test_monitoring_fix():
     rejected_in_active = [symbol for symbol in ['ANANTRAJ', 'GODREJPROP'] if symbol in active_symbols]
     
     if not rejected_in_active:
-        print(f"   ✅ SUCCESS: Rejected stocks not in active monitoring list")
-        print(f"   ✅ SUCCESS: Only qualified stocks are being monitored")
+        print(f"   [OK] SUCCESS: Rejected stocks not in active monitoring list")
+        print(f"   [OK] SUCCESS: Only qualified stocks are being monitored")
         return True
     else:
-        print(f"   ❌ FAILURE: Rejected stocks still in active list: {rejected_in_active}")
+        print(f"   [FAIL] FAILURE: Rejected stocks still in active list: {rejected_in_active}")
         return False
 
 if __name__ == "__main__":
     success = test_monitoring_fix()
     if success:
-        print(f"\n🎉 MONITORING FIX VERIFIED!")
+        print(f"\n[DONE] MONITORING FIX VERIFIED!")
         print(f"   The reversal bot now correctly shows only actively monitored stocks")
         print(f"   in the qualification status, eliminating confusion about which")
         print(f"   stocks are actually being tracked.")
     else:
-        print(f"\n❌ MONITORING FIX FAILED!")
+        print(f"\n[FAIL] MONITORING FIX FAILED!")
         sys.exit(1)

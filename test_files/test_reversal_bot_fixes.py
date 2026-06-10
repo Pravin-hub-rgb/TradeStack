@@ -99,7 +99,7 @@ def test_reversal_subscription_tracking():
         return True
         
     except Exception as e:
-        print(f"\n❌ Test failed: {e}")
+        print(f"\n[FAIL] Test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -109,13 +109,13 @@ def test_reversal_vs_continuation_comparison():
     print("\n=== COMPARISON: REVERSAL vs CONTINUATION BOT FIXES ===\n")
     
     fixes = [
-        ("Subscription tracking discrepancy", "✅ FIXED", "✅ FIXED"),
-        ("Data streamer update method", "✅ ADDED", "✅ ADDED"),
-        ("Unsubscribe method fix", "✅ FIXED", "✅ FIXED"),
-        ("Phase 1 elimination", "✅ IMPLEMENTED", "✅ IMPLEMENTED"),
-        ("Integration method updates", "✅ ADDED", "✅ ADDED"),
-        ("OOPS immediate entry", "✅ PRESERVED", "N/A"),
-        ("SVRO entry timing", "✅ PRESERVED", "N/A"),
+        ("Subscription tracking discrepancy", "[OK] FIXED", "[OK] FIXED"),
+        ("Data streamer update method", "[OK] ADDED", "[OK] ADDED"),
+        ("Unsubscribe method fix", "[OK] FIXED", "[OK] FIXED"),
+        ("Phase 1 elimination", "[OK] IMPLEMENTED", "[OK] IMPLEMENTED"),
+        ("Integration method updates", "[OK] ADDED", "[OK] ADDED"),
+        ("OOPS immediate entry", "[OK] PRESERVED", "N/A"),
+        ("SVRO entry timing", "[OK] PRESERVED", "N/A"),
     ]
     
     print(f"{'Fix':<35} {'Reversal Bot':<15} {'Continuation Bot':<15}")
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     success = test_reversal_subscription_tracking()
     if success:
         test_reversal_vs_continuation_comparison()
-        print("\n🎉 ALL TESTS PASSED - REVERSAL BOT FIXES VERIFIED!")
+        print("\n[DONE] ALL TESTS PASSED - REVERSAL BOT FIXES VERIFIED!")
     else:
-        print("\n❌ TESTS FAILED - PLEASE REVIEW THE FIXES")
+        print("\n[FAIL] TESTS FAILED - PLEASE REVIEW THE FIXES")
         sys.exit(1)

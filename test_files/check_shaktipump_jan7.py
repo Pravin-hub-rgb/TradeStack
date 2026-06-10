@@ -8,14 +8,14 @@ from datetime import date
 
 def check_shaktipump_jan7():
     """Check SHAKTIPUMP's cache data"""
-    print("🔍 CHECKING SHAKTIPUMP JAN 7 DATA")
+    print("[SEARCH] CHECKING SHAKTIPUMP JAN 7 DATA")
     print("=" * 50)
 
     symbol = 'SHAKTIPUMP'
     df = cache_manager.load_cached_data(symbol)
 
     if df is not None:
-        print(f"✅ {symbol} cache found with {len(df)} days of data")
+        print(f"[OK] {symbol} cache found with {len(df)} days of data")
         print(f"Date range: {df.index.min()} to {df.index.max()}")
 
         # Check if Jan 7 is there (handle both date and datetime index)
@@ -36,7 +36,7 @@ def check_shaktipump_jan7():
                     break
 
         if jan7_found:
-            print("✅ Jan 7 data found!")
+            print("[OK] Jan 7 data found!")
 
             # Get the row (handle different index types)
             try:
@@ -54,7 +54,7 @@ def check_shaktipump_jan7():
             print(f"Jan 7 close: ₹{row['close']:.2f}")
             print(f"Jan 7 volume: {int(row['volume']):,}")
         else:
-            print("❌ Jan 7 data missing")
+            print("[FAIL] Jan 7 data missing")
             print("Bulk update may not have worked for SHAKTIPUMP")
 
         # Show last few days
@@ -65,7 +65,7 @@ def check_shaktipump_jan7():
             print(f"  {date_str}: ₹{row['close']:.2f}")
 
     else:
-        print(f"❌ {symbol} cache not found")
+        print(f"[FAIL] {symbol} cache not found")
         print("Bulk update definitely failed")
 
     print("\n" + "="*50)

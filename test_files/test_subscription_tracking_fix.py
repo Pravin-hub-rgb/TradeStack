@@ -28,9 +28,9 @@ def test_subscription_tracking_fix():
         
         # Check initial state
         if len(streamer.active_instruments) == 13:
-            print("✅ Initial active instruments: 13 (all instruments)")
+            print("[OK] Initial active instruments: 13 (all instruments)")
         else:
-            print(f"❌ Initial active instruments: {len(streamer.active_instruments)} (expected 13)")
+            print(f"[FAIL] Initial active instruments: {len(streamer.active_instruments)} (expected 13)")
             return False
         
         # Test update with 4 validated instruments (simulating the optimization)
@@ -38,13 +38,13 @@ def test_subscription_tracking_fix():
         streamer.update_active_instruments(validated_keys)
         
         if len(streamer.active_instruments) == 4:
-            print("✅ After update: 4 active instruments (validated only)")
+            print("[OK] After update: 4 active instruments (validated only)")
         else:
-            print(f"❌ After update: {len(streamer.active_instruments)} active instruments (expected 4)")
+            print(f"[FAIL] After update: {len(streamer.active_instruments)} active instruments (expected 4)")
             return False
             
     except Exception as e:
-        print(f"❌ Error testing data streamer: {e}")
+        print(f"[FAIL] Error testing data streamer: {e}")
         return False
     
     # Test 2: Check that integration calls update_active_instruments
@@ -74,13 +74,13 @@ def test_subscription_tracking_fix():
         
         # Check that data streamer was updated
         if len(streamer.active_instruments) == 4:
-            print("✅ Integration correctly updated data streamer to 4 instruments")
+            print("[OK] Integration correctly updated data streamer to 4 instruments")
         else:
-            print(f"❌ Integration updated data streamer to {len(streamer.active_instruments)} instruments (expected 4)")
+            print(f"[FAIL] Integration updated data streamer to {len(streamer.active_instruments)} instruments (expected 4)")
             return False
             
     except Exception as e:
-        print(f"❌ Error testing integration: {e}")
+        print(f"[FAIL] Error testing integration: {e}")
         return False
     
     # Test 3: Check unsubscribe message accuracy
@@ -107,20 +107,20 @@ def test_subscription_tracking_fix():
         # Check remaining count
         remaining = len(streamer.active_instruments)
         if remaining == 2:
-            print("✅ Unsubscribe message shows correct remaining count: 2")
+            print("[OK] Unsubscribe message shows correct remaining count: 2")
         else:
-            print(f"❌ Unsubscribe message shows incorrect remaining count: {remaining} (expected 2)")
+            print(f"[FAIL] Unsubscribe message shows incorrect remaining count: {remaining} (expected 2)")
             return False
             
     except Exception as e:
-        print(f"❌ Error testing unsubscribe accuracy: {e}")
+        print(f"[FAIL] Error testing unsubscribe accuracy: {e}")
         return False
     
     print("\n=== ALL TESTS PASSED ===")
-    print("✅ Subscription tracking discrepancy fix is working correctly")
-    print("✅ Data streamer now tracks only validated instruments")
-    print("✅ Unsubscribe messages will show accurate remaining counts")
-    print("✅ No more 'Active instruments remaining: 11' when only 4 were validated")
+    print("[OK] Subscription tracking discrepancy fix is working correctly")
+    print("[OK] Data streamer now tracks only validated instruments")
+    print("[OK] Unsubscribe messages will show accurate remaining counts")
+    print("[OK] No more 'Active instruments remaining: 11' when only 4 were validated")
     return True
 
 def simulate_fixed_flow():
@@ -143,10 +143,10 @@ def simulate_fixed_flow():
     print("   Because it only tracks the 4 validated instruments")
     
     print("\nFIX IMPLEMENTED:")
-    print("✅ Added update_active_instruments() method to SimpleStockStreamer")
-    print("✅ Integration.prepare_and_subscribe() calls update_active_instruments()")
-    print("✅ Data streamer now tracks only validated instruments")
-    print("✅ Unsubscribe messages show accurate remaining counts")
+    print("[OK] Added update_active_instruments() method to SimpleStockStreamer")
+    print("[OK] Integration.prepare_and_subscribe() calls update_active_instruments()")
+    print("[OK] Data streamer now tracks only validated instruments")
+    print("[OK] Unsubscribe messages show accurate remaining counts")
 
 if __name__ == "__main__":
     print("SUBSCRIPTION TRACKING DISCREPANCY FIX VERIFICATION")
@@ -156,5 +156,5 @@ if __name__ == "__main__":
     if success:
         simulate_fixed_flow()
     else:
-        print("\n❌ SUBSCRIPTION TRACKING FIX VERIFICATION FAILED")
+        print("\n[FAIL] SUBSCRIPTION TRACKING FIX VERIFICATION FAILED")
         print("Please check the implementation and try again.")

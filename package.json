@@ -1,5 +1,12 @@
 {
+  "scripts": {
+    "dev": "node dev.js",
+    "kill:py": "node scripts/kill-port.js 8002",
+    "kill:vite": "node scripts/kill-port.js 3001",
+    "kill:all": "node scripts/kill-port.js"
+  },
   "dependencies": {
+    "concurrently": "^9.0.0",
     "@mui/x-date-pickers": "^8.24.0",
     "date-fns": "^4.1.0"
   }

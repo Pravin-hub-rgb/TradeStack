@@ -31,7 +31,7 @@ def update_all_stocks_with_bhavcopy(target_date=None):
         end_time = datetime.now()
         duration = end_time - start_time
 
-        print(f"\n⏱️  Total time: {duration}")
+        print(f"\n[STOPWATCH]  Total time: {duration}")
 
         if 'error' not in result:
             print(" Bhavcopy update completed successfully!")
@@ -44,12 +44,12 @@ def update_all_stocks_with_bhavcopy(target_date=None):
             print(f"   Success rate: {success_rate:.1f}%")
 
         else:
-            print(f"❌ Error: {result['error']}")
-            print("\n💡 Note: Bhavcopy data is typically available after 6-7 PM IST on trading days")
+            print(f"[FAIL] Error: {result['error']}")
+            print("\n[IDEA] Note: Bhavcopy data is typically available after 6-7 PM IST on trading days")
             print("   If you're testing, try using a historical date that has available data")
 
     except Exception as e:
-        print(f"❌ Unexpected error: {e}")
+        print(f"[FAIL] Unexpected error: {e}")
 
 def check_cache_status():
     """Check current cache status"""

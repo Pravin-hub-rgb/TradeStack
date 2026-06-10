@@ -152,9 +152,9 @@ def test_vah_calculation():
 
     # Test save functionality
     if save_vah_results_to_file(mock_vah_dict, 'test'):
-        print("✅ VAH save test passed")
+        print("[OK] VAH save test passed")
     else:
-        print("❌ VAH save test failed")
+        print("[FAIL] VAH save test failed")
 
     # Test print functionality
     print_vah_results(mock_vah_dict)

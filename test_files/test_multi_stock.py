@@ -35,7 +35,7 @@ def load_test_stocks():
             return symbols
 
     except Exception as e:
-        print(f"❌ Error loading stocks: {e}")
+        print(f"[FAIL] Error loading stocks: {e}")
         return []
 
 def get_instrument_keys(fetcher, symbols):
@@ -49,24 +49,24 @@ def get_instrument_keys(fetcher, symbols):
             if key:
                 instrument_keys.append(key)
                 stock_symbols[key] = symbol
-                print(f"✅ {symbol} → {key}")
+                print(f"[OK] {symbol} → {key}")
             else:
-                print(f"❌ {symbol} → No key found")
+                print(f"[FAIL] {symbol} → No key found")
         except Exception as e:
-            print(f"❌ {symbol} → Error: {e}")
+            print(f"[FAIL] {symbol} → Error: {e}")
 
     return instrument_keys, stock_symbols
 
 def test_multi_stock_threading():
     """Test multi-stock threading with live data"""
-    print("🧪 MULTI-STOCK THREADING TEST")
+    print("[TEST_TUBE] MULTI-STOCK THREADING TEST")
     print("=" * 50)
     print(f"Time: {datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S %Z')}")
     print()
 
     # Load stocks
     symbols = load_test_stocks()
-    print(f"📋 Testing threading with {len(symbols)} stocks: {symbols}")
+    print(f"[CLIPBOARD] Testing threading with {len(symbols)} stocks: {symbols}")
     print()
 
     # Get Upstox fetcher
@@ -75,11 +75,11 @@ def test_multi_stock_threading():
     # Get instrument keys
     instrument_keys, stock_symbols = get_instrument_keys(fetcher, symbols)
     if not instrument_keys:
-        print("❌ No instrument keys found")
+        print("[FAIL] No instrument keys found")
         return 1
 
     print()
-    print("🔌 Starting WebSocket connection for multi-stock monitoring...")
+    print("[PLUG] Starting WebSocket connection for multi-stock monitoring...")
     print("You should see interleaved price updates from all stocks:")
     print("-" * 60)
 
@@ -93,7 +93,7 @@ def test_multi_stock_threading():
         tick_counts[symbol] += 1
         # Only print every 10th tick to avoid spam
         if tick_counts[symbol] % 10 == 0:
-            print(f"📊 {symbol}: {tick_counts[symbol]} ticks, Last: ₹{price:.2f}")
+            print(f"[CHART] {symbol}: {tick_counts[symbol]} ticks, Last: ₹{price:.2f}")
 
     streamer.tick_handler = tick_handler
 
@@ -106,7 +106,7 @@ def test_multi_stock_threading():
 
         # Summary
         print("-" * 60)
-        print("📊 THREADING TEST SUMMARY:")
+        print("[CHART] THREADING TEST SUMMARY:")
         total_ticks = sum(tick_counts.values())
         print(f"Total ticks received: {total_ticks}")
         print(f"Stocks monitored: {len(symbols)}")
@@ -116,14 +116,14 @@ def test_multi_stock_threading():
             print(f"  {symbol}: {count} ticks")
 
         if total_ticks > len(symbols) * 5:  # At least 5 ticks per stock
-            print("✅ Threading working perfectly!")
+            print("[OK] Threading working perfectly!")
             return 0
         else:
-            print("⚠️ Limited ticks - check connection")
+            print("[WARN] Limited ticks - check connection")
             return 1
 
     except KeyboardInterrupt:
-        print("\n🛑 Stopped by user")
+        print("\n[STOP] Stopped by user")
         return 0
 
 if __name__ == "__main__":

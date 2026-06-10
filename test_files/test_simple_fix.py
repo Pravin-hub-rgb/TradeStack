@@ -97,7 +97,7 @@ def test_cross_contamination_fix():
             print("   Each stock processes only its own price")
             return True
         else:
-            print("\n   ✗ CROSS-CONTAMINATION BUG STILL EXISTS!")
+            print("\n   [FAIL] CROSS-CONTAMINATION BUG STILL EXISTS!")
             return False
             
     except Exception as e:
@@ -119,13 +119,13 @@ def main():
     print("=" * 40)
     
     if result:
-        print("🎉 TEST PASSED! The cross-contamination bug has been fixed.")
+        print("[DONE] TEST PASSED! The cross-contamination bug has been fixed.")
         print("\nKey improvements:")
         print("- Each stock processes only its own price")
         print("- Modular architecture eliminates cross-contamination")
         print("- State machine provides explicit state management")
     else:
-        print("❌ TEST FAILED! The cross-contamination bug still exists.")
+        print("[FAIL] TEST FAILED! The cross-contamination bug still exists.")
     
     return result
 

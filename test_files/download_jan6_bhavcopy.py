@@ -48,7 +48,7 @@ def download_jan6_bhavcopy():
         with zipfile.ZipFile(io.BytesIO(zip_response.content)) as zf:
             csv_files = [f for f in zf.namelist() if f.endswith('.csv')]
             if not csv_files:
-                print("❌ No CSV file found in ZIP")
+                print("[FAIL] No CSV file found in ZIP")
                 return None
 
             with zf.open(csv_files[0]) as f:
@@ -61,7 +61,7 @@ def download_jan6_bhavcopy():
         if 'SctySrs' in df.columns:
             df = df[df['SctySrs'] == 'EQ']  # Filter equities only
         else:
-            print("⚠️  Warning: SctySrs column not found, processing all data")
+            print("[WARN]  Warning: SctySrs column not found, processing all data")
 
         # Standardize columns (UDiFF format)
         column_mapping = {
@@ -82,7 +82,7 @@ def download_jan6_bhavcopy():
         df['volume'] = df['volume'].astype(int)
         df[['open', 'high', 'low', 'close']] = df[['open', 'high', 'low', 'close']].astype(float)
 
-        print(f"✅ SUCCESS: Processed {len(df)} stocks")
+        print(f"[OK] SUCCESS: Processed {len(df)} stocks")
 
         # Show sample data
         if 'BLSE' in df['symbol'].values:
@@ -96,12 +96,12 @@ def download_jan6_bhavcopy():
         return df
 
     except Exception as e:
-        print(f"❌ ERROR: {e}")
+        print(f"[FAIL] ERROR: {e}")
         return None
 
 def update_cache_with_data(df):
     """Update cache with downloaded data"""
-    print("\n💾 UPDATING CACHE...")
+    print("\n[FLOPPY] UPDATING CACHE...")
     print("=" * 30)
 
     from src.utils.cache_manager import cache_manager
@@ -130,15 +130,15 @@ def update_cache_with_data(df):
             updated_count += 1
 
             if updated_count <= 3:
-                print(f"  ✅ Updated {symbol}")
+                print(f"  [OK] Updated {symbol}")
 
         except Exception as e:
-            print(f"  ❌ Error updating {symbol}: {e}")
+            print(f"  [FAIL] Error updating {symbol}: {e}")
 
-    print(f"\n📊 Updated {updated_count} stocks in cache")
+    print(f"\n[CHART] Updated {updated_count} stocks in cache")
 
 if __name__ == "__main__":
-    print("📰 JAN 6, 2026 BHAVCOPY DOWNLOADER")
+    print("[NEWS] JAN 6, 2026 BHAVCOPY DOWNLOADER")
     print("=" * 45)
 
     # Download data
@@ -148,10 +148,10 @@ if __name__ == "__main__":
         # Update cache
         update_cache_with_data(df)
 
-        print("\n🎉 COMPLETE!")
+        print("\n[DONE] COMPLETE!")
         print("Jan 6 data added to all cached stocks")
         print("Ready for Jan 7 trading analysis")
     else:
-        print("\n❌ FAILED")
+        print("\n[FAIL] FAILED")
         print("Could not download Jan 6 data")
         print("Try again after 6-7 PM IST if before market close")

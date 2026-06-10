@@ -13,7 +13,7 @@ sys.path.insert(0, 'src')
 def test_vah_validation_logging():
     """Test that VAH validation logging works correctly"""
     
-    print("🧪 TESTING VAH VALIDATION LOGGING")
+    print("[TEST_TUBE] TESTING VAH VALIDATION LOGGING")
     print("=" * 50)
     print("This tests the VAH validation logging that was just added")
     print()
@@ -21,9 +21,9 @@ def test_vah_validation_logging():
     # Import the modules
     try:
         from src.trading.live_trading.continuation_stock_monitor import StockState
-        print("✅ Successfully imported StockState")
+        print("[OK] Successfully imported StockState")
     except ImportError as e:
-        print(f"❌ Failed to import modules: {e}")
+        print(f"[FAIL] Failed to import modules: {e}")
         return
     
     # Create test stocks with different scenarios
@@ -58,12 +58,12 @@ def test_vah_validation_logging():
         }
     ]
     
-    print("📊 TEST CASES:")
+    print("[CHART] TEST CASES:")
     for i, case in enumerate(test_cases, 1):
         print(f"   {i}. {case['symbol']}: Open {case['open_price']:.2f} vs VAH {case['vah_price']:.2f}")
     
     print()
-    print("🚀 RUNNING VAH VALIDATION LOGGING TEST")
+    print("[ROCKET] RUNNING VAH VALIDATION LOGGING TEST")
     print("-" * 50)
     
     # Test each case
@@ -86,12 +86,12 @@ def test_vah_validation_logging():
         
         # Check result
         if stock.is_active == case['expected_active']:
-            print(f"   ✅ {case['symbol']}: {case['expected_result']}")
+            print(f"   [OK] {case['symbol']}: {case['expected_result']}")
         else:
-            print(f"   ❌ {case['symbol']}: Expected {case['expected_result']}, got {'validated' if stock.is_active else 'failed'}")
+            print(f"   [FAIL] {case['symbol']}: Expected {case['expected_result']}, got {'validated' if stock.is_active else 'failed'}")
     
     print()
-    print("🎯 EXPECTED LOG OUTPUT:")
+    print("[TARGET] EXPECTED LOG OUTPUT:")
     print("When you run the continuation bot, you should see:")
     print("   VAH validated for ROSSTECH")
     print("   VAH validated for SHANTIGOLD")
@@ -99,7 +99,7 @@ def test_vah_validation_logging():
     print("   VAH validation failed for ANGELONE (Opening price 2675.00 < VAH 2745.08)")
     
     print()
-    print("✅ VAH VALIDATION LOGGING TEST COMPLETE")
+    print("[OK] VAH VALIDATION LOGGING TEST COMPLETE")
     print("The continuation bot will now show explicit VAH validation results!")
 
 if __name__ == "__main__":

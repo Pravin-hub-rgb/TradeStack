@@ -12,7 +12,7 @@ from typing import Dict, List, Optional
 
 def test_svro_logic():
     """Test SVRO logic with minimal dependencies - completely self-contained"""
-    print("🧪 Standalone SVRO Test")
+    print("[TEST_TUBE] Standalone SVRO Test")
     print("=" * 50)
     print("Testing: Core SVRO functionality without external dependencies")
     print("Pattern: Self-contained test with defined constants")
@@ -23,7 +23,7 @@ def test_svro_logic():
     LOW_VIOLATION_PCT = 0.01    # 1% threshold for low violation
     ENTRY_SL_PCT = 0.04         # 4% stop loss below entry high
     
-    print("✅ Using defined SVRO constants:")
+    print("[OK] Using defined SVRO constants:")
     print(f"   FLAT_GAP_THRESHOLD: {FLAT_GAP_THRESHOLD}")
     print(f"   LOW_VIOLATION_PCT: {LOW_VIOLATION_PCT}")
     print(f"   ENTRY_SL_PCT: {ENTRY_SL_PCT}")
@@ -214,7 +214,7 @@ def test_svro_logic():
 
     results = []
     
-    print("🧪 Running SVRO Test Scenarios")
+    print("[TEST_TUBE] Running SVRO Test Scenarios")
     print("-" * 50)
 
     for scenario in test_scenarios:
@@ -256,7 +256,7 @@ def test_svro_logic():
         if qualified:
             stock.prepare_entry()
             entry_ready = stock.entry_ready
-            print(f"   Entry Ready: {'✅' if entry_ready else '❌'}")
+            print(f"   Entry Ready: {'[OK]' if entry_ready else '[FAIL]'}")
             if entry_ready:
                 print(f"   Entry High: {stock.entry_high:.2f}")
                 print(f"   Entry SL: {stock.entry_sl:.2f}")
@@ -274,7 +274,7 @@ def test_svro_logic():
             'rejection_reason': stock.rejection_reason
         })
 
-        status = "✅ PASS" if passed else "❌ FAIL"
+        status = "[OK] PASS" if passed else "[FAIL] FAIL"
         print(f"   {status} Expected: {'PASS' if scenario['expected_pass'] else 'FAIL'}, Got: {'PASS' if qualified else 'FAIL'}")
         if not passed:
             print(f"      Reason: {stock.rejection_reason}")
@@ -295,56 +295,56 @@ def test_svro_logic():
 
     print("Detailed Results:")
     for result in results:
-        status = "✅ PASS" if result['passed'] else "❌ FAIL"
+        status = "[OK] PASS" if result['passed'] else "[FAIL] FAIL"
         print(f"  {status} {result['scenario']}")
         print(f"     Expected: {'PASS' if result['expected_pass'] else 'FAIL'}")
         print(f"     Actual: {'PASS' if result['actual_pass'] else 'FAIL'}")
-        print(f"     Gap: {'✅' if result['gap_valid'] else '❌'}")
-        print(f"     Low Violation: {'✅' if result['low_valid'] else '❌'}")
-        print(f"     Volume: {'✅' if result['volume_valid'] else '❌'}")
+        print(f"     Gap: {'[OK]' if result['gap_valid'] else '[FAIL]'}")
+        print(f"     Low Violation: {'[OK]' if result['low_valid'] else '[FAIL]'}")
+        print(f"     Volume: {'[OK]' if result['volume_valid'] else '[FAIL]'}")
         if result['rejection_reason']:
             print(f"     Rejection: {result['rejection_reason']}")
         print()
 
     # Critical validation
-    print("🎯 CRITICAL SVRO VALIDATION:")
+    print("[TARGET] CRITICAL SVRO VALIDATION:")
     
     # Volume threshold test
     volume_test = next((r for r in results if 'Volume Fail' in r['scenario']), None)
     if volume_test and volume_test['passed']:
-        print("  ✅ Volume threshold (7.5%) validation working")
+        print("  [OK] Volume threshold (7.5%) validation working")
     else:
-        print("  ❌ Volume threshold (7.5%) validation failed")
+        print("  [FAIL] Volume threshold (7.5%) validation failed")
 
     # Gap threshold test
     gap_test = next((r for r in results if 'Gap Boundary' in r['scenario']), None)
     if gap_test and gap_test['passed']:
-        print("  ✅ Gap threshold (0.3%) validation working")
+        print("  [OK] Gap threshold (0.3%) validation working")
     else:
-        print("  ❌ Gap threshold (0.3%) validation failed")
+        print("  [FAIL] Gap threshold (0.3%) validation failed")
 
     # Low violation test
     low_test = next((r for r in results if 'Low Violation' in r['scenario']), None)
     if low_test and low_test['passed']:
-        print("  ✅ Low violation detection working")
+        print("  [OK] Low violation detection working")
     else:
-        print("  ❌ Low violation detection failed")
+        print("  [FAIL] Low violation detection failed")
 
     # Gap upper limit test
     high_gap_test = next((r for r in results if 'Gap Too High' in r['scenario']), None)
     if high_gap_test and high_gap_test['passed']:
-        print("  ✅ Gap upper limit (5%) validation working")
+        print("  [OK] Gap upper limit (5%) validation working")
     else:
-        print("  ❌ Gap upper limit (5%) validation failed")
+        print("  [FAIL] Gap upper limit (5%) validation failed")
 
     success = passed_count == total_count
     print("\n" + "=" * 50)
     if success:
-        print("🎉 SVRO TEST PASSED!")
+        print("[DONE] SVRO TEST PASSED!")
         print("Core SVRO functionality is working correctly.")
         print("Ready to test with real market data.")
     else:
-        print("❌ SVRO TEST FAILED!")
+        print("[FAIL] SVRO TEST FAILED!")
         print("Core SVRO functionality has issues.")
         print("Review and fix before proceeding.")
 
@@ -353,7 +353,7 @@ def test_svro_logic():
 
 def main():
     """Main test runner"""
-    print("🚀 Standalone SVRO Test Starting...")
+    print("[ROCKET] Standalone SVRO Test Starting...")
     print("Pattern: Self-contained test with defined constants")
     print("Goal: Test SVRO logic without external dependencies")
     print()
@@ -362,11 +362,11 @@ def main():
     
     print("\n" + "=" * 50)
     if success:
-        print("🎉 STANDALONE SVRO TEST COMPLETED SUCCESSFULLY!")
+        print("[DONE] STANDALONE SVRO TEST COMPLETED SUCCESSFULLY!")
         print("The SVRO continuation system logic is working correctly.")
         print("All core validations (gap, volume, low violation) are functional.")
     else:
-        print("❌ STANDALONE SVRO TEST FAILED!")
+        print("[FAIL] STANDALONE SVRO TEST FAILED!")
         print("Issues detected in SVRO logic that need to be addressed.")
     
     return success

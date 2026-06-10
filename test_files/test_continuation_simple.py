@@ -46,9 +46,9 @@ def test_continuation_simple():
                 
                 if result:
                     qualified_stocks.append(result)
-                    logger.info(f"✅ {symbol} - ₹{result['price']:.2f}")
+                    logger.info(f"[OK] {symbol} - ₹{result['price']:.2f}")
                 else:
-                    logger.info(f"❌ {symbol} - Did not qualify")
+                    logger.info(f"[FAIL] {symbol} - Did not qualify")
                     
             except Exception as e:
                 logger.error(f"Error analyzing {symbol}: {e}")
@@ -63,7 +63,7 @@ def test_continuation_simple():
         else:
             logger.info("No stocks qualified the base filters")
             
-        logger.info("✅ Continuation scan test completed!")
+        logger.info("[OK] Continuation scan test completed!")
         
     except Exception as e:
         logger.error(f"Continuation scan test failed: {e}", exc_info=True)

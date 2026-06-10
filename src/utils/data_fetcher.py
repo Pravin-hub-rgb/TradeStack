@@ -382,15 +382,15 @@ class DataFetcher:
         """
         try:
             logger.info(f"Starting market data preparation for last {days_back} days")
-            logger.info("📡 Fetching NSE stocks list...")
+            logger.info("[SATELLITE] Fetching NSE stocks list...")
 
             # Get NSE stocks list
             nse_stocks = self.fetch_nse_stocks()
             if not nse_stocks:
-                logger.error("❌ Failed to fetch NSE stocks list")
+                logger.error("[FAIL] Failed to fetch NSE stocks list")
                 return {'error': 'Failed to fetch NSE stocks'}
 
-            logger.info(f"✅ Found {len(nse_stocks)} NSE stocks")
+            logger.info(f"[OK] Found {len(nse_stocks)} NSE stocks")
 
             # Limit number of stocks to process
             stocks_to_process = nse_stocks[:max_stocks]
@@ -421,16 +421,16 @@ class DataFetcher:
                     end_date = datetime.now().strftime('%Y-%m-%d')
                     start_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d')
 
-                    logger.info(f"📥 Downloading {days_back} days data for {symbol} ({start_date} to {end_date})")
+                    logger.info(f"[OUTBOX] Downloading {days_back} days data for {symbol} ({start_date} to {end_date})")
                     data = self.fetch_historical_data(symbol, start_date, end_date)
                     if data.empty:
-                        logger.warning(f"❌ No data received for {symbol}")
+                        logger.warning(f"[FAIL] No data received for {symbol}")
                         summary['errors'] += 1
                         continue
 
                     # Update cache
                     cache_manager.update_cache(symbol, data)
-                    logger.info(f"✅ Cached {len(data)} days data for {symbol}")
+                    logger.info(f"[OK] Cached {len(data)} days data for {symbol}")
                     summary['updated'] += 1
                     summary['total_days_added'] += len(data)
 

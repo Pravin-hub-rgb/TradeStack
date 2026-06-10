@@ -12,7 +12,7 @@ from src.utils.nse_fetcher import nse_bhavcopy_fetcher
 
 def get_stocks_needing_update():
     """Get list of cached stocks that don't have Jan 6 data"""
-    print("🔍 IDENTIFYING STOCKS NEEDING JAN 6 DATA...")
+    print("[SEARCH] IDENTIFYING STOCKS NEEDING JAN 6 DATA...")
     print("-" * 50)
 
     cache_dir = Path('data/cache')
@@ -42,7 +42,7 @@ def get_stocks_needing_update():
 
 def bulk_update_stocks(stock_list, bhavcopy_df, batch_size=50):
     """Update stocks in batches with proper error handling"""
-    print(f"\n🔄 UPDATING {len(stock_list)} STOCKS IN BATCHES OF {batch_size}")
+    print(f"\n[REFRESH] UPDATING {len(stock_list)} STOCKS IN BATCHES OF {batch_size}")
     print("=" * 60)
 
     total_updated = 0
@@ -53,7 +53,7 @@ def bulk_update_stocks(stock_list, bhavcopy_df, batch_size=50):
         batch_num = (i // batch_size) + 1
         total_batches = (len(stock_list) + batch_size - 1) // batch_size
 
-        print(f"\n📦 Batch {batch_num}/{total_batches} ({len(batch)} stocks)")
+        print(f"\n[PACKAGE] Batch {batch_num}/{total_batches} ({len(batch)} stocks)")
 
         batch_updated = 0
         batch_failed = 0
@@ -64,7 +64,7 @@ def bulk_update_stocks(stock_list, bhavcopy_df, batch_size=50):
                 stock_data = bhavcopy_df[bhavcopy_df['symbol'] == symbol]
 
                 if stock_data.empty:
-                    print(f"  ⚠️  {symbol}: Not found in bhavcopy data")
+                    print(f"  [WARN]  {symbol}: Not found in bhavcopy data")
                     batch_failed += 1
                     continue
 
@@ -91,22 +91,22 @@ def bulk_update_stocks(stock_list, bhavcopy_df, batch_size=50):
                 total_updated += 1
 
             except Exception as e:
-                print(f"  ❌ {symbol}: {str(e)[:50]}...")
+                print(f"  [FAIL] {symbol}: {str(e)[:50]}...")
                 batch_failed += 1
                 total_failed += 1
 
-        print(f"  📊 Batch complete: {batch_updated} updated, {batch_failed} failed")
+        print(f"  [CHART] Batch complete: {batch_updated} updated, {batch_failed} failed")
 
         # Progress summary every 10 batches
         if batch_num % 10 == 0:
             progress = (i + len(batch)) / len(stock_list) * 100
-            print(f"  📈 Overall progress: {progress:.1f}% ({total_updated}/{len(stock_list)})")
+            print(f"  [TREND_UP] Overall progress: {progress:.1f}% ({total_updated}/{len(stock_list)})")
 
     return total_updated, total_failed
 
 def main():
     """Main bulk update process"""
-    print("🚀 BULK JAN 6 DATA UPDATE FOR ALL CACHED STOCKS")
+    print("[ROCKET] BULK JAN 6 DATA UPDATE FOR ALL CACHED STOCKS")
     print("=" * 60)
 
     start_time = datetime.now()
@@ -115,15 +115,15 @@ def main():
     needs_update, already_have = get_stocks_needing_update()
 
     if not needs_update:
-        print("\n🎉 ALL STOCKS ALREADY HAVE JAN 6 DATA!")
+        print("\n[DONE] ALL STOCKS ALREADY HAVE JAN 6 DATA!")
         return
 
     # Step 2: Download fresh bhavcopy data
-    print("\n📥 DOWNLOADING FRESH JAN 6 BHAVCOPY DATA...")
+    print("\n[OUTBOX] DOWNLOADING FRESH JAN 6 BHAVCOPY DATA...")
     bhavcopy_df = nse_bhavcopy_fetcher.download_bhavcopy(date(2026, 1, 6))
 
     if bhavcopy_df is None or bhavcopy_df.empty:
-        print("❌ FAILED TO DOWNLOAD BHAVCOPY DATA")
+        print("[FAIL] FAILED TO DOWNLOAD BHAVCOPY DATA")
         print("Please run again when NSE data is available")
         return
 
@@ -133,7 +133,7 @@ def main():
     updated, failed = bulk_update_stocks(needs_update, bhavcopy_df, batch_size=100)
 
     # Step 4: Final verification
-    print("\n🔍 FINAL VERIFICATION...")
+    print("\n[SEARCH] FINAL VERIFICATION...")
     _, final_already_have = get_stocks_needing_update()
 
     end_time = datetime.now()
@@ -141,17 +141,17 @@ def main():
 
     print("\n" + "=" * 60)
     print("FINAL RESULTS:")
-    print(f"⏱️  Total time: {duration}")
-    print(f"📊 Stocks already had data: {len(already_have)}")
-    print(f"🔄 Stocks updated: {updated}")
-    print(f"❌ Update failures: {failed}")
+    print(f"[STOPWATCH]  Total time: {duration}")
+    print(f"[CHART] Stocks already had data: {len(already_have)}")
+    print(f"[REFRESH] Stocks updated: {updated}")
+    print(f"[FAIL] Update failures: {failed}")
     print(f" Final total with Jan 6: {len(final_already_have)}")
-    print(f"📈 Success rate: {(updated/(updated+failed)*100):.1f}%" if (updated+failed) > 0 else "N/A")
+    print(f"[TREND_UP] Success rate: {(updated/(updated+failed)*100):.1f}%" if (updated+failed) > 0 else "N/A")
 
     if len(final_already_have) == len(already_have) + updated:
-        print("\n🎉 SUCCESS! All targeted stocks now have Jan 6 data!")
+        print("\n[DONE] SUCCESS! All targeted stocks now have Jan 6 data!")
     else:
-        print(f"\n⚠️  Discrepancy detected. Expected {len(already_have) + updated}, got {len(final_already_have)}")
+        print(f"\n[WARN]  Discrepancy detected. Expected {len(already_have) + updated}, got {len(final_already_have)}")
 
 if __name__ == "__main__":
     main()

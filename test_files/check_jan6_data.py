@@ -7,7 +7,7 @@ from src.utils.cache_manager import cache_manager
 import pandas as pd
 
 def main():
-    print("📊 OHLC VALUES FOR JAN 6, 2026 FROM CACHE")
+    print("[CHART] OHLC VALUES FOR JAN 6, 2026 FROM CACHE")
     print("=" * 50)
 
     # Check 5 stocks that were updated with Jan 6 data

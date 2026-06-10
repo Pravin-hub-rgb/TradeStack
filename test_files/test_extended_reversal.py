@@ -12,7 +12,7 @@ from src.scanner.reversal_analyzer import ReversalAnalyzer
 
 def test_extended_pattern_rules():
     """Test the new pattern rules for periods 3-15"""
-    print("🧪 Testing Extended Reversal Pattern Rules (3-15 days)")
+    print("[TEST_TUBE] Testing Extended Reversal Pattern Rules (3-15 days)")
     print("=" * 60)
 
     analyzer = ReversalAnalyzer(None, {'min_decline_percent': 0.13})
@@ -34,14 +34,14 @@ def test_extended_pattern_rules():
             green_days = period - red_days
 
             result = analyzer._check_pattern_logic(red_days, green_days, period, period_data)
-            status = "✅ PASS" if result else "❌ FAIL"
+            status = "[OK] PASS" if result else "[FAIL] FAIL"
             print(f"Period {period}: {red_days} red, {green_days} green → {status}")
 
     print()
 
 def test_green_day_cap():
     """Test that green_days <= 3 for periods 8-15"""
-    print("🧪 Testing Green Day Cap (≤3 for periods 8-15)")
+    print("[TEST_TUBE] Testing Green Day Cap (≤3 for periods 8-15)")
     print("=" * 60)
 
     analyzer = ReversalAnalyzer(None, {'min_decline_percent': 0.13})
@@ -70,7 +70,7 @@ def test_green_day_cap():
 
         period_data = data
         result = analyzer._check_pattern_logic(red_days, green_days, period, period_data)
-        status = "✅ PASS" if result else "❌ FAIL"
+        status = "[OK] PASS" if result else "[FAIL] FAIL"
         expected = "PASS" if green_days <= 3 else "FAIL"
         print(f"Period {period}: {red_days} red, {green_days} green → {status} (expected {expected})")
 
@@ -78,7 +78,7 @@ def test_green_day_cap():
 
 def test_first_day_must_be_red():
     """Test that first day of period must be red"""
-    print("🧪 Testing First Day Must Be Red Rule")
+    print("[TEST_TUBE] Testing First Day Must Be Red Rule")
     print("=" * 60)
 
     analyzer = ReversalAnalyzer(None, {'min_decline_percent': 0.13})
@@ -110,7 +110,7 @@ def test_first_day_must_be_red():
         green_days = period - red_days
 
         result = analyzer._check_pattern_logic(red_days, green_days, period, period_data)
-        status = "✅ PASS" if result else "❌ FAIL"
+        status = "[OK] PASS" if result else "[FAIL] FAIL"
         expected = "PASS" if should_pass else "FAIL"
         print(f"{desc}: {red_days} red, {green_days} green → {status} (expected {expected})")
 
@@ -120,4 +120,4 @@ if __name__ == "__main__":
     test_extended_pattern_rules()
     test_green_day_cap()
     test_first_day_must_be_red()
-    print("🎉 All extended reversal tests completed!")
+    print("[DONE] All extended reversal tests completed!")

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 def test_different_gap_percentages():
     """Test Strong Start with different gap percentages"""
-    logger.info("🧪 Testing Configurable Strong Start Gap Percentage")
+    logger.info("[TEST_TUBE] Testing Configurable Strong Start Gap Percentage")
     logger.info(f"Current time: {datetime.now(IST).strftime('%H:%M:%S')}")
     
     # Test different gap percentages
@@ -52,10 +52,10 @@ def test_different_gap_percentages():
         open_equals_low = abs(required_open - test_stock['current_low']) / required_open <= 0.01
         
         if open_equals_low:
-            logger.info(f"✅ Strong Start conditions met with {test_case['name']} gap!")
+            logger.info(f"[OK] Strong Start conditions met with {test_case['name']} gap!")
             logger.info(f"   Gap: {test_case['gap_pct']*100:.1f}%, Open≈Low: ₹{test_stock['current_low']:.2f}")
         else:
-            logger.info(f"❌ Strong Start conditions NOT met with {test_case['name']} gap")
+            logger.info(f"[FAIL] Strong Start conditions NOT met with {test_case['name']} gap")
             logger.info(f"   Gap: {test_case['gap_pct']*100:.1f}%, Open≈Low check failed")
 
 def show_config_usage():
@@ -84,7 +84,7 @@ def main():
     test_different_gap_percentages()
     show_config_usage()
     
-    logger.info("🎉 Configuration test completed!")
+    logger.info("[DONE] Configuration test completed!")
     logger.info("You can now easily adjust the Strong Start gap percentage in config.py")
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ from src.scanner.scanner import scanner
 
 def update_scanner_threshold():
     """Update the scanner threshold to 6%"""
-    print("🔧 UPDATING SCANNER THRESHOLD")
+    print("[WRENCH] UPDATING SCANNER THRESHOLD")
     print("=" * 60)
     
     print(f"\n1. CURRENT CONFIGURATION:")
@@ -25,7 +25,7 @@ def update_scanner_threshold():
     print(f"\n3. NEW CONFIGURATION:")
     print(f"   Near MA Threshold: {scanner.continuation_params.get('near_ma_threshold', 0)*100:.1f}%")
     
-    print(f"\n✅ Scanner threshold updated to 6%")
+    print(f"\n[OK] Scanner threshold updated to 6%")
     
     return scanner.continuation_params.get('near_ma_threshold', 0)
 
@@ -38,7 +38,7 @@ def main():
     print(f"{'='*60}")
     print(f"New Near MA Threshold: {threshold*100:.1f}%")
     
-    print(f"\n📝 Note: This change will apply to future scanner runs.")
+    print(f"\n[NOTE] Note: This change will apply to future scanner runs.")
     print(f"   The scanner should now use 6% threshold as expected.")
 
 if __name__ == "__main__":

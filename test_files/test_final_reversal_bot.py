@@ -33,10 +33,10 @@ def test_all_fixes():
         assert stock.is_subscribed == True, "Expected is_subscribed to be True"
         assert stock.is_active == True, "Expected is_active to be True"
         
-        print("✅ State machine initialization working correctly")
+        print("[OK] State machine initialization working correctly")
         
     except Exception as e:
-        print(f"❌ State machine initialization failed: {e}")
+        print(f"[FAIL] State machine initialization failed: {e}")
         return False
     
     # Test 2: State Transitions
@@ -46,26 +46,26 @@ def test_all_fixes():
         stock.open_price = 95.0  # Gap down
         stock.validate_gap()
         assert stock.state.value == "gap_validated", f"Expected 'gap_validated', got {stock.state.value}"
-        print("✅ Gap validation state transition working")
+        print("[OK] Gap validation state transition working")
         
         # Test low violation check transition
         stock.daily_low = 94.1  # No violation
         stock.check_low_violation()
         assert stock.state.value == "qualified", f"Expected 'qualified', got {stock.state.value}"
-        print("✅ Low violation check state transition working")
+        print("[OK] Low violation check state transition working")
         
         # Test prepare entry transition
         stock.prepare_entry()
         assert stock.state.value == "selected", f"Expected 'selected', got {stock.state.value}"
-        print("✅ Prepare entry state transition working")
+        print("[OK] Prepare entry state transition working")
         
         # Test entry transition
         stock.enter_position(96.0, datetime.now())
         assert stock.state.value == "entered", f"Expected 'entered', got {stock.state.value}"
-        print("✅ Entry state transition working")
+        print("[OK] Entry state transition working")
         
     except Exception as e:
-        print(f"❌ State transitions failed: {e}")
+        print(f"[FAIL] State transitions failed: {e}")
         return False
     
     # Test 3: Entry Logic State Validation
@@ -95,10 +95,10 @@ def test_all_fixes():
         assert stock.entered == True, "Expected stock to be entered after tick processing"
         assert stock.entry_price == test_price, f"Expected entry_price {test_price}, got {stock.entry_price}"
         
-        print("✅ Entry logic state validation working correctly")
+        print("[OK] Entry logic state validation working correctly")
         
     except Exception as e:
-        print(f"❌ Entry logic state validation failed: {e}")
+        print(f"[FAIL] Entry logic state validation failed: {e}")
         return False
     
     # Test 4: Enhanced Debug Logging
@@ -114,10 +114,10 @@ def test_all_fixes():
         assert "DEBUG: Add state validation logging" in source, "Debug logging not found in _handle_entry_monitoring"
         assert "logger.info(f\"[{self.stock.symbol}] Entry monitoring - Current state:" in source, "State validation logging not found"
         
-        print("✅ Enhanced debug logging is present")
+        print("[OK] Enhanced debug logging is present")
         
     except Exception as e:
-        print(f"❌ Enhanced debug logging test failed: {e}")
+        print(f"[FAIL] Enhanced debug logging test failed: {e}")
         return False
     
     # Test 5: Improved Logging in Main Bot
@@ -131,21 +131,21 @@ def test_all_fixes():
         assert "STRONG START CANDIDATES READY FOR TRADING" in content, "Strong Start logging not found"
         assert "already ready since market open" in content, "Market open timing logging not found"
         
-        print("✅ Improved logging is present in main bot")
+        print("[OK] Improved logging is present in main bot")
         
     except Exception as e:
-        print(f"❌ Improved logging test failed: {e}")
+        print(f"[FAIL] Improved logging test failed: {e}")
         return False
     
     print("\n=== ALL TESTS PASSED ===")
-    print("✅ The reversal bot has been successfully fixed and verified!")
+    print("[OK] The reversal bot has been successfully fixed and verified!")
     print()
     print("Summary of fixes implemented:")
-    print("1. ✅ State machine initialization fixed")
-    print("2. ✅ State transitions working correctly")
-    print("3. ✅ Entry logic state validation implemented")
-    print("4. ✅ Enhanced debug logging added")
-    print("5. ✅ Improved logging for OOPS vs Strong Start timing")
+    print("1. [OK] State machine initialization fixed")
+    print("2. [OK] State transitions working correctly")
+    print("3. [OK] Entry logic state validation implemented")
+    print("4. [OK] Enhanced debug logging added")
+    print("5. [OK] Improved logging for OOPS vs Strong Start timing")
     print()
     print("The reversal bot should now work correctly:")
     print("- OOPS candidates ready at market open (9:15 AM)")
@@ -159,8 +159,8 @@ def test_all_fixes():
 if __name__ == "__main__":
     success = test_all_fixes()
     if success:
-        print("\n🎉 REVERSAL BOT FIXES VERIFIED - READY FOR LIVE TRADING!")
+        print("\n[DONE] REVERSAL BOT FIXES VERIFIED - READY FOR LIVE TRADING!")
     else:
-        print("\n❌ Some fixes need attention - please review the errors above")
+        print("\n[FAIL] Some fixes need attention - please review the errors above")
     
     sys.exit(0 if success else 1)

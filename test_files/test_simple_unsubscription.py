@@ -113,10 +113,10 @@ def test_simple_unsubscription():
         print(f"Ticks after unsubscription: {len(ticks_after_unsub)}")
         
         if len(ticks_after_unsub) == 0:
-            print("✅ SUCCESS: No ticks received after unsubscription!")
+            print("[OK] SUCCESS: No ticks received after unsubscription!")
             print("   The Upstox unsubscribe method is working correctly.")
         else:
-            print("❌ FAILURE: Still receiving ticks after unsubscription!")
+            print("[FAIL] FAILURE: Still receiving ticks after unsubscription!")
             print("   There may be a delay in Upstox stopping the data flow.")
             print("   Or the unsubscription call didn't work properly.")
             print()
@@ -144,8 +144,8 @@ def test_simple_unsubscription():
 if __name__ == "__main__":
     success = test_simple_unsubscription()
     if success:
-        print("\n🎉 SIMPLE UNSUBSCRIPTION TEST PASSED!")
+        print("\n[DONE] SIMPLE UNSUBSCRIPTION TEST PASSED!")
         print("The Upstox unsubscribe method is working correctly.")
     else:
-        print("\n❌ SIMPLE UNSUBSCRIPTION TEST FAILED!")
+        print("\n[FAIL] SIMPLE UNSUBSCRIPTION TEST FAILED!")
         print("There may be an issue with the unsubscription behavior.")

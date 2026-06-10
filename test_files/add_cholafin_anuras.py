@@ -8,7 +8,7 @@ from datetime import date, timedelta
 
 def add_cholafin_anuras():
     """Add CHOLAFIN and ANURAS to the cache"""
-    print("📈 ADDING CHOLAFIN & ANURAS TO CACHE")
+    print("[TREND_UP] ADDING CHOLAFIN & ANURAS TO CACHE")
     print("=" * 50)
 
     from src.utils.cache_manager import cache_manager
@@ -21,11 +21,11 @@ def add_cholafin_anuras():
     end_date = date.today()
     start_date = end_date - timedelta(days=150)
 
-    print(f"📅 Date range: {start_date} to {end_date}")
-    print(f"📊 Stocks to add: {', '.join(stocks)}")
+    print(f"[CALENDAR] Date range: {start_date} to {end_date}")
+    print(f"[CHART] Stocks to add: {', '.join(stocks)}")
 
     for symbol in stocks:
-        print(f"\n🔄 Adding {symbol} to cache...")
+        print(f"\n[REFRESH] Adding {symbol} to cache...")
         try:
             # Fetch historical data using Upstox (with fixed instrument keys)
             df = upstox_fetcher.fetch_historical_data(symbol, start_date, end_date)
@@ -33,14 +33,14 @@ def add_cholafin_anuras():
             if not df.empty:
                 # Update cache with the fetched data
                 cache_manager.update_cache(symbol, df)
-                print("✅ Successfully added to cache")
-                print(f"   📊 Data points: {len(df)} days")
-                print(f"   📅 Date range: {df.index.min()} to {df.index.max()}")
-                print(f"   💰 Latest close: ₹{df.iloc[-1]['close']:.2f}")
+                print("[OK] Successfully added to cache")
+                print(f"   [CHART] Data points: {len(df)} days")
+                print(f"   [CALENDAR] Date range: {df.index.min()} to {df.index.max()}")
+                print(f"   [MONEY] Latest close: ₹{df.iloc[-1]['close']:.2f}")
             else:
-                print("❌ Failed to fetch data from Upstox")
+                print("[FAIL] Failed to fetch data from Upstox")
         except Exception as e:
-            print(f"❌ Error adding {symbol}: {e}")
+            print(f"[FAIL] Error adding {symbol}: {e}")
 
     print("\n" + "=" * 50)
     print("SUMMARY:")

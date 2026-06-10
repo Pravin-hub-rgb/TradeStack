@@ -14,7 +14,7 @@ from src.scanner.scanner import scanner
 
 def check_scanner_config():
     """Check the actual scanner configuration"""
-    print("🔍 SCANNER CONFIGURATION CHECK")
+    print("[SEARCH] SCANNER CONFIGURATION CHECK")
     print("=" * 60)
     
     print(f"\n1. CONTINUATION SCANNER PARAMETERS:")
@@ -54,13 +54,13 @@ def main():
     print(f"Current Near MA Threshold: {near_ma_threshold*100:.1f}%")
     
     if near_ma_threshold == 0.05:
-        print("⚠️  Scanner is using 5% threshold (default)")
+        print("[WARN]  Scanner is using 5% threshold (default)")
         print("   But you mentioned using 6% threshold")
         print("   This might explain the discrepancy!")
     elif near_ma_threshold == 0.06:
-        print("✅ Scanner is using 6% threshold as expected")
+        print("[OK] Scanner is using 6% threshold as expected")
     else:
-        print(f"❓ Scanner is using {near_ma_threshold*100:.1f}% threshold")
+        print(f"[?] Scanner is using {near_ma_threshold*100:.1f}% threshold")
 
 if __name__ == "__main__":
     main()

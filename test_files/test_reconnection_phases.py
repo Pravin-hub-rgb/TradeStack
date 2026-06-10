@@ -46,14 +46,14 @@ def test_reconnection_phases():
                         "symbol": stock["symbol"],
                         "instrument_key": instrument_key
                     })
-                    print(f"✅ {stock['symbol']}: {instrument_key}")
+                    print(f"[OK] {stock['symbol']}: {instrument_key}")
                 else:
-                    print(f"❌ Could not get instrument key for {stock['symbol']}")
+                    print(f"[FAIL] Could not get instrument key for {stock['symbol']}")
             except Exception as e:
-                print(f"❌ Error getting instrument key for {stock['symbol']}: {e}")
+                print(f"[FAIL] Error getting instrument key for {stock['symbol']}: {e}")
         
         if len(valid_stocks) < 2:
-            print("❌ Need at least 2 valid stocks for this test")
+            print("[FAIL] Need at least 2 valid stocks for this test")
             return False
         
         # Create SimpleStockStreamer
@@ -99,10 +99,10 @@ def test_reconnection_phases():
         print("\n=== PHASE 2: CONNECT AND SUBSCRIBE ===")
         print("Connecting to data stream...")
         if not data_streamer.connect():
-            print("❌ FAILED to connect to data stream")
+            print("[FAIL] FAILED to connect to data stream")
             return False
         
-        print("✅ Connected! Waiting for subscription...")
+        print("[OK] Connected! Waiting for subscription...")
         time.sleep(3)
         
         # Phase 1: Monitor all 3 stocks
@@ -136,10 +136,10 @@ def test_reconnection_phases():
         
         total_ticks = sum(len(ticks) for ticks in ticks_received.values())
         if total_ticks == 0:
-            print("❌ NO TICKS RECEIVED - Cannot continue test!")
+            print("[FAIL] NO TICKS RECEIVED - Cannot continue test!")
             return False
         
-        print("✅ SUCCESS: All stocks receiving ticks!")
+        print("[OK] SUCCESS: All stocks receiving ticks!")
         
         # Phase 2: Unsubscribe 1 stock (simulating gap/VAH rejection)
         print("\n=== PHASE 4: UNSUBSCRIBE 1 STOCK (Gap/VAH Rejection) ===")
@@ -151,9 +151,9 @@ def test_reconnection_phases():
         
         try:
             data_streamer.unsubscribe([instrument_to_unsub])
-            print(f"✅ Unsubscribed {symbol_to_unsub}")
+            print(f"[OK] Unsubscribed {symbol_to_unsub}")
         except Exception as e:
-            print(f"❌ Unsubscribe error: {e}")
+            print(f"[FAIL] Unsubscribe error: {e}")
             return False
         
         # Monitor for 15 seconds to catch any reconnection
@@ -201,12 +201,12 @@ def test_reconnection_phases():
                 unexpected_ticks.append(event)
         
         if unexpected_ticks:
-            print(f"❌ PROBLEM: {len(unexpected_ticks)} ticks from unsubscribed stock!")
+            print(f"[FAIL] PROBLEM: {len(unexpected_ticks)} ticks from unsubscribed stock!")
             for tick in unexpected_ticks[:3]:  # Show first 3
                 print(f"   {tick}")
         
         if reconnection_detected:
-            print("❌ PROBLEM: Reconnection detected after unsubscription!")
+            print("[FAIL] PROBLEM: Reconnection detected after unsubscription!")
         
         # Phase 3: Unsubscribe another stock (simulating low/volume rejection)
         print(f"\n=== PHASE 5: UNSUBSCRIBE ANOTHER STOCK (Low/Volume Rejection) ===")
@@ -219,9 +219,9 @@ def test_reconnection_phases():
             
             try:
                 data_streamer.unsubscribe([instrument_to_unsub2])
-                print(f"✅ Unsubscribed {symbol_to_unsub2}")
+                print(f"[OK] Unsubscribed {symbol_to_unsub2}")
             except Exception as e:
-                print(f"❌ Unsubscribe error: {e}")
+                print(f"[FAIL] Unsubscribe error: {e}")
                 return False
             
             # Monitor for 15 seconds
@@ -261,7 +261,7 @@ def test_reconnection_phases():
                 print(f"{symbol}: {count} ticks")
             
             if reconnection_detected2:
-                print("❌ PROBLEM: Reconnection detected after second unsubscription!")
+                print("[FAIL] PROBLEM: Reconnection detected after second unsubscription!")
         
         # Phase 4: Unsubscribe final stock (simulating entry completion)
         print(f"\n=== PHASE 6: UNSUBSCRIBE FINAL STOCK (Entry Completion) ===")
@@ -274,9 +274,9 @@ def test_reconnection_phases():
             
             try:
                 data_streamer.unsubscribe([final_instrument])
-                print(f"✅ Unsubscribed {final_symbol} (all stocks now unsubscribed)")
+                print(f"[OK] Unsubscribed {final_symbol} (all stocks now unsubscribed)")
             except Exception as e:
-                print(f"❌ Unsubscribe error: {e}")
+                print(f"[FAIL] Unsubscribe error: {e}")
                 return False
             
             # Monitor for 15 seconds - should see NO ticks
@@ -309,11 +309,11 @@ def test_reconnection_phases():
             print(f"Ticks received after unsubscribing all stocks: {len(final_ticks)}")
             
             if len(final_ticks) > 0:
-                print("❌ PROBLEM: Still receiving ticks after unsubscribing ALL stocks!")
+                print("[FAIL] PROBLEM: Still receiving ticks after unsubscribing ALL stocks!")
             elif final_reconnection:
-                print("❌ PROBLEM: Reconnection detected with NO active stocks!")
+                print("[FAIL] PROBLEM: Reconnection detected with NO active stocks!")
             else:
-                print("✅ SUCCESS: No ticks and no reconnection after unsubscribing all stocks")
+                print("[OK] SUCCESS: No ticks and no reconnection after unsubscribing all stocks")
         
         # Final summary
         print(f"\n=== COMPREHENSIVE TEST SUMMARY ===")
@@ -324,26 +324,26 @@ def test_reconnection_phases():
         
         print(f"\nReconnection Analysis:")
         if reconnection_detected:
-            print("❌ PROBLEM: Reconnection triggered after Phase 2 unsubscription")
+            print("[FAIL] PROBLEM: Reconnection triggered after Phase 2 unsubscription")
         if 'reconnection_detected2' in locals() and reconnection_detected2:
-            print("❌ PROBLEM: Reconnection triggered after Phase 3 unsubscription")
+            print("[FAIL] PROBLEM: Reconnection triggered after Phase 3 unsubscription")
         if 'final_reconnection' in locals() and final_reconnection:
-            print("❌ PROBLEM: Reconnection triggered after Phase 4 unsubscription (no active stocks)")
+            print("[FAIL] PROBLEM: Reconnection triggered after Phase 4 unsubscription (no active stocks)")
         
         if not reconnection_detected and not ('reconnection_detected2' in locals() and reconnection_detected2) and not ('final_reconnection' in locals() and final_reconnection):
-            print("✅ SUCCESS: No unwanted reconnections detected")
+            print("[OK] SUCCESS: No unwanted reconnections detected")
         
         # Cleanup
         try:
             data_streamer.disconnect()
-            print("✅ WebSocket disconnected")
+            print("[OK] WebSocket disconnected")
         except:
             pass
         
         return True
         
     except Exception as e:
-        print(f"❌ Error in test: {e}")
+        print(f"[FAIL] Error in test: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -357,9 +357,9 @@ if __name__ == "__main__":
     
     print("\n" + "=" * 70)
     if success:
-        print("🎉 COMPREHENSIVE TEST COMPLETED!")
+        print("[DONE] COMPREHENSIVE TEST COMPLETED!")
         print("Check the results above to see if reconnection issues were detected.")
     else:
-        print("❌ COMPREHENSIVE TEST FAILED!")
+        print("[FAIL] COMPREHENSIVE TEST FAILED!")
         print("Check the error messages above for more details.")
     print("=" * 70)

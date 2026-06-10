@@ -84,7 +84,7 @@ class BhavcopyIntegrator:
         Smart bhavcopy update - fills gaps from latest cache date to today
         Returns status and statistics
         """
-        print("🚀 INTEGRATED BHAVCOPY UPDATE")
+        print("[ROCKET] INTEGRATED BHAVCOPY UPDATE")
         print("=" * 50)
 
         start_time = datetime.now()
@@ -95,12 +95,12 @@ class BhavcopyIntegrator:
             result = self._update_for_date(target_date)
 
             if result['status'] == 'SUCCESS':
-                print("\n✅ Manual update completed")
-                print(f"📊 Bhavcopy stocks: {result['bhavcopy_stocks']}")
-                print(f"✅ Updated: {result['stocks_updated']}")
-                print(f"📅 Already had: {result['stocks_already_had_data']}")
-                print(f"⚠️  Not in bhavcopy: {result['stocks_not_in_bhavcopy']}")
-                print(f"📈 Success rate: {result['success_rate']:.1f}%")
+                print("\n[OK] Manual update completed")
+                print(f"[CHART] Bhavcopy stocks: {result['bhavcopy_stocks']}")
+                print(f"[OK] Updated: {result['stocks_updated']}")
+                print(f"[CALENDAR] Already had: {result['stocks_already_had_data']}")
+                print(f"[WARN]  Not in bhavcopy: {result['stocks_not_in_bhavcopy']}")
+                print(f"[TREND_UP] Success rate: {result['success_rate']:.1f}%")
 
             return result
 
@@ -126,7 +126,7 @@ class BhavcopyIntegrator:
 
         current_date = start_date
         while current_date <= end_date:
-            print(f"\n📅 Trying date: {current_date}")
+            print(f"\n[CALENDAR] Trying date: {current_date}")
 
             result = self._update_for_date(current_date)
 
@@ -135,11 +135,11 @@ class BhavcopyIntegrator:
                 total_updated += result['stocks_updated']
                 total_already_had += result['stocks_already_had_data']
                 total_not_in_bhavcopy += result['stocks_not_in_bhavcopy']
-                print(f"✅ Successfully updated {result['stocks_updated']} stocks for {current_date}")
+                print(f"[OK] Successfully updated {result['stocks_updated']} stocks for {current_date}")
             elif result['status'] == 'FAILED' and 'Could not download bhavcopy' in result.get('error', ''):
-                print(f"❌ No bhavcopy data available for {current_date} (holiday/weekend)")
+                print(f"[FAIL] No bhavcopy data available for {current_date} (holiday/weekend)")
             else:
-                print(f"⚠️  Failed to update for {current_date}: {result.get('error', 'Unknown error')}")
+                print(f"[WARN]  Failed to update for {current_date}: {result.get('error', 'Unknown error')}")
 
             current_date += timedelta(days=1)
 
@@ -147,7 +147,7 @@ class BhavcopyIntegrator:
         duration = end_time - start_time
 
         if not successful_updates:
-            print("\n❌ No successful updates in the date range")
+            print("\n[FAIL] No successful updates in the date range")
             return {
                 'status': 'FAILED',
                 'error': 'No successful updates in the date range',
@@ -169,12 +169,12 @@ class BhavcopyIntegrator:
 
         print("\n" + "=" * 50)
         print("SMART UPDATE COMPLETE")
-        print(f"⏱️  Duration: {duration}")
-        print(f"📅 Dates processed: {start_date} to {end_date}")
-        print(f"✅ Successful dates: {len(successful_updates)}")
-        print(f"📊 Total stocks updated: {total_updated}")
-        print(f"📅 Total stocks already had data: {total_already_had}")
-        print(f"⚠️  Total stocks not in bhavcopy: {total_not_in_bhavcopy}")
+        print(f"[STOPWATCH]  Duration: {duration}")
+        print(f"[CALENDAR] Dates processed: {start_date} to {end_date}")
+        print(f"[OK] Successful dates: {len(successful_updates)}")
+        print(f"[CHART] Total stocks updated: {total_updated}")
+        print(f"[CALENDAR] Total stocks already had data: {total_already_had}")
+        print(f"[WARN]  Total stocks not in bhavcopy: {total_not_in_bhavcopy}")
 
         return result
 

@@ -24,23 +24,23 @@ def load_continuation_stocks():
         with open('src/trading/continuation_list.txt', 'r') as f:
             content = f.read().strip()
             if not content:
-                print("❌ continuation_list.txt is empty")
+                print("[FAIL] continuation_list.txt is empty")
                 return []
 
             symbols = [s.strip() for s in content.split(',') if s.strip()]
-            print(f"📋 Loaded {len(symbols)} stocks: {symbols}")
+            print(f"[CLIPBOARD] Loaded {len(symbols)} stocks: {symbols}")
             return symbols
 
     except FileNotFoundError:
-        print("❌ continuation_list.txt not found")
+        print("[FAIL] continuation_list.txt not found")
         return []
     except Exception as e:
-        print(f"❌ Error loading continuation stocks: {e}")
+        print(f"[FAIL] Error loading continuation stocks: {e}")
         return []
 
 def test_connection():
     """Test basic Upstox connection"""
-    print("🔌 Testing Upstox connection...")
+    print("[PLUG] Testing Upstox connection...")
 
     try:
         fetcher = UpstoxFetcher()
@@ -48,38 +48,38 @@ def test_connection():
         # Try to get profile (tests API key and access token)
         profile_response = fetcher.user_api.get_profile(api_version='2.0')
         email = profile_response.data.email
-        print(f"✅ Connected to Upstox account: {email}")
+        print(f"[OK] Connected to Upstox account: {email}")
 
         return True, fetcher
 
     except Exception as e:
-        print(f"❌ Connection failed: {e}")
+        print(f"[FAIL] Connection failed: {e}")
         return False, None
 
 def test_instrument_keys(fetcher, symbols):
     """Test instrument key resolution"""
-    print("\n🔑 Testing instrument key resolution...")
+    print("\n[KEY] Testing instrument key resolution...")
 
     results = {}
     for symbol in symbols:
         try:
             instrument_key = fetcher.get_instrument_key(symbol)
             if instrument_key and 'NSE_EQ' in instrument_key:
-                print(f"✅ {symbol} → {instrument_key}")
+                print(f"[OK] {symbol} → {instrument_key}")
                 results[symbol] = {'instrument_key': instrument_key, 'status': 'success'}
             else:
-                print(f"❌ {symbol} → No valid instrument key found")
+                print(f"[FAIL] {symbol} → No valid instrument key found")
                 results[symbol] = {'instrument_key': None, 'status': 'no_key'}
 
         except Exception as e:
-            print(f"❌ {symbol} → Error: {e}")
+            print(f"[FAIL] {symbol} → Error: {e}")
             results[symbol] = {'instrument_key': None, 'status': 'error', 'error': str(e)}
 
     return results
 
 def test_ltp_fetch(fetcher, instrument_results):
     """Test LTP fetching for stocks with valid instrument keys"""
-    print("\n💰 Testing LTP fetch...")
+    print("\n[MONEY] Testing LTP fetch...")
 
     ltp_results = {}
 
@@ -88,7 +88,7 @@ def test_ltp_fetch(fetcher, instrument_results):
                    if data['status'] == 'success'}
 
     if not valid_stocks:
-        print("❌ No valid instrument keys to test LTP")
+        print("[FAIL] No valid instrument keys to test LTP")
         return {}
 
     for symbol, data in valid_stocks.items():
@@ -100,25 +100,25 @@ def test_ltp_fetch(fetcher, instrument_results):
 
             if latest_data and 'close' in latest_data:
                 prev_close = latest_data['close']
-                print(f"✅ {symbol} → Previous close: ₹{prev_close:.2f}")
+                print(f"[OK] {symbol} → Previous close: ₹{prev_close:.2f}")
                 ltp_results[symbol] = {
                     'status': 'success',
                     'prev_close': prev_close,
                     'date': latest_data.get('date')
                 }
             else:
-                print(f"❌ {symbol} → No data received")
+                print(f"[FAIL] {symbol} → No data received")
                 ltp_results[symbol] = {'status': 'no_data'}
 
         except Exception as e:
-            print(f"❌ {symbol} → LTP fetch error: {e}")
+            print(f"[FAIL] {symbol} → LTP fetch error: {e}")
             ltp_results[symbol] = {'status': 'error', 'error': str(e)}
 
     return ltp_results
 
 def main():
     """Main test function"""
-    print("🧪 UPSTOX CONNECTION TEST")
+    print("[TEST_TUBE] UPSTOX CONNECTION TEST")
     print("=" * 50)
     print(f"Time: {datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S %Z')}")
     print()
@@ -126,7 +126,7 @@ def main():
     # Load continuation stocks
     symbols = load_continuation_stocks()
     if not symbols:
-        print("❌ No stocks to test")
+        print("[FAIL] No stocks to test")
         return 1
 
     # Test connection
@@ -142,7 +142,7 @@ def main():
 
     # Summary
     print("\n" + "=" * 50)
-    print("📊 TEST SUMMARY")
+    print("[CHART] TEST SUMMARY")
 
     total_stocks = len(symbols)
     valid_keys = sum(1 for r in instrument_results.values() if r['status'] == 'success')
@@ -153,10 +153,10 @@ def main():
     print(f"Successful LTP fetches: {successful_ltp}")
 
     if valid_keys == total_stocks and successful_ltp == valid_keys:
-        print("🎉 ALL TESTS PASSED - Upstox connection is working!")
+        print("[DONE] ALL TESTS PASSED - Upstox connection is working!")
         return 0
     else:
-        print("⚠️ Some tests failed - check the output above")
+        print("[WARN] Some tests failed - check the output above")
         return 1
 
 if __name__ == "__main__":

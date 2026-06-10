@@ -226,9 +226,9 @@ class StrongStartTestRunner:
         
         # Verify no low violation
         if self.test_stock.low_violation_checked:
-            logger.info(f"[{self.test_stock.symbol}] ✅ No low violation detected")
+            logger.info(f"[{self.test_stock.symbol}] [OK] No low violation detected")
         else:
-            logger.info(f"[{self.test_stock.symbol}] ❌ Low violation detected - would not enter")
+            logger.info(f"[{self.test_stock.symbol}] [FAIL] Low violation detected - would not enter")
         
         logger.info(f"Daily High reached: {self.test_stock.daily_high:.2f}")
         logger.info(f"Entry High set to: {self.test_stock.entry_high:.2f}")
@@ -244,7 +244,7 @@ class StrongStartTestRunner:
         # Check entry signal
         if self.test_stock.check_entry_signal(new_price):
             self.test_stock.enter_position(new_price, datetime.now())
-            logger.info(f"🎯 STRONG START ENTRY TRIGGERED!")
+            logger.info(f"[TARGET] STRONG START ENTRY TRIGGERED!")
             logger.info(f"   Entry Price: {self.test_stock.entry_price:.2f}")
             logger.info(f"   Trigger Price: {new_price:.2f}")
             logger.info(f"   Entry High: {self.test_stock.entry_high:.2f}")
@@ -258,7 +258,7 @@ class StrongStartTestRunner:
 
 def run_strong_start_test():
     """Run the Strong Start entry test"""
-    print("🚀 Starting Strong Start Entry Test")
+    print("[ROCKET] Starting Strong Start Entry Test")
     print("Testing: Strong Start stock should enter when price crosses daily high")
     print("Setup: Previous Close = 100.00, Open Price = 102.00 (gap up)")
     print("Expected: Entry when price >= daily high (built during monitoring)")
@@ -276,7 +276,7 @@ def run_strong_start_test():
         while test_runner.is_running:
             time.sleep(0.1)
     except KeyboardInterrupt:
-        print("\n⏹️  Test interrupted by user")
+        print("\n[STOP_SQ]  Test interrupted by user")
     finally:
         test_runner.stop_test()
     
@@ -286,7 +286,7 @@ def run_strong_start_test():
     print("="*60)
     
     if test_runner.test_stock.entry_triggered:
-        print("✅ STRONG START TEST PASSED!")
+        print("[OK] STRONG START TEST PASSED!")
         print(f"   Entry Price: {test_runner.test_stock.entry_price:.2f}")
         print(f"   Daily High: {test_runner.test_stock.entry_high:.2f}")
         print(f"   Entry SL: {test_runner.test_stock.entry_sl:.2f}")
@@ -296,7 +296,7 @@ def run_strong_start_test():
         movement_pct = (price_movement / test_runner.test_stock.open_price) * 100
         print(f"   Price movement: {price_movement:+.2f} ({movement_pct:+.2f}%)")
     else:
-        print("❌ STRONG START TEST FAILED!")
+        print("[FAIL] STRONG START TEST FAILED!")
         print("   No entry was triggered")
     
     return test_runner.test_stock.entry_triggered

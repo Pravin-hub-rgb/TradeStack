@@ -1522,13 +1522,13 @@ def run_bhavcopy_update_background(operation_id: str):
 
 if __name__ == "__main__":
     print("Starting MA Stock Trader API Server...")
-    print("API available at: http://localhost:8001")
-    print("Documentation at: http://localhost:8001/docs")
+    print("API available at: http://localhost:8002")
+    print("Documentation at: http://localhost:8002/docs")
 
     uvicorn.run(
         "server:app",
         host="127.0.0.1",  # Use localhost instead of 0.0.0.0 for frontend proxy
-        port=8001,  # Use port 8001 to avoid conflicts
+        port=8002,  # Use port 8002 to avoid conflicts with new architecture
         reload=False,  # Disable reload to prevent import crashes
         log_level="info"
     )

@@ -29,10 +29,10 @@ def test_scanner_execution(symbol: str, scan_date: date):
         cached_data = cache_manager.load_cached_data(symbol)
         
         if cached_data is None or cached_data.empty:
-            print(f"   ❌ No cached data found for {symbol}")
+            print(f"   [FAIL] No cached data found for {symbol}")
             return None
         
-        print(f"   ✅ Found cached data: {len(cached_data)} days")
+        print(f"   [OK] Found cached data: {len(cached_data)} days")
         
         # 2. Get data for date range (same as scanner)
         print(f"\n2. FETCHING DATA FOR DATE RANGE:")
@@ -43,21 +43,21 @@ def test_scanner_execution(symbol: str, scan_date: date):
         )
         
         if scanner_data.empty:
-            print(f"   ❌ Scanner data fetch returned empty")
+            print(f"   [FAIL] Scanner data fetch returned empty")
             return None
         
-        print(f"   ✅ Scanner data fetched: {len(scanner_data)} days")
+        print(f"   [OK] Scanner data fetched: {len(scanner_data)} days")
         
         # 3. Calculate technical indicators (same as scanner)
         print(f"\n3. CALCULATING TECHNICAL INDICATORS:")
         scanner_data = data_fetcher.calculate_technical_indicators(scanner_data)
-        print(f"   ✅ Technical indicators calculated")
+        print(f"   [OK] Technical indicators calculated")
         
         # 4. Get latest data point
         latest = scanner_data.iloc[-1]
-        print(f"   📈 Latest date: {latest.name}")
-        print(f"   💰 Close: {latest['close']:.2f}")
-        print(f"   📊 20 MA: {latest['ma_20']:.2f}")
+        print(f"   [TREND_UP] Latest date: {latest.name}")
+        print(f"   [MONEY] Close: {latest['close']:.2f}")
+        print(f"   [CHART] 20 MA: {latest['ma_20']:.2f}")
         
         # 5. Apply base filters (same as scanner)
         print(f"\n4. APPLYING BASE FILTERS:")
@@ -67,19 +67,19 @@ def test_scanner_execution(symbol: str, scan_date: date):
         price_max = 2000
         close_price = float(latest['close'])
         price_pass = price_min <= close_price <= price_max
-        print(f"   💰 Price filter (₹{price_min}-{price_max}): {'✅ PASS' if price_pass else '❌ FAIL'} - {close_price:.2f}")
+        print(f"   [MONEY] Price filter (₹{price_min}-{price_max}): {'[OK] PASS' if price_pass else '[FAIL] FAIL'} - {close_price:.2f}")
         
         if not price_pass:
-            print(f"   🚫 Would be filtered out by price filter")
+            print(f"   [NO] Would be filtered out by price filter")
             return None
         
         # Check ADR filter (3% minimum)
         adr_percent = float(latest['adr_percent'])
         adr_pass = adr_percent >= 3.0
-        print(f"   📊 ADR filter (≥3%): {'✅ PASS' if adr_pass else '❌ FAIL'} - {adr_percent:.2f}%")
+        print(f"   [CHART] ADR filter (≥3%): {'[OK] PASS' if adr_pass else '[FAIL] FAIL'} - {adr_percent:.2f}%")
         
         if not adr_pass:
-            print(f"   🚫 Would be filtered out by ADR filter")
+            print(f"   [NO] Would be filtered out by ADR filter")
             return None
         
         # 6. Check liquidity confirmation (same as scanner)
@@ -102,10 +102,10 @@ def test_scanner_execution(symbol: str, scan_date: date):
         liquid_days_count = liquid_days.sum()
         liquidity_pass = liquid_days_count >= min_liquid_days
         
-        print(f"   💧 Liquidity check (≥{min_liquid_days} days): {'✅ PASS' if liquidity_pass else '❌ FAIL'} - {liquid_days_count} days")
+        print(f"   [DROP] Liquidity check (≥{min_liquid_days} days): {'[OK] PASS' if liquidity_pass else '[FAIL] FAIL'} - {liquid_days_count} days")
         
         if not liquidity_pass:
-            print(f"   🚫 Would be filtered out by liquidity filter")
+            print(f"   [NO] Would be filtered out by liquidity filter")
             return None
         
         # 7. Run continuation pattern analysis (same as scanner)
@@ -143,34 +143,34 @@ def test_scanner_execution(symbol: str, scan_date: date):
         latest_df = df.iloc[-1]
         
         # Check Phase 3 (20 MA check) - this is the FIRST check in continuation_analyzer
-        print(f"   📊 20 MA check (Phase 3):")
+        print(f"   [CHART] 20 MA check (Phase 3):")
         print(f"      - Near_or_Above_MA: {latest_df['Near_or_Above_MA']}")
         print(f"      - Rising_MA: {latest_df['Rising_MA']}")
         print(f"      - Dist_to_MA_pct: {latest_df['Dist_to_MA_pct']*100:.2f}% (threshold: {params['near_ma_threshold']*100}%)")
         
         phase3_pass = latest_df['Near_or_Above_MA'] and latest_df['Rising_MA']
-        print(f"      - Result: {'✅ PASS' if phase3_pass else '❌ FAIL'}")
+        print(f"      - Result: {'[OK] PASS' if phase3_pass else '[FAIL] FAIL'}")
         
         if not phase3_pass:
-            print(f"   🚫 Would be filtered out by 20 MA check (Phase 3)")
+            print(f"   [NO] Would be filtered out by 20 MA check (Phase 3)")
             return None
         
         # Check body size
         body_size_pct = abs(latest_df['Open'] - latest_df['Close']) / latest_df['Close']
         body_pass = body_size_pct < params['max_body_percentage']
-        print(f"   📐 Body size check: {'✅ PASS' if body_pass else '❌ FAIL'} - {body_size_pct*100:.2f}% (threshold: {params['max_body_percentage']*100}%)")
+        print(f"   [TRIANGLE] Body size check: {'[OK] PASS' if body_pass else '[FAIL] FAIL'} - {body_size_pct*100:.2f}% (threshold: {params['max_body_percentage']*100}%)")
         
         if not body_pass:
-            print(f"   🚫 Would be filtered out by body size check")
+            print(f"   [NO] Would be filtered out by body size check")
             return None
         
         # If we get here, the stock would pass all checks
         print(f"\n7. FINAL RESULT:")
-        print(f"   🎯 {symbol} WOULD PASS ALL SCANNER CHECKS!")
-        print(f"   💰 Close: {latest['close']:.2f}")
-        print(f"   📊 20 MA: {latest['ma_20']:.2f}")
-        print(f"   📈 Above 20 MA: {latest['close'] > latest['ma_20']}")
-        print(f"   📊 Distance from MA: {latest_df['Dist_to_MA_pct']*100:.2f}%")
+        print(f"   [TARGET] {symbol} WOULD PASS ALL SCANNER CHECKS!")
+        print(f"   [MONEY] Close: {latest['close']:.2f}")
+        print(f"   [CHART] 20 MA: {latest['ma_20']:.2f}")
+        print(f"   [TREND_UP] Above 20 MA: {latest['close'] > latest['ma_20']}")
+        print(f"   [CHART] Distance from MA: {latest_df['Dist_to_MA_pct']*100:.2f}%")
         
         return {
             'symbol': symbol,
@@ -183,14 +183,14 @@ def test_scanner_execution(symbol: str, scan_date: date):
         }
         
     except Exception as e:
-        print(f"\n❌ Error testing {symbol}: {e}")
+        print(f"\n[FAIL] Error testing {symbol}: {e}")
         import traceback
         traceback.print_exc()
         return None
 
 def main():
     """Main test function"""
-    print("🔍 SCANNER EXECUTION TEST")
+    print("[SEARCH] SCANNER EXECUTION TEST")
     print("=" * 60)
     
     # Test for 1st Feb 2026 (as mentioned in the issue)
@@ -214,12 +214,12 @@ def main():
     for symbol in test_stocks:
         result = all_results[symbol]
         if result is not None:
-            print(f"{symbol}: 🎯 WOULD PASS SCANNER")
+            print(f"{symbol}: [TARGET] WOULD PASS SCANNER")
             print(f"   Close: {result['close']:.2f}, 20 MA: {result['sma20']:.2f}")
             print(f"   Above 20 MA: {result['above_ma']}, Near MA: {result['near_ma']}")
             print(f"   Distance from MA: {result['dist_to_ma_pct']:.2f}%")
         else:
-            print(f"{symbol}: ❌ WOULD FAIL SCANNER")
+            print(f"{symbol}: [FAIL] WOULD FAIL SCANNER")
 
 if __name__ == "__main__":
     main()

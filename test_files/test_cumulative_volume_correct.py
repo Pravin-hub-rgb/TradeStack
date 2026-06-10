@@ -35,11 +35,11 @@ def test_cumulative_volume_correct():
     try:
         initial_volume = upstox_fetcher.get_current_volume(test_stock)
         if initial_volume <= 0:
-            print("❌ Failed to get initial volume")
+            print("[FAIL] Failed to get initial volume")
             return False
         print(f"Initial volume (baseline): {initial_volume:,} shares")
     except Exception as e:
-        print(f"❌ Error getting initial volume: {e}")
+        print(f"[FAIL] Error getting initial volume: {e}")
         return False
     
     # Test volume accumulation for 30 seconds
@@ -70,11 +70,11 @@ def test_cumulative_volume_correct():
         if mean_volume > 0:
             print(f"Real mean volume baseline: {mean_volume:,} shares")
         else:
-            print(f"❌ No mean volume baseline found for {test_stock}")
+            print(f"[FAIL] No mean volume baseline found for {test_stock}")
             return False
             
     except Exception as e:
-        print(f"❌ Error getting mean volume: {e}")
+        print(f"[FAIL] Error getting mean volume: {e}")
         return False
     
     while time.time() < end_time:
@@ -115,7 +115,7 @@ def test_cumulative_volume_correct():
                 
                 # Check if meets SVRO threshold (7.5%)
                 threshold_met = volume_pct >= 7.5
-                status = "✅ PASS" if threshold_met else "❌ FAIL"
+                status = "[OK] PASS" if threshold_met else "[FAIL] FAIL"
                 
                 print(f"{elapsed:2d}s  | {curr_vol_str:>12} | {volume_change:>6} | {cum_vol_str:>10} | {volume_pct:5.1f}% | {status}")
                 

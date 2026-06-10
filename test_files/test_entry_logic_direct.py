@@ -115,7 +115,7 @@ def test_entry_logic_direct():
             print(f"Price crossed entry: {crossed_up} (price {price:.2f} >= entry {stock.entry_price:.2f})")
             
             if crossed_up:
-                print("🚨 ENTRY SHOULD TRIGGER! 🚨")
+                print("[ALERT] ENTRY SHOULD TRIGGER! [ALERT]")
             else:
                 print("Price not crossed - continuing monitoring")
         else:
@@ -136,12 +136,12 @@ def test_entry_logic_direct():
         print(f"   Stock State: {stock.state.value}")
         print(f"   Entered: {stock.entered}")
         if stock.entered:
-            print(f"   ✅ ENTRY SUCCESSFULLY TRIGGERED!")
+            print(f"   [OK] ENTRY SUCCESSFULLY TRIGGERED!")
             print(f"   Entry Price: Rs{stock.entry_price:.2f}")
             print(f"   Trigger Price: Rs{price:.2f}")
             break
         else:
-            print(f"   ❌ Entry not triggered")
+            print(f"   [FAIL] Entry not triggered")
         
         # Increment timestamp
         timestamp = timestamp.replace(second=timestamp.second + 1)
@@ -155,10 +155,10 @@ def test_entry_logic_direct():
     print(f"Entry Price: Rs{stock.entry_price:.2f}")
     
     if stock.entered:
-        print(f"✅ Entry logic is WORKING correctly!")
+        print(f"[OK] Entry logic is WORKING correctly!")
         print(f"   The system successfully triggered entry when price crossed the threshold")
     else:
-        print(f"❌ Entry logic has ISSUES!")
+        print(f"[FAIL] Entry logic has ISSUES!")
         print(f"   The system did not trigger entry even when price crossed the threshold")
         print(f"   This indicates a problem in the entry logic implementation")
 

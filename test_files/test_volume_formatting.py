@@ -72,10 +72,10 @@ def main():
     success = test_volume_formatting()
     
     if success:
-        print("\n✅ Volume formatting test completed successfully")
+        print("\n[OK] Volume formatting test completed successfully")
         print("The continuation bot will now show properly formatted volume information")
     else:
-        print("\n❌ Volume formatting test failed")
+        print("\n[FAIL] Volume formatting test failed")
     
     return success
 

@@ -39,11 +39,11 @@ def test_state_machine_initialization():
         assert stock.is_subscribed == True, "Expected is_subscribed to be True"
         assert stock.is_active == True, "Expected is_active to be True"
         
-        print("✅ State machine initialization test PASSED")
+        print("[OK] State machine initialization test PASSED")
         return True
         
     except Exception as e:
-        print(f"❌ State machine initialization test FAILED: {e}")
+        print(f"[FAIL] State machine initialization test FAILED: {e}")
         return False
 
 def test_state_transitions():
@@ -83,11 +83,11 @@ def test_state_transitions():
         print(f"After enter position: {stock.state.value}")
         assert stock.state.value == "entered", f"Expected 'entered', got {stock.state.value}"
         
-        print("✅ State transitions test PASSED")
+        print("[OK] State transitions test PASSED")
         return True
         
     except Exception as e:
-        print(f"❌ State transitions test FAILED: {e}")
+        print(f"[FAIL] State transitions test FAILED: {e}")
         return False
 
 def test_entry_logic():
@@ -128,11 +128,11 @@ def test_entry_logic():
         assert stock.entered == True, "Expected entered to be True"
         assert stock.entry_price == test_price, f"Expected entry_price {test_price}, got {stock.entry_price}"
         
-        print("✅ Entry logic test PASSED")
+        print("[OK] Entry logic test PASSED")
         return True
         
     except Exception as e:
-        print(f"❌ Entry logic test FAILED: {e}")
+        print(f"[FAIL] Entry logic test FAILED: {e}")
         return False
 
 def test_tick_processor():
@@ -177,11 +177,11 @@ def test_tick_processor():
         assert stock.entered == True, "Expected stock to be entered after tick processing"
         assert stock.entry_price == test_price, f"Expected entry_price {test_price}, got {stock.entry_price}"
         
-        print("✅ Tick processor test PASSED")
+        print("[OK] Tick processor test PASSED")
         return True
         
     except Exception as e:
-        print(f"❌ Tick processor test FAILED: {e}")
+        print(f"[FAIL] Tick processor test FAILED: {e}")
         return False
 
 def main():
@@ -204,15 +204,15 @@ def main():
             if test():
                 passed += 1
         except Exception as e:
-            print(f"❌ Test {test.__name__} FAILED with exception: {e}")
+            print(f"[FAIL] Test {test.__name__} FAILED with exception: {e}")
     
     print(f"\n{'=' * 50}")
     print(f"TEST RESULTS: {passed}/{total} tests passed")
     
     if passed == total:
-        print("🎉 ALL TESTS PASSED! The reversal bot fixes are working correctly.")
+        print("[DONE] ALL TESTS PASSED! The reversal bot fixes are working correctly.")
     else:
-        print("⚠️  Some tests failed. Please review the fixes.")
+        print("[WARN]  Some tests failed. Please review the fixes.")
     
     return passed == total
 

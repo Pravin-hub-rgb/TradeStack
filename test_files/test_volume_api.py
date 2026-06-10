@@ -37,20 +37,20 @@ def test_volume_api():
         print(f"Volume result: {volume}")
         
         if volume > 0:
-            print("✅ Volume API is working!")
+            print("[OK] Volume API is working!")
             print(f"Current volume: {volume:,} shares")
         else:
-            print("❌ Volume API returned 0 or failed")
+            print("[FAIL] Volume API returned 0 or failed")
             
         return volume > 0
         
     except Exception as e:
-        print(f"❌ Error testing volume API: {e}")
+        print(f"[FAIL] Error testing volume API: {e}")
         return False
 
 if __name__ == "__main__":
     success = test_volume_api()
     if success:
-        print("\n✅ Volume API test passed")
+        print("\n[OK] Volume API test passed")
     else:
-        print("\n❌ Volume API test failed")
+        print("\n[FAIL] Volume API test failed")

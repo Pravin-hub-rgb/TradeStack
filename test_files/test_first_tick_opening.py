@@ -39,7 +39,7 @@ class TestReversalStock:
         if not self.first_tick_captured:
             self.open_price = price
             self.first_tick_captured = True
-            logger.info(f"✅ {self.symbol}: Captured first tick as open = ₹{price:.2f} (bot start time)")
+            logger.info(f"[OK] {self.symbol}: Captured first tick as open = ₹{price:.2f} (bot start time)")
             return True
         return False
     
@@ -47,10 +47,10 @@ class TestReversalStock:
         """Calculate gap percentage using first tick as opening price"""
         if self.open_price and self.prev_close:
             gap_pct = ((self.open_price - self.prev_close) / self.prev_close) * 100
-            logger.info(f"📊 {self.symbol}: Gap % = {gap_pct:.2f}% (Open: ₹{self.open_price:.2f}, Prev Close: ₹{self.prev_close:.2f})")
+            logger.info(f"[CHART] {self.symbol}: Gap % = {gap_pct:.2f}% (Open: ₹{self.open_price:.2f}, Prev Close: ₹{self.prev_close:.2f})")
             self.gap_calculated = True
             return gap_pct
-        logger.warning(f"⚠️ {self.symbol}: Missing open or prev_close for gap calculation")
+        logger.warning(f"[WARN] {self.symbol}: Missing open or prev_close for gap calculation")
         return None
     
     def check_oops_conditions(self, current_price):
@@ -62,7 +62,7 @@ class TestReversalStock:
         crosses_prev_close = current_price > self.prev_close
         
         if gap_pct <= -2.0 and crosses_prev_close:
-            logger.info(f"🎯 {self.symbol}: OOPS conditions met! Gap: {gap_pct:.2f}%, Crossed Prev Close: ₹{current_price:.2f}")
+            logger.info(f"[TARGET] {self.symbol}: OOPS conditions met! Gap: {gap_pct:.2f}%, Crossed Prev Close: ₹{current_price:.2f}")
             return True
         return False
     
@@ -75,7 +75,7 @@ class TestReversalStock:
         open_equals_low = abs(self.open_price - current_low) / self.open_price <= 0.01
         
         if gap_pct >= 2.0 and open_equals_low:
-            logger.info(f"🚀 {self.symbol}: Strong Start conditions met! Gap: {gap_pct:.2f}%, Open≈Low: ₹{current_low:.2f}")
+            logger.info(f"[ROCKET] {self.symbol}: Strong Start conditions met! Gap: {gap_pct:.2f}%, Open≈Low: ₹{current_low:.2f}")
             return True
         return False
 
@@ -127,9 +127,9 @@ class TestFirstTickTracker:
                 ltp_data = self.fetcher.get_ltp_data(symbol)
                 if ltp_data and 'cp' in ltp_data:
                     prev_closes[symbol] = float(ltp_data['cp'])
-                    logger.info(f"✅ {symbol}: Previous close = ₹{prev_closes[symbol]:.2f}")
+                    logger.info(f"[OK] {symbol}: Previous close = ₹{prev_closes[symbol]:.2f}")
                 else:
-                    logger.warning(f"⚠️ Could not get prev close for {symbol}")
+                    logger.warning(f"[WARN] Could not get prev close for {symbol}")
                     prev_closes[symbol] = 0.0
             except Exception as e:
                 logger.error(f"Error getting prev close for {symbol}: {e}")
@@ -150,9 +150,9 @@ class TestFirstTickTracker:
             if instrument_key:
                 self.instrument_keys.append(instrument_key)
                 self.stock_symbols[instrument_key] = symbol
-                logger.info(f"✅ {symbol}: Instrument key = {instrument_key}")
+                logger.info(f"[OK] {symbol}: Instrument key = {instrument_key}")
             else:
-                logger.warning(f"⚠️ No instrument key for {symbol}")
+                logger.warning(f"[WARN] No instrument key for {symbol}")
     
     def handle_tick(self, instrument_key, symbol, price, timestamp, ohlc_data=None):
         """Handle incoming tick data"""
@@ -173,9 +173,9 @@ class TestFirstTickTracker:
                         strong_start_triggered = stock.check_strong_start_conditions(price)
                         
                         if oops_triggered or strong_start_triggered:
-                            logger.info(f"🎯 REVERSAL TRIGGERED for {symbol}!")
+                            logger.info(f"[TARGET] REVERSAL TRIGGERED for {symbol}!")
                         else:
-                            logger.info(f"📊 {symbol}: Gap analysis complete, no triggers yet")
+                            logger.info(f"[CHART] {symbol}: Gap analysis complete, no triggers yet")
                 
                 # Update current low for ongoing analysis
                 stock.current_low = min(stock.current_low, price)
@@ -185,7 +185,7 @@ class TestFirstTickTracker:
     
     def run_test(self):
         """Run the first tick tracking test"""
-        logger.info("🚀 Starting First Tick Opening Price Test")
+        logger.info("[ROCKET] Starting First Tick Opening Price Test")
         logger.info(f"Current time: {datetime.now(IST).strftime('%H:%M:%S')}")
         
         # Load test stocks
@@ -205,13 +205,13 @@ class TestFirstTickTracker:
         try:
             self.data_streamer = SimpleStockStreamer(self.instrument_keys, self.stock_symbols)
             self.data_streamer.tick_handler = self.handle_tick
-            logger.info(f"📡 Initialized streamer for {len(self.instrument_keys)} stocks")
+            logger.info(f"[SATELLITE] Initialized streamer for {len(self.instrument_keys)} stocks")
         except Exception as e:
             logger.error(f"Error initializing streamer: {e}")
             return False
         
         # Start streaming
-        logger.info("📡 Starting data streaming...")
+        logger.info("[SATELLITE] Starting data streaming...")
         logger.info("Waiting for first ticks to capture opening prices...")
         
         try:
@@ -225,7 +225,7 @@ class TestFirstTickTracker:
             if hasattr(self, 'data_streamer'):
                 self.data_streamer.disconnect()
         
-        logger.info("✅ First tick tracking test completed")
+        logger.info("[OK] First tick tracking test completed")
         return True
 
 def main():
@@ -238,10 +238,10 @@ def main():
     success = test_tracker.run_test()
     
     if success:
-        logger.info("🎉 Test completed successfully!")
+        logger.info("[DONE] Test completed successfully!")
         logger.info("The expert's solution works: First tick = opening price")
     else:
-        logger.error("❌ Test failed")
+        logger.error("[FAIL] Test failed")
     
     logger.info("=" * 60)
 

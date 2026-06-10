@@ -74,7 +74,7 @@ def test_subscribe_unsubscribe():
     
     # Connect and subscribe
     if not streamer.connect():
-        print("❌ Failed to connect to WebSocket")
+        print("[FAIL] Failed to connect to WebSocket")
         return False
     
     # Wait for connection to establish
@@ -84,10 +84,10 @@ def test_subscribe_unsubscribe():
         time.sleep(0.5)
     
     if not streamer.connected:
-        print("❌ WebSocket connection failed")
+        print("[FAIL] WebSocket connection failed")
         return False
     
-    print("✅ WebSocket connected successfully")
+    print("[OK] WebSocket connected successfully")
     
     # Wait for initial ticks
     print("Waiting for initial ticks...")
@@ -96,11 +96,11 @@ def test_subscribe_unsubscribe():
     ticks_before_unsubscribe = tick_handler.ticks_received
     symbols_before = len(tick_handler.symbols_received)
     
-    print(f"📊 Ticks received before unsubscribe: {ticks_before_unsubscribe}")
-    print(f"📊 Symbols receiving ticks: {symbols_before}")
+    print(f"[CHART] Ticks received before unsubscribe: {ticks_before_unsubscribe}")
+    print(f"[CHART] Symbols receiving ticks: {symbols_before}")
     
     if ticks_before_unsubscribe == 0:
-        print("⚠️  No ticks received - this might be expected if market is closed or symbols are invalid")
+        print("[WARN]  No ticks received - this might be expected if market is closed or symbols are invalid")
         print("   Proceeding with unsubscribe test anyway...")
     
     print("\n" + "=" * 40)
@@ -111,10 +111,10 @@ def test_subscribe_unsubscribe():
     try:
         print(f"Attempting to unsubscribe from {len(test_instruments)} instruments...")
         streamer.unsubscribe(test_instruments)
-        print("✅ Unsubscribe call completed successfully")
+        print("[OK] Unsubscribe call completed successfully")
         
     except Exception as e:
-        print(f"❌ Unsubscribe failed: {e}")
+        print(f"[FAIL] Unsubscribe failed: {e}")
         return False
     
     # Wait a moment after unsubscribe
@@ -123,8 +123,8 @@ def test_subscribe_unsubscribe():
     ticks_after_unsubscribe = tick_handler.ticks_received
     symbols_after = len(tick_handler.symbols_received)
     
-    print(f"📊 Ticks received after unsubscribe: {ticks_after_unsubscribe}")
-    print(f"📊 Symbols receiving ticks after unsubscribe: {symbols_after}")
+    print(f"[CHART] Ticks received after unsubscribe: {ticks_after_unsubscribe}")
+    print(f"[CHART] Symbols receiving ticks after unsubscribe: {symbols_after}")
     
     print("\n" + "=" * 40)
     print("PHASE 3: ANALYSIS AND RESULTS")
@@ -133,14 +133,14 @@ def test_subscribe_unsubscribe():
     # Analyze results
     if ticks_before_unsubscribe > 0:
         if ticks_after_unsubscribe == ticks_before_unsubscribe:
-            print("✅ SUCCESS: No new ticks received after unsubscribe")
+            print("[OK] SUCCESS: No new ticks received after unsubscribe")
             print("   This indicates unsubscribe is working correctly")
         else:
             new_ticks = ticks_after_unsubscribe - ticks_before_unsubscribe
-            print(f"⚠️  WARNING: {new_ticks} new ticks received after unsubscribe")
+            print(f"[WARN]  WARNING: {new_ticks} new ticks received after unsubscribe")
             print("   This might indicate unsubscribe is not working fully")
     else:
-        print("ℹ️  INFO: No ticks received during test (market may be closed)")
+        print("ℹ  INFO: No ticks received during test (market may be closed)")
         print("   Unsubscribe call completed without errors - this is good")
     
     # Test individual unsubscribe
@@ -153,9 +153,9 @@ def test_subscribe_unsubscribe():
         single_instrument = [test_instruments[0]]
         print(f"Attempting to unsubscribe from single instrument: {single_instrument[0]}")
         streamer.unsubscribe(single_instrument)
-        print("✅ Single instrument unsubscribe completed successfully")
+        print("[OK] Single instrument unsubscribe completed successfully")
     except Exception as e:
-        print(f"❌ Single instrument unsubscribe failed: {e}")
+        print(f"[FAIL] Single instrument unsubscribe failed: {e}")
         return False
     
     # Clean up
@@ -165,9 +165,9 @@ def test_subscribe_unsubscribe():
     
     try:
         streamer.disconnect()
-        print("✅ WebSocket disconnected successfully")
+        print("[OK] WebSocket disconnected successfully")
     except Exception as e:
-        print(f"⚠️  Disconnect warning: {e}")
+        print(f"[WARN]  Disconnect warning: {e}")
     
     print("\n" + "=" * 60)
     print("TEST SUMMARY")
@@ -179,13 +179,13 @@ def test_subscribe_unsubscribe():
     print(f"Symbols after unsubscribe: {symbols_after}")
     
     if ticks_before_unsubscribe == 0:
-        print("\n✅ TEST PASSED: Unsubscribe method works (no errors during calls)")
+        print("\n[OK] TEST PASSED: Unsubscribe method works (no errors during calls)")
         print("   Note: No ticks received - likely due to market closed or test symbols")
     elif ticks_after_unsubscribe == ticks_before_unsubscribe:
-        print("\n✅ TEST PASSED: Unsubscribe method working correctly")
+        print("\n[OK] TEST PASSED: Unsubscribe method working correctly")
         print("   No new ticks received after unsubscribe")
     else:
-        print("\n⚠️  TEST INCONCLUSIVE: Some ticks received after unsubscribe")
+        print("\n[WARN]  TEST INCONCLUSIVE: Some ticks received after unsubscribe")
         print("   This could be due to timing or WebSocket behavior")
     
     print("\n" + "=" * 60)
@@ -198,14 +198,14 @@ if __name__ == "__main__":
     try:
         success = test_subscribe_unsubscribe()
         if success:
-            print("🎉 Test completed successfully!")
+            print("[DONE] Test completed successfully!")
         else:
-            print("❌ Test failed!")
+            print("[FAIL] Test failed!")
             sys.exit(1)
     except KeyboardInterrupt:
-        print("\n⏹️  Test interrupted by user")
+        print("\n[STOP_SQ]  Test interrupted by user")
     except Exception as e:
-        print(f"\n💥 Test failed with exception: {e}")
+        print(f"\n[BOOM] Test failed with exception: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

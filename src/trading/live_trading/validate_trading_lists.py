@@ -126,7 +126,7 @@ class TradingListValidator:
             print("CONTINUATION LIST:")
             valid_count = 0
             for symbol, is_valid, price in continuation_results:
-                status = "✅" if is_valid else "❌"
+                status = "[OK]" if is_valid else "[FAIL]"
                 print(f"  {status} {symbol}: {price}")
                 if is_valid:
                     valid_count += 1
@@ -138,7 +138,7 @@ class TradingListValidator:
             print("REVERSAL LIST:")
             valid_count = 0
             for symbol, is_valid, price in reversal_results:
-                status = "✅" if is_valid else "❌"
+                status = "[OK]" if is_valid else "[FAIL]"
                 print(f"  {status} {symbol}: {price}")
                 if is_valid:
                     valid_count += 1
@@ -152,9 +152,9 @@ class TradingListValidator:
         print(f"OVERALL SUMMARY: {total_valid}/{total_stocks} stocks valid ({(total_valid/total_stocks*100):.1f}%)")
 
         if total_valid == total_stocks:
-            print("✅ ALL STOCKS READY FOR LIVE TRADING")
+            print("[OK] ALL STOCKS READY FOR LIVE TRADING")
         else:
-            print("⚠️  CHECK FAILED STOCKS ABOVE")
+            print("[WARN]  CHECK FAILED STOCKS ABOVE")
 
 def main():
     """Main entry point"""

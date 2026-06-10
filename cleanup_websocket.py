@@ -14,12 +14,12 @@ import sys
 def cleanup_websocket_sessions():
     """Send disconnect signals to Upstox server for all configured tokens"""
 
-    print("🧹 WebSocket Session Cleanup Tool")
+    print("[BROOM] WebSocket Session Cleanup Tool")
     print("=" * 40)
 
     config_file = "upstox_config.json"
     if not os.path.exists(config_file):
-        print(f"❌ Config file not found: {config_file}")
+        print(f"[FAIL] Config file not found: {config_file}")
         return False
 
     try:
@@ -37,13 +37,13 @@ def cleanup_websocket_sessions():
             tokens_to_cleanup.append(('Option App', config['option_access_token']))
 
         if not tokens_to_cleanup:
-            print("❌ No access tokens found in config")
+            print("[FAIL] No access tokens found in config")
             return False
 
         print(f"Found {len(tokens_to_cleanup)} token(s) to cleanup")
 
         for app_name, access_token in tokens_to_cleanup:
-            print(f"\n🔧 Cleaning up {app_name}...")
+            print(f"\n[WRENCH] Cleaning up {app_name}...")
 
             try:
                 # Create configuration
@@ -60,14 +60,14 @@ def cleanup_websocket_sessions():
                 print(f" Disconnect signal sent for {app_name}")
 
             except Exception as e:
-                print(f"⚠️ Disconnect attempt failed for {app_name}: {e}")
+                print(f"[WARN] Disconnect attempt failed for {app_name}: {e}")
                 # This is often normal if no active connection exists
 
-        print(f"\n⏳ Waiting 5 seconds for server to process disconnects...")
+        print(f"\n[WAIT] Waiting 5 seconds for server to process disconnects...")
         time.sleep(5)
 
         print(" Cleanup complete!")
-        print("\n📋 Next Steps:")
+        print("\n[CLIPBOARD] Next Steps:")
         print("1. Wait 10-15 minutes for server-side session cleanup")
         print("2. Regenerate fresh access tokens if needed")
         print("3. Test WebSocket connection with your main script")
@@ -75,16 +75,16 @@ def cleanup_websocket_sessions():
         return True
 
     except Exception as e:
-        print(f"❌ Cleanup failed: {e}")
+        print(f"[FAIL] Cleanup failed: {e}")
         return False
 
 if __name__ == "__main__":
     success = cleanup_websocket_sessions()
 
     if success:
-        print("\n🎯 Cleanup successful - server sessions should clear within 10-15 minutes")
+        print("\n[TARGET] Cleanup successful - server sessions should clear within 10-15 minutes")
     else:
-        print("\n❌ Cleanup encountered issues")
+        print("\n[FAIL] Cleanup encountered issues")
 
-    print("\n💡 Pro Tip: Run this script after any bot crashes or forced kills")
-    print("💡 Prevents lingering connections that cause 403 Forbidden errors")
+    print("\n[IDEA] Pro Tip: Run this script after any bot crashes or forced kills")
+    print("[IDEA] Prevents lingering connections that cause 403 Forbidden errors")

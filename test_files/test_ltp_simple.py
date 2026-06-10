@@ -46,19 +46,19 @@ def get_opening_price(access_token, instrument_key):
     }
     response = requests.get(url, headers=headers).json()
     
-    print(f"🔍 Debug: Response status: {response.get('status')}")
-    print(f"🔍 Debug: Response data keys: {list(response.get('data', {}).keys())}")
+    print(f"[SEARCH] Debug: Response status: {response.get('status')}")
+    print(f"[SEARCH] Debug: Response data keys: {list(response.get('data', {}).keys())}")
     
     if response.get('status') == 'success':
         data = response.get('data', {}).get(instrument_key, {})
-        print(f"🔍 Debug: Looking for key '{instrument_key}' - found: {bool(data)}")
+        print(f"[SEARCH] Debug: Looking for key '{instrument_key}' - found: {bool(data)}")
         
         # Try the actual key format that the API returns
         actual_data = None
         for key, value in response.get('data', {}).items():
             if 'RELIANCE' in key:
                 actual_data = value
-                print(f"🔍 Debug: Found RELIANCE data with key: {key}")
+                print(f"[SEARCH] Debug: Found RELIANCE data with key: {key}")
                 break
         
         if not actual_data:
@@ -66,7 +66,7 @@ def get_opening_price(access_token, instrument_key):
         
         # The API uses 'last_price' field, not 'ltp'
         price = actual_data.get('last_price') if actual_data else None
-        print(f"🔍 Debug: LTP price: {price}")
+        print(f"[SEARCH] Debug: LTP price: {price}")
         
         if price:
             return float(price)
@@ -92,24 +92,24 @@ def get_instrument_key(symbol):
 def main():
     """Test the LTP fetching function"""
     print("=" * 60)
-    print("🧪 SIMPLE LTP TEST (Your Exact Function)")
+    print("[TEST_TUBE] SIMPLE LTP TEST (Your Exact Function)")
     print("=" * 60)
     
     # Load access token
     access_token = load_access_token()
     if not access_token:
-        print("❌ No access token available")
+        print("[FAIL] No access token available")
         return
     
-    print(f"✅ Access token loaded")
-    print(f"⏰ Current time: {datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S %Z')}")
+    print(f"[OK] Access token loaded")
+    print(f"[ALARM] Current time: {datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S %Z')}")
     
     # Test with RELIANCE
     test_symbol = "RELIANCE"
     instrument_key = get_instrument_key(test_symbol)
     
-    print(f"🎯 Testing with symbol: {test_symbol}")
-    print(f"🎯 Instrument key: {instrument_key}")
+    print(f"[TARGET] Testing with symbol: {test_symbol}")
+    print(f"[TARGET] Instrument key: {instrument_key}")
     print()
     
     try:
@@ -117,16 +117,16 @@ def main():
         ltp_price = get_opening_price(access_token, instrument_key)
         
         if ltp_price:
-            print(f"✅ SUCCESS: Got LTP for {test_symbol}: ₹{ltp_price:.2f}")
+            print(f"[OK] SUCCESS: Got LTP for {test_symbol}: ₹{ltp_price:.2f}")
         else:
-            print(f"❌ FAILED: No LTP data received for {test_symbol}")
+            print(f"[FAIL] FAILED: No LTP data received for {test_symbol}")
             
     except Exception as e:
-        print(f"❌ ERROR: {e}")
+        print(f"[FAIL] ERROR: {e}")
     
     print()
     print("=" * 60)
-    print("🏁 TEST COMPLETED")
+    print("[FLAG] TEST COMPLETED")
     print("=" * 60)
 
 if __name__ == "__main__":

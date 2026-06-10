@@ -102,10 +102,10 @@ if __name__ == "__main__":
     success = test_api_opening_price()
     
     if success:
-        print("\n🎉 API TEST SUCCESSFUL!")
+        print("\n[DONE] API TEST SUCCESSFUL!")
         print("The Upstox API is working correctly for opening price capture.")
     else:
-        print("\n❌ API TEST FAILED!")
+        print("\n[FAIL] API TEST FAILED!")
         print("There are issues with the Upstox API or configuration.")
     
     print("\nTest completed.")

@@ -34,7 +34,7 @@ def load_test_stocks():
             return symbols[:2]  # Test with first 2 stocks
 
     except Exception as e:
-        print(f"❌ Error loading stocks: {e}")
+        print(f"[FAIL] Error loading stocks: {e}")
         return []
 
 def get_instrument_keys(fetcher, symbols):
@@ -48,17 +48,17 @@ def get_instrument_keys(fetcher, symbols):
             if key:
                 instrument_keys.append(key)
                 stock_symbols[key] = symbol
-                print(f"✅ {symbol} → {key}")
+                print(f"[OK] {symbol} → {key}")
             else:
-                print(f"❌ {symbol} → No key found")
+                print(f"[FAIL] {symbol} → No key found")
         except Exception as e:
-            print(f"❌ {symbol} → Error: {e}")
+            print(f"[FAIL] {symbol} → Error: {e}")
 
     return instrument_keys, stock_symbols
 
 def test_live_ticks():
     """Test live tick streaming"""
-    print("🧪 LIVE TICKS TEST")
+    print("[TEST_TUBE] LIVE TICKS TEST")
     print("=" * 50)
     print(f"Time: {datetime.now(IST).strftime('%Y-%m-%d %H:%M:%S %Z')}")
     print()
@@ -66,10 +66,10 @@ def test_live_ticks():
     # Load stocks
     symbols = load_test_stocks()
     if not symbols:
-        print("❌ No stocks to test")
+        print("[FAIL] No stocks to test")
         return 1
 
-    print(f"📋 Testing with stocks: {symbols}")
+    print(f"[CLIPBOARD] Testing with stocks: {symbols}")
     print()
 
     # Get Upstox fetcher
@@ -78,11 +78,11 @@ def test_live_ticks():
     # Get instrument keys
     instrument_keys, stock_symbols = get_instrument_keys(fetcher, symbols)
     if not instrument_keys:
-        print("❌ No instrument keys found")
+        print("[FAIL] No instrument keys found")
         return 1
 
     print()
-    print("🔌 Starting WebSocket connection...")
+    print("[PLUG] Starting WebSocket connection...")
     print("You should see live price updates below:")
     print("-" * 50)
 
@@ -102,10 +102,10 @@ def test_live_ticks():
         streamer.run()
 
     except KeyboardInterrupt:
-        print("\n🛑 Stopped by user")
+        print("\n[STOP] Stopped by user")
 
     print("-" * 50)
-    print("✅ Live ticks test completed")
+    print("[OK] Live ticks test completed")
     return 0
 
 if __name__ == "__main__":

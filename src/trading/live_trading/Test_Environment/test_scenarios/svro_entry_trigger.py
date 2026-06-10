@@ -24,7 +24,7 @@ logger = logging.getLogger('SVROEntryTrigger')
 
 def test_svro_entry_trigger():
     """Test SVRO entry trigger logic"""
-    print("🧪 Testing SVRO Entry Trigger Logic")
+    print("[TEST_TUBE] Testing SVRO Entry Trigger Logic")
     print("=" * 50)
     
     monitor = StockMonitor()
@@ -107,13 +107,13 @@ def test_svro_entry_trigger():
         
         results.append(result)
         
-        status = "✅ PASS" if passed else "❌ FAIL"
+        status = "[OK] PASS" if passed else "[FAIL] FAIL"
         
         print(f"{status} Price {scenario['price']:.2f} - {scenario['reason']}")
         print(f"     Expected: {scenario['expected_trigger']}, Got: {should_trigger}")
     
     # Test entry execution
-    print(f"\n🎯 Testing Entry Execution")
+    print(f"\n[TARGET] Testing Entry Execution")
     
     # Reset stock state
     stock.entered = False
@@ -128,7 +128,7 @@ def test_svro_entry_trigger():
         entry_time = datetime.now()
         stock.enter_position(trigger_price, entry_time)
         
-        print(f"✅ Entry triggered successfully!")
+        print(f"[OK] Entry triggered successfully!")
         print(f"   Entry Price: {stock.entry_price}")
         print(f"   Entry Time: {stock.entry_time}")
         print(f"   Entered: {stock.entered}")
@@ -137,22 +137,22 @@ def test_svro_entry_trigger():
         
         entry_test_passed = True
     else:
-        print(f"❌ Entry trigger failed!")
+        print(f"[FAIL] Entry trigger failed!")
         entry_test_passed = False
     
     # Summary
     trigger_passed_count = sum(1 for r in results if r['passed'])
     total_count = len(results)
     
-    print(f"\n📊 Entry Trigger Results: {trigger_passed_count}/{total_count} passed")
+    print(f"\n[CHART] Entry Trigger Results: {trigger_passed_count}/{total_count} passed")
     
     overall_success = (trigger_passed_count == total_count) and entry_test_passed
     
     if overall_success:
-        print("🎉 All SVRO entry trigger tests PASSED!")
+        print("[DONE] All SVRO entry trigger tests PASSED!")
         return True
     else:
-        print("❌ Some SVRO entry trigger tests FAILED!")
+        print("[FAIL] Some SVRO entry trigger tests FAILED!")
         return False
 
 

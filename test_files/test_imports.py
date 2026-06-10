@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.join('src', 'trading', 'live_trading'))
 
 def test_imports():
     """Test all imports for live trading bot"""
-    print("🧪 Testing Live Trading Bot Imports")
+    print("[TEST_TUBE] Testing Live Trading Bot Imports")
     print("=" * 50)
 
     tests = [
@@ -32,40 +32,40 @@ def test_imports():
         try:
             module = __import__(module_name)
             cls = getattr(module, class_name)
-            print(f"✅ {module_name}.{class_name}")
+            print(f"[OK] {module_name}.{class_name}")
         except Exception as e:
-            print(f"❌ {module_name}.{class_name}: {e}")
+            print(f"[FAIL] {module_name}.{class_name}: {e}")
             failed.append((module_name, class_name))
 
     # Test upstox_fetcher separately
     try:
         from utils.upstox_fetcher import UpstoxFetcher
-        print("✅ utils.upstox_fetcher.UpstoxFetcher")
+        print("[OK] utils.upstox_fetcher.UpstoxFetcher")
     except Exception as e:
-        print(f"❌ utils.upstox_fetcher.UpstoxFetcher: {e}")
+        print(f"[FAIL] utils.upstox_fetcher.UpstoxFetcher: {e}")
         failed.append(("utils.upstox_fetcher", "UpstoxFetcher"))
 
     # Test stock_scorer
     try:
         from scanner.stock_scorer import stock_scorer
-        print("✅ scanner.stock_scorer.stock_scorer")
+        print("[OK] scanner.stock_scorer.stock_scorer")
     except Exception as e:
-        print(f"❌ scanner.stock_scorer.stock_scorer: {e}")
+        print(f"[FAIL] scanner.stock_scorer.stock_scorer: {e}")
         failed.append(("scanner.stock_scorer", "stock_scorer"))
 
     print("\n" + "=" * 50)
     if failed:
-        print(f"❌ {len(failed)} imports failed")
+        print(f"[FAIL] {len(failed)} imports failed")
         for module, cls in failed:
             print(f"   - {module}.{cls}")
         return False
     else:
-        print("✅ All imports successful!")
+        print("[OK] All imports successful!")
         return True
 
 def test_stock_classifier():
     """Test stock classifier functionality"""
-    print("\n🧪 Testing Stock Classifier")
+    print("\n[TEST_TUBE] Testing Stock Classifier")
     print("-" * 30)
 
     try:
@@ -76,7 +76,7 @@ def test_stock_classifier():
         result = classifier.load_reversal_stocks()
         symbols, situations = result
 
-        print(f"✅ Loaded {len(symbols)} reversal stocks:")
+        print(f"[OK] Loaded {len(symbols)} reversal stocks:")
         for symbol, situation in situations.items():
             desc = {
                 'reversal_s1': 'Uptrend (Continuation method)',
@@ -86,21 +86,21 @@ def test_stock_classifier():
 
         # Test continuation
         cont_symbols = classifier.load_continuation_stocks()
-        print(f"✅ Loaded {len(cont_symbols)} continuation stocks")
+        print(f"[OK] Loaded {len(cont_symbols)} continuation stocks")
 
         # Test full config
         config = classifier.get_stock_configuration('r')
-        print(f"✅ Generated config for {len(config['symbols'])} stocks")
+        print(f"[OK] Generated config for {len(config['symbols'])} stocks")
 
         return True
 
     except Exception as e:
-        print(f"❌ Stock classifier test failed: {e}")
+        print(f"[FAIL] Stock classifier test failed: {e}")
         return False
 
 def test_argument_parsing():
     """Test argument parsing"""
-    print("\n🧪 Testing Argument Parsing")
+    print("\n[TEST_TUBE] Testing Argument Parsing")
     print("-" * 30)
 
     try:
@@ -109,18 +109,18 @@ def test_argument_parsing():
         import argparse
         try:
             config = parse_bot_arguments()
-            print("❌ Should have shown help")
+            print("[FAIL] Should have shown help")
             return False
         except SystemExit:
-            print("✅ Help displayed correctly (SystemExit expected)")
+            print("[OK] Help displayed correctly (SystemExit expected)")
             return True
 
     except Exception as e:
-        print(f"❌ Argument parsing test failed: {e}")
+        print(f"[FAIL] Argument parsing test failed: {e}")
         return False
 
 if __name__ == "__main__":
-    print("🚀 LIVE TRADING BOT - IMPORT VERIFICATION")
+    print("[ROCKET] LIVE TRADING BOT - IMPORT VERIFICATION")
     print("=" * 60)
 
     success = True
@@ -139,11 +139,11 @@ if __name__ == "__main__":
 
     print("\n" + "=" * 60)
     if success:
-        print("🎉 ALL TESTS PASSED - Ready for live trading!")
+        print("[DONE] ALL TESTS PASSED - Ready for live trading!")
         print("\nUsage:")
         print("  python run_live_bot.py c    # Continuation trading")
         print("  python run_live_bot.py r    # Reversal trading")
     else:
-        print("❌ SOME TESTS FAILED - Check errors above")
+        print("[FAIL] SOME TESTS FAILED - Check errors above")
 
     sys.exit(0 if success else 1)

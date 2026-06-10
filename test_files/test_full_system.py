@@ -49,9 +49,9 @@ def test_full_system():
             logger.info(f"  ... and {len(reversal_results) - 5} more")
         
         logger.info("\n=== System Test Summary ===")
-        logger.info(f"✅ Continuation scan: {len(continuation_results)} candidates found")
-        logger.info(f"✅ Reversal scan: {len(reversal_results)} candidates found")
-        logger.info("✅ All system components working correctly!")
+        logger.info(f"[OK] Continuation scan: {len(continuation_results)} candidates found")
+        logger.info(f"[OK] Reversal scan: {len(reversal_results)} candidates found")
+        logger.info("[OK] All system components working correctly!")
         
         return True
         

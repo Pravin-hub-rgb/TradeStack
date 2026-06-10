@@ -120,7 +120,7 @@ def test_candidate_files():
 
 def main():
     """Run all tests"""
-    print("🧪 LIVE TRADING MODULE INTEGRATION TEST")
+    print("[TEST_TUBE] LIVE TRADING MODULE INTEGRATION TEST")
     print("=" * 50)
 
     tests = [
@@ -134,7 +134,7 @@ def main():
     total = len(tests)
 
     for test_name, test_func in tests:
-        print(f"\n🔍 Running {test_name} test...")
+        print(f"\n[SEARCH] Running {test_name} test...")
         if test_func():
             passed += 1
         else:
@@ -144,7 +144,7 @@ def main():
     print(f"Test Results: {passed}/{total} passed")
 
     if passed == total:
-        print("🎉 All tests passed! Module is ready.")
+        print("[DONE] All tests passed! Module is ready.")
         return 0
     else:
         print("Some tests failed. Check the output above.")

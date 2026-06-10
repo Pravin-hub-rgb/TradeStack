@@ -24,7 +24,7 @@ logger = logging.getLogger('SVROVolumeValidation')
 
 def test_svro_volume_validation():
     """Test SVRO volume validation requirements (7.5% threshold)"""
-    print("🧪 Testing SVRO Volume Validation Requirements")
+    print("[TEST_TUBE] Testing SVRO Volume Validation Requirements")
     print("=" * 50)
     
     monitor = StockMonitor()
@@ -112,7 +112,7 @@ def test_svro_volume_validation():
         
         results.append(result)
         
-        status = "✅ PASS" if passed else "❌ FAIL"
+        status = "[OK] PASS" if passed else "[FAIL] FAIL"
         volume_pct = result['volume_pct']
         
         print(f"{status} {test_case['symbol']}: {volume_pct:.1f}% - {test_case['reason']}")
@@ -124,13 +124,13 @@ def test_svro_volume_validation():
     passed_count = sum(1 for r in results if r['passed'])
     total_count = len(results)
     
-    print(f"\n📊 Volume Validation Results: {passed_count}/{total_count} passed")
+    print(f"\n[CHART] Volume Validation Results: {passed_count}/{total_count} passed")
     
     if passed_count == total_count:
-        print("🎉 All SVRO volume validation tests PASSED!")
+        print("[DONE] All SVRO volume validation tests PASSED!")
         return True
     else:
-        print("❌ Some SVRO volume validation tests FAILED!")
+        print("[FAIL] Some SVRO volume validation tests FAILED!")
         return False
 
 

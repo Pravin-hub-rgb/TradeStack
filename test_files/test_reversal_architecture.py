@@ -23,25 +23,25 @@ def test_reversal_architecture():
     # Test 1: Import ReversalStockMonitor (should work)
     try:
         from reversal_stock_monitor import ReversalStockMonitor
-        print("✅ ReversalStockMonitor imported successfully")
+        print("[OK] ReversalStockMonitor imported successfully")
     except ImportError as e:
-        print(f"❌ Failed to import ReversalStockMonitor: {e}")
+        print(f"[FAIL] Failed to import ReversalStockMonitor: {e}")
         return False
     
     # Test 2: Import StockMonitor (should fail - not available in reversal system)
     try:
         from stock_monitor import StockMonitor
-        print("❌ StockMonitor should not be available in reversal system")
+        print("[FAIL] StockMonitor should not be available in reversal system")
         return False
     except ImportError:
-        print("✅ StockMonitor correctly not available in reversal system")
+        print("[OK] StockMonitor correctly not available in reversal system")
     
     # Test 3: Create ReversalStockMonitor instance
     try:
         monitor = ReversalStockMonitor()
-        print("✅ ReversalStockMonitor instance created successfully")
+        print("[OK] ReversalStockMonitor instance created successfully")
     except Exception as e:
-        print(f"❌ Failed to create ReversalStockMonitor: {e}")
+        print(f"[FAIL] Failed to create ReversalStockMonitor: {e}")
         return False
     
     # Test 4: Add stocks with different situations
@@ -52,9 +52,9 @@ def test_reversal_architecture():
         # Add Strong Start stock (reversal_s1)
         monitor.add_stock("TEST_SS", "test_ss_key", 100.0, "reversal_s1")
         
-        print("✅ Stocks added successfully with different situations")
+        print("[OK] Stocks added successfully with different situations")
     except Exception as e:
-        print(f"❌ Failed to add stocks: {e}")
+        print(f"[FAIL] Failed to add stocks: {e}")
         return False
     
     # Test 5: Test real-time low violation checking
@@ -67,7 +67,7 @@ def test_reversal_architecture():
         
         # Validate gap
         gap_valid = oops_stock.validate_gap()
-        print(f"✅ OOPS gap validation: {gap_valid}")
+        print(f"[OK] OOPS gap validation: {gap_valid}")
         
         # Test real-time low violation checking
         import sys
@@ -85,13 +85,13 @@ def test_reversal_architecture():
         
         # Check if low violation was detected
         if oops_stock.low_violation_checked:
-            print("✅ Real-time low violation checking working")
+            print("[OK] Real-time low violation checking working")
         else:
-            print("❌ Real-time low violation checking not working")
+            print("[FAIL] Real-time low violation checking not working")
             return False
             
     except Exception as e:
-        print(f"❌ Failed real-time low violation test: {e}")
+        print(f"[FAIL] Failed real-time low violation test: {e}")
         return False
     
     # Test 6: Test Strong Start entry level tracking
@@ -104,7 +104,7 @@ def test_reversal_architecture():
         
         # Validate gap
         gap_valid = ss_stock.validate_gap()
-        print(f"✅ Strong Start gap validation: {gap_valid}")
+        print(f"[OK] Strong Start gap validation: {gap_valid}")
         
         # Test real-time entry level tracking
         tick_processor = ReversalTickProcessor(ss_stock)
@@ -118,34 +118,34 @@ def test_reversal_architecture():
         
         # Check if entry levels were updated
         if ss_stock.entry_high is not None and ss_stock.entry_high >= 110.0:
-            print("✅ Real-time entry level tracking working")
+            print("[OK] Real-time entry level tracking working")
         else:
-            print(f"❌ Real-time entry level tracking not working: entry_high={ss_stock.entry_high}")
+            print(f"[FAIL] Real-time entry level tracking not working: entry_high={ss_stock.entry_high}")
             return False
             
     except Exception as e:
-        print(f"❌ Failed Strong Start entry level test: {e}")
+        print(f"[FAIL] Failed Strong Start entry level test: {e}")
         return False
     
     # Test 7: Test utility methods
     try:
         # Test get_subscribed_symbols
         symbols = monitor.get_subscribed_symbols()
-        print(f"✅ get_subscribed_symbols: {symbols}")
+        print(f"[OK] get_subscribed_symbols: {symbols}")
         
         # Test get_low_violation_stocks
         low_violations = monitor.get_low_violation_stocks()
-        print(f"✅ get_low_violation_stocks: {len(low_violations)} stocks")
+        print(f"[OK] get_low_violation_stocks: {len(low_violations)} stocks")
         
     except Exception as e:
-        print(f"❌ Failed utility methods test: {e}")
+        print(f"[FAIL] Failed utility methods test: {e}")
         return False
     
     print("\n=== ALL TESTS PASSED ===")
-    print("✅ Reversal architecture separation is working correctly")
-    print("✅ Real-time low violation checking is working")
-    print("✅ Real-time entry level tracking is working")
-    print("✅ No dependencies on StockMonitor in reversal system")
+    print("[OK] Reversal architecture separation is working correctly")
+    print("[OK] Real-time low violation checking is working")
+    print("[OK] Real-time entry level tracking is working")
+    print("[OK] No dependencies on StockMonitor in reversal system")
     
     return True
 
@@ -168,13 +168,13 @@ def test_integration_with_real_time_low_checking():
         # Create integration
         integration = ReversalIntegration(streamer, monitor, paper_trader)
         
-        print("✅ Integration created successfully")
-        print("✅ Real-time low violation checking integrated")
+        print("[OK] Integration created successfully")
+        print("[OK] Real-time low violation checking integrated")
         
         return True
         
     except Exception as e:
-        print(f"❌ Integration test failed: {e}")
+        print(f"[FAIL] Integration test failed: {e}")
         return False
 
 if __name__ == "__main__":
@@ -186,11 +186,11 @@ if __name__ == "__main__":
     integration_test = test_integration_with_real_time_low_checking()
     
     if architecture_test and integration_test:
-        print("\n🎉 ALL TESTS PASSED! 🎉")
+        print("\n[DONE] ALL TESTS PASSED! [DONE]")
         print("The reversal bot architectural separation is complete and working correctly.")
         print("Real-time low violation checking is implemented and functional.")
         sys.exit(0)
     else:
-        print("\n❌ SOME TESTS FAILED")
+        print("\n[FAIL] SOME TESTS FAILED")
         print("Please check the implementation and fix any issues.")
         sys.exit(1)

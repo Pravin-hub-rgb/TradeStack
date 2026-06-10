@@ -69,7 +69,7 @@ class OpenRangeMonitoringTest:
 
     def test_low_violation_detection(self):
         """Test low violation detection during monitoring window"""
-        print("🧪 Testing Low Violation Detection")
+        print("[TEST_TUBE] Testing Low Violation Detection")
         print("=" * 50)
         print("Testing: Low violation monitoring (1% below open price)")
         print("Focus: Price dropping below 1% threshold triggers rejection")
@@ -146,7 +146,7 @@ class OpenRangeMonitoringTest:
                     if not violation_detected:
                         violation_detected = True
                         violation_tick = tick
-                        logger.info(f"  ⚠️  Low violation detected at tick {tick}: Price {price:.2f} < Threshold {threshold:.2f}")
+                        logger.info(f"  [WARN]  Low violation detected at tick {tick}: Price {price:.2f} < Threshold {threshold:.2f}")
 
                 # Log price movement
                 if tick % 20 == 0:
@@ -169,7 +169,7 @@ class OpenRangeMonitoringTest:
 
             results.append(result)
 
-            status = "✅ PASS" if passed else "❌ FAIL"
+            status = "[OK] PASS" if passed else "[FAIL] FAIL"
             logger.info(f"  {status} {scenario['name']}: Expected {'VIOLATION' if scenario['expected_violation'] else 'NO VIOLATION'}, Got {'VIOLATION' if actual_violation else 'NO VIOLATION'}")
             if not passed:
                 logger.info(f"       Expected: {scenario['expected_violation']}, Actual: {actual_violation}")
@@ -178,7 +178,7 @@ class OpenRangeMonitoringTest:
 
     def test_open_range_high_tracking(self):
         """Test high tracking during the 9:15-9:20 window"""
-        print("\n🧪 Testing Open Range High Tracking")
+        print("\n[TEST_TUBE] Testing Open Range High Tracking")
         print("=" * 50)
         print("Testing: High tracking during 9:15-9:20 monitoring window")
         print("Focus: Entry high set correctly at 9:20")
@@ -270,7 +270,7 @@ class OpenRangeMonitoringTest:
 
             high_results.append(result)
 
-            status = "✅ PASS" if passed else "❌ FAIL"
+            status = "[OK] PASS" if passed else "[FAIL] FAIL"
             logger.info(f"  {status} {scenario['name']}: Expected {expected_entry_high:.2f}, Got {actual_entry_high:.2f}")
             if not passed:
                 logger.info(f"       Difference: {abs(actual_entry_high - expected_entry_high):.2f}")
@@ -279,7 +279,7 @@ class OpenRangeMonitoringTest:
 
     def test_entry_signal_generation(self):
         """Test entry signal generation after 9:20"""
-        print("\n🧪 Testing Entry Signal Generation")
+        print("\n[TEST_TUBE] Testing Entry Signal Generation")
         print("=" * 50)
         print("Testing: Entry signal when price breaks above entry high")
         print("Focus: Signal generation after 9:20 preparation")
@@ -354,7 +354,7 @@ class OpenRangeMonitoringTest:
                         if not signal_triggered:
                             signal_triggered = True
                             signal_tick = tick
-                            logger.info(f"  🎯 Entry signal triggered at tick {tick}: Price {price:.2f} >= Entry High {monitor_stock.entry_high:.2f}")
+                            logger.info(f"  [TARGET] Entry signal triggered at tick {tick}: Price {price:.2f} >= Entry High {monitor_stock.entry_high:.2f}")
 
                 # Log price movement
                 if tick % 20 == 0:
@@ -375,7 +375,7 @@ class OpenRangeMonitoringTest:
 
             entry_results.append(result)
 
-            status = "✅ PASS" if passed else "❌ FAIL"
+            status = "[OK] PASS" if passed else "[FAIL] FAIL"
             logger.info(f"  {status} {scenario['name']}: Expected {'SIGNAL' if scenario['expected_signal'] else 'NO SIGNAL'}, Got {'SIGNAL' if actual_signal else 'NO SIGNAL'}")
             if not passed:
                 logger.info(f"       Expected: {scenario['expected_signal']}, Actual: {actual_signal}")
@@ -384,7 +384,7 @@ class OpenRangeMonitoringTest:
 
     def run_comprehensive_open_range_test(self):
         """Run comprehensive open range monitoring tests"""
-        print("🧪 Starting Comprehensive Open Range Monitoring Test")
+        print("[TEST_TUBE] Starting Comprehensive Open Range Monitoring Test")
         print("=" * 60)
         print("Testing: All aspects of open range monitoring for SVRO system")
         print("Focus: Low violation, high tracking, and entry signal generation")
@@ -410,10 +410,10 @@ class OpenRangeMonitoringTest:
         print("="*60)
 
         # Low violation test results
-        print("\n⚠️  LOW VIOLATION TESTS:")
+        print("\n[WARN]  LOW VIOLATION TESTS:")
         low_violation_passed = 0
         for result in low_violation_results:
-            status = "✅ PASS" if result['passed'] else "❌ FAIL"
+            status = "[OK] PASS" if result['passed'] else "[FAIL] FAIL"
             print(f"  {status} {result['scenario']}")
             print(f"     Expected: {'VIOLATION' if result['expected_violation'] else 'NO VIOLATION'}")
             print(f"     Actual: {'VIOLATION' if result['actual_violation'] else 'NO VIOLATION'}")
@@ -426,10 +426,10 @@ class OpenRangeMonitoringTest:
             print()
 
         # High tracking test results
-        print("\n📈 HIGH TRACKING TESTS:")
+        print("\n[TREND_UP] HIGH TRACKING TESTS:")
         high_tracking_passed = 0
         for result in high_tracking_results:
-            status = "✅ PASS" if result['passed'] else "❌ FAIL"
+            status = "[OK] PASS" if result['passed'] else "[FAIL] FAIL"
             print(f"  {status} {result['scenario']}")
             print(f"     Expected Entry High: {result['expected_entry_high']:.2f}")
             print(f"     Actual Entry High: {result['actual_entry_high']:.2f}")
@@ -440,10 +440,10 @@ class OpenRangeMonitoringTest:
             print()
 
         # Entry signal test results
-        print("\n🎯 ENTRY SIGNAL TESTS:")
+        print("\n[TARGET] ENTRY SIGNAL TESTS:")
         entry_signal_passed = 0
         for result in entry_signal_results:
-            status = "✅ PASS" if result['passed'] else "❌ FAIL"
+            status = "[OK] PASS" if result['passed'] else "[FAIL] FAIL"
             print(f"  {status} {result['scenario']}")
             print(f"     Expected: {'SIGNAL' if result['expected_signal'] else 'NO SIGNAL'}")
             print(f"     Actual: {'SIGNAL' if result['actual_signal'] else 'NO SIGNAL'}")
@@ -465,25 +465,25 @@ class OpenRangeMonitoringTest:
         print(f"  Success Rate: {total_passed/total_tests*100:.1f}%")
 
         # Critical functionality validation
-        print(f"\n🎯 CRITICAL FUNCTIONALITY VALIDATION:")
+        print(f"\n[TARGET] CRITICAL FUNCTIONALITY VALIDATION:")
 
         # Low violation detection
         if low_violation_passed == len(low_violation_results):
-            print(f"  ✅ Low violation detection working correctly")
+            print(f"  [OK] Low violation detection working correctly")
         else:
-            print(f"  ❌ Low violation detection has issues")
+            print(f"  [FAIL] Low violation detection has issues")
 
         # High tracking
         if high_tracking_passed == len(high_tracking_results):
-            print(f"  ✅ High tracking working correctly")
+            print(f"  [OK] High tracking working correctly")
         else:
-            print(f"  ❌ High tracking has issues")
+            print(f"  [FAIL] High tracking has issues")
 
         # Entry signal generation
         if entry_signal_passed == len(entry_signal_results):
-            print(f"  ✅ Entry signal generation working correctly")
+            print(f"  [OK] Entry signal generation working correctly")
         else:
-            print(f"  ❌ Entry signal generation has issues")
+            print(f"  [FAIL] Entry signal generation has issues")
 
         # Final assessment
         success = (low_violation_passed == len(low_violation_results) and 
@@ -492,7 +492,7 @@ class OpenRangeMonitoringTest:
 
         print("\n" + "="*60)
         if success:
-            print("🎉 COMPREHENSIVE OPEN RANGE MONITORING TESTS PASSED!")
+            print("[DONE] COMPREHENSIVE OPEN RANGE MONITORING TESTS PASSED!")
             print("The SVRO open range monitoring system correctly:")
             print("  - Detects low violations (1% threshold)")
             print("  - Tracks daily high during monitoring window")
@@ -500,7 +500,7 @@ class OpenRangeMonitoringTest:
             print("  - Generates entry signals when price breaks entry high")
             print("  - Rejects stocks that violate low threshold")
         else:
-            print("❌ SOME OPEN RANGE MONITORING TESTS FAILED!")
+            print("[FAIL] SOME OPEN RANGE MONITORING TESTS FAILED!")
             print("Issues detected with:")
             if low_violation_passed < len(low_violation_results):
                 print("  - Low violation detection")

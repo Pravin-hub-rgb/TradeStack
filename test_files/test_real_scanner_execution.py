@@ -30,12 +30,12 @@ def test_real_scanner_execution(symbol: str, scan_date: date):
         # Check if our symbol is in the results
         symbol_found = any(r['symbol'] == symbol for r in result)
         
-        print(f"   📊 Total candidates found: {len(result)}")
-        print(f"   🎯 {symbol} in results: {symbol_found}")
+        print(f"   [CHART] Total candidates found: {len(result)}")
+        print(f"   [TARGET] {symbol} in results: {symbol_found}")
         
         if symbol_found:
             symbol_result = next(r for r in result if r['symbol'] == symbol)
-            print(f"   💰 {symbol} details:")
+            print(f"   [MONEY] {symbol} details:")
             print(f"      Close: {symbol_result['close']:.2f}")
             print(f"      20 MA: {symbol_result['sma20']:.2f}")
             print(f"      Distance from MA: {symbol_result['dist_to_ma_pct']:.2f}%")
@@ -45,19 +45,19 @@ def test_real_scanner_execution(symbol: str, scan_date: date):
             print(f"      Depth: {symbol_result['depth_rs']:.2f} ({symbol_result['depth_pct']:.1f}%)")
             print(f"      ADR: {symbol_result['adr_pct']:.1f}%")
         else:
-            print(f"   ❌ {symbol} NOT found in scanner results")
+            print(f"   [FAIL] {symbol} NOT found in scanner results")
         
         return symbol_found
         
     except Exception as e:
-        print(f"\n❌ Error testing {symbol}: {e}")
+        print(f"\n[FAIL] Error testing {symbol}: {e}")
         import traceback
         traceback.print_exc()
         return False
 
 def main():
     """Main test function"""
-    print("🔍 REAL SCANNER EXECUTION TEST")
+    print("[SEARCH] REAL SCANNER EXECUTION TEST")
     print("=" * 60)
     
     # Test for 1st Feb 2026
@@ -80,7 +80,7 @@ def main():
     
     for symbol in test_stocks:
         found = all_results[symbol]
-        print(f"{symbol}: {'✅ FOUND in scanner results' if found else '❌ NOT found in scanner results'}")
+        print(f"{symbol}: {'[OK] FOUND in scanner results' if found else '[FAIL] NOT found in scanner results'}")
 
 if __name__ == "__main__":
     main()

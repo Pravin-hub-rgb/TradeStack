@@ -200,7 +200,7 @@ class ComprehensiveReversalTest:
                     
                     self.test_results.append(result)
                     
-                    self.logger.info(f"🎯 ENTRY TRIGGERED: {stock_symbol}")
+                    self.logger.info(f"[TARGET] ENTRY TRIGGERED: {stock_symbol}")
                     self.logger.info(f"   Situation: {stock.situation}")
                     self.logger.info(f"   Entry Price: {stock.entry_price:.2f}")
                     self.logger.info(f"   Entry High: {stock.entry_high:.2f}")
@@ -210,7 +210,7 @@ class ComprehensiveReversalTest:
     
     def run_test(self):
         """Run the complete comprehensive test"""
-        print("🚀 Starting Comprehensive Reversal Test")
+        print("[ROCKET] Starting Comprehensive Reversal Test")
         print("Testing: Real reversal bot architecture with proper state progression")
         print("Setup: OOPS and Strong Start stocks with exact bot logic")
         print()
@@ -256,7 +256,7 @@ class ComprehensiveReversalTest:
         print("="*60)
         
         if not self.test_results:
-            print("❌ No entries triggered")
+            print("[FAIL] No entries triggered")
             
             # Print current stock status for debugging
             print("\nCurrent Stock Status:")
@@ -277,7 +277,7 @@ class ComprehensiveReversalTest:
             return
         
         for result in self.test_results:
-            print(f"\n{result['symbol']} ({result['situation']}) - ✅ TRIGGERED")
+            print(f"\n{result['symbol']} ({result['situation']}) - [OK] TRIGGERED")
             print(f"  Entry Price: {result['entry_price']:.2f}")
             print(f"  Entry High: {result['entry_high']:.2f}")
             print(f"  Entry SL: {result['entry_sl']:.2f}")
@@ -296,10 +296,10 @@ class ComprehensiveReversalTest:
         print(f"\nTotal Entries: {len(self.test_results)}/2")
         
         if len(self.test_results) >= 2:
-            print("🎉 COMPREHENSIVE REVERSAL TEST PASSED!")
+            print("[DONE] COMPREHENSIVE REVERSAL TEST PASSED!")
             print("Both OOPS and Strong Start entries triggered correctly")
         else:
-            print("❌ COMPREHENSIVE REVERSAL TEST FAILED!")
+            print("[FAIL] COMPREHENSIVE REVERSAL TEST FAILED!")
             print("Not all expected entries were triggered")
 
 

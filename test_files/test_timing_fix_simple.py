@@ -49,7 +49,7 @@ def test_entry_time_gate():
         if not stock.entry_ready and not stock.entry_time_reached:
             print("✓ Entry ready correctly NOT set before entry time")
         else:
-            print("✗ Entry ready incorrectly set before entry time")
+            print("[FAIL] Entry ready incorrectly set before entry time")
             return False
         
         # Test 2: After entry time - should set entry_ready
@@ -75,13 +75,13 @@ def test_entry_time_gate():
         if stock.entry_ready and stock.entry_time_reached:
             print("✓ Entry ready correctly set after entry time")
         else:
-            print("✗ Entry ready not set after entry time")
+            print("[FAIL] Entry ready not set after entry time")
             return False
         
         return True
         
     except Exception as e:
-        print(f"✗ Error testing entry time gates: {e}")
+        print(f"[FAIL] Error testing entry time gates: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -123,7 +123,7 @@ def test_prepare_entry_timing():
             if not stock.entry_ready and not stock.entry_time_reached:
                 print("✓ prepare_entry correctly does not set entry_ready before entry time")
             else:
-                print("✗ prepare_entry incorrectly sets entry_ready before entry time")
+                print("[FAIL] prepare_entry incorrectly sets entry_ready before entry time")
                 return False
             
             # Test after entry time
@@ -148,7 +148,7 @@ def test_prepare_entry_timing():
             if stock.entry_ready and stock.entry_time_reached:
                 print("✓ prepare_entry correctly sets entry_ready after entry time")
             else:
-                print("✗ prepare_entry does not set entry_ready after entry time")
+                print("[FAIL] prepare_entry does not set entry_ready after entry time")
                 return False
                 
         finally:
@@ -158,7 +158,7 @@ def test_prepare_entry_timing():
         return True
         
     except Exception as e:
-        print(f"✗ Error testing prepare_entry timing: {e}")
+        print(f"[FAIL] Error testing prepare_entry timing: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -178,7 +178,7 @@ def main():
         print("✓ ALL TIMING FIX TESTS PASSED")
         print("The critical timing bypass issue has been fixed!")
     else:
-        print("✗ SOME TIMING FIX TESTS FAILED")
+        print("[FAIL] SOME TIMING FIX TESTS FAILED")
         print("Please review the timing implementation.")
     
     return success

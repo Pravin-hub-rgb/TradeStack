@@ -196,7 +196,7 @@ class SVROTest:
                 
                 self.test_results.append(result)
                 
-                self.logger.info(f"🎯 SVRO ENTRY TRIGGERED: {stock.symbol}")
+                self.logger.info(f"[TARGET] SVRO ENTRY TRIGGERED: {stock.symbol}")
                 self.logger.info(f"   Situation: {stock.situation}")
                 self.logger.info(f"   Entry Price: {stock.entry_price:.2f}")
                 self.logger.info(f"   Trigger Price: {stock.current_price:.2f}")
@@ -209,7 +209,7 @@ class SVROTest:
 
     def run_test(self):
         """Run the complete SVRO test"""
-        print("🚀 Starting SVRO Test")
+        print("[ROCKET] Starting SVRO Test")
         print("Testing: Exact continuation bot architecture with SVRO entry system")
         print("Setup: SVRO stocks with gap up, volume validation, and entry triggers")
         print()
@@ -255,7 +255,7 @@ class SVROTest:
         print("="*60)
         
         if not self.test_results:
-            print("❌ No SVRO entries triggered")
+            print("[FAIL] No SVRO entries triggered")
             
             # Print current stock status for debugging
             print("\nCurrent Stock Status:")
@@ -276,7 +276,7 @@ class SVROTest:
             return
         
         for result in self.test_results:
-            print(f"\n{result['symbol']} ({result['situation']}) - ✅ SVRO TRIGGERED")
+            print(f"\n{result['symbol']} ({result['situation']}) - [OK] SVRO TRIGGERED")
             print(f"  Entry Price: {result['entry_price']:.2f}")
             print(f"  Entry High: {result['entry_high']:.2f}")
             print(f"  Entry SL: {result['entry_sl']:.2f}")
@@ -304,10 +304,10 @@ class SVROTest:
         print(f"\nTotal SVRO Entries: {len(self.test_results)}/2")
         
         if len(self.test_results) >= 2:
-            print("🎉 SVRO TEST PASSED!")
+            print("[DONE] SVRO TEST PASSED!")
             print("Both SVRO stocks entered successfully with proper gap and volume validation")
         else:
-            print("❌ SVRO TEST FAILED!")
+            print("[FAIL] SVRO TEST FAILED!")
             print("Not all expected SVRO entries were triggered")
 
     def get_test_summary(self):

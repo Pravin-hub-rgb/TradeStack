@@ -49,7 +49,7 @@ def test_multiple_stocks():
                 logger.error(f"No data found for {symbol}")
                 continue
             
-            logger.info(f"✅ Successfully fetched {len(data)} days of data")
+            logger.info(f"[OK] Successfully fetched {len(data)} days of data")
             
             # Calculate technical indicators
             data_with_indicators = data_fetcher.calculate_technical_indicators(data)
@@ -58,7 +58,7 @@ def test_multiple_stocks():
                 logger.error(f"Failed to calculate indicators for {symbol}")
                 continue
             
-            logger.info("✅ Technical indicators calculated successfully")
+            logger.info("[OK] Technical indicators calculated successfully")
             
             # Show latest data
             latest = data_with_indicators.iloc[-1]
@@ -70,7 +70,7 @@ def test_multiple_stocks():
             logger.error(f"Error testing {symbol}: {e}")
     
     logger.info(f"\n=== Test completed ===")
-    logger.info("If you see ✅ marks above, the data fetching is working correctly!")
+    logger.info("If you see [OK] marks above, the data fetching is working correctly!")
 
 if __name__ == "__main__":
     test_multiple_stocks()

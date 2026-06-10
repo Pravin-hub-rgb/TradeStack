@@ -13,7 +13,7 @@ sys.path.insert(0, 'src')
 def test_reversal_trading_logic():
     """Test the reversal bot's trading logic"""
 
-    print("🧪 Testing Reversal Bot Trading Logic")
+    print("[TEST_TUBE] Testing Reversal Bot Trading Logic")
     print("=" * 50)
 
     try:
@@ -26,10 +26,10 @@ def test_reversal_trading_logic():
         success = monitor.load_watchlist(REVERSAL_LIST_FILE)
 
         if not success:
-            print("❌ Failed to load reversal watchlist")
+            print("[FAIL] Failed to load reversal watchlist")
             return False
 
-        print(f"✅ Loaded watchlist: {len(monitor.vip_stocks)} VIP, {len(monitor.secondary_stocks)} secondary, {len(monitor.tertiary_stocks)} tertiary stocks")
+        print(f"[OK] Loaded watchlist: {len(monitor.vip_stocks)} VIP, {len(monitor.secondary_stocks)} secondary, {len(monitor.tertiary_stocks)} tertiary stocks")
 
         # Test data access and trading conditions
         test_results = []
@@ -44,7 +44,7 @@ def test_reversal_trading_logic():
                 data = upstox_fetcher.get_ltp_data(clean_symbol)
                 if data and 'cp' in data:
                     prev_close = float(data['cp'])
-                    print(f"\n📊 Testing {stock.symbol} - Previous close: ₹{prev_close}")
+                    print(f"\n[CHART] Testing {stock.symbol} - Previous close: ₹{prev_close}")
 
                     # Set prev_close in monitor
                     monitor.set_prev_closes({stock.symbol: prev_close})
@@ -63,19 +63,19 @@ def test_reversal_trading_logic():
                     is_strong_start = monitor.check_strong_start_conditions(stock, current_low)
 
                     if is_strong_start:
-                        print("✅ STRONG START: Conditions met - 5% gap up, low within 1% of open")
-                        print("🎯 Bot would execute Strong Start trade!")
+                        print("[OK] STRONG START: Conditions met - 5% gap up, low within 1% of open")
+                        print("[TARGET] Bot would execute Strong Start trade!")
                         test_results.append("Strong Start: PASS")
                     else:
-                        print("❌ Strong Start: Conditions not met")
+                        print("[FAIL] Strong Start: Conditions not met")
                         test_results.append("Strong Start: FAIL")
 
                 else:
-                    print(f"❌ No previous close data for {clean_symbol}")
+                    print(f"[FAIL] No previous close data for {clean_symbol}")
                     test_results.append("Strong Start: NO DATA")
 
             except Exception as e:
-                print(f"❌ Strong Start test error: {e}")
+                print(f"[FAIL] Strong Start test error: {e}")
                 test_results.append("Strong Start: ERROR")
 
         # Test OOPS condition (gap down + cross above prev close)
@@ -88,7 +88,7 @@ def test_reversal_trading_logic():
                 data = upstox_fetcher.get_ltp_data(clean_symbol)
                 if data and 'cp' in data:
                     prev_close = float(data['cp'])
-                    print(f"\n📊 Testing {stock.symbol} - Previous close: ₹{prev_close}")
+                    print(f"\n[CHART] Testing {stock.symbol} - Previous close: ₹{prev_close}")
 
                     # Set prev_close in monitor
                     monitor.set_prev_closes({stock.symbol: prev_close})
@@ -107,24 +107,24 @@ def test_reversal_trading_logic():
                     is_oops = monitor.check_oops_conditions(stock, current_price)
 
                     if is_oops:
-                        print("✅ OOPS: Conditions met - 3% gap down + crossed above prev close")
-                        print("🎯 Bot would execute OOPS trade!")
+                        print("[OK] OOPS: Conditions met - 3% gap down + crossed above prev close")
+                        print("[TARGET] Bot would execute OOPS trade!")
                         test_results.append("OOPS: PASS")
                     else:
-                        print("❌ OOPS: Conditions not met")
+                        print("[FAIL] OOPS: Conditions not met")
                         test_results.append("OOPS: FAIL")
 
                 else:
-                    print(f"❌ No previous close data for {clean_symbol}")
+                    print(f"[FAIL] No previous close data for {clean_symbol}")
                     test_results.append("OOPS: NO DATA")
 
             except Exception as e:
-                print(f"❌ OOPS test error: {e}")
+                print(f"[FAIL] OOPS test error: {e}")
                 test_results.append("OOPS: ERROR")
 
         # Summary
         print("\n" + "=" * 50)
-        print("📋 TEST RESULTS SUMMARY")
+        print("[CLIPBOARD] TEST RESULTS SUMMARY")
         print("=" * 50)
 
         passes = sum(1 for result in test_results if "PASS" in result)
@@ -133,23 +133,23 @@ def test_reversal_trading_logic():
         for result in test_results:
             print(f"   {result}")
 
-        print(f"\n🎯 Overall: {passes}/{total_tests} tests passed")
+        print(f"\n[TARGET] Overall: {passes}/{total_tests} tests passed")
 
         if passes == total_tests and total_tests > 0:
-            print("\n✅ REVERSAL BOT TRADING LOGIC: FULLY OPERATIONAL!")
-            print("🚀 The bot can now execute OOPS and Strong Start trades when conditions are met.")
+            print("\n[OK] REVERSAL BOT TRADING LOGIC: FULLY OPERATIONAL!")
+            print("[ROCKET] The bot can now execute OOPS and Strong Start trades when conditions are met.")
             return True
         elif passes > 0:
-            print("\n⚠️ PARTIAL SUCCESS: Some trading conditions work, but not all.")
-            print("💡 The bot will execute trades for working conditions.")
+            print("\n[WARN] PARTIAL SUCCESS: Some trading conditions work, but not all.")
+            print("[IDEA] The bot will execute trades for working conditions.")
             return True
         else:
-            print("\n❌ FAILED: No trading conditions are working.")
-            print("🔧 Check data access and gap calculation logic.")
+            print("\n[FAIL] FAILED: No trading conditions are working.")
+            print("[WRENCH] Check data access and gap calculation logic.")
             return False
 
     except Exception as e:
-        print(f"❌ Test failed with error: {e}")
+        print(f"[FAIL] Test failed with error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -159,15 +159,15 @@ def main():
     try:
         success = test_reversal_trading_logic()
         if success:
-            print("\n✅ Trading logic test completed successfully!")
+            print("\n[OK] Trading logic test completed successfully!")
         else:
-            print("\n❌ Trading logic test failed!")
+            print("\n[FAIL] Trading logic test failed!")
             sys.exit(1)
     except KeyboardInterrupt:
-        print("\n\n⚠️ Test interrupted by user")
+        print("\n\n[WARN] Test interrupted by user")
         sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Unexpected error during test: {e}")
+        print(f"\n[FAIL] Unexpected error during test: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

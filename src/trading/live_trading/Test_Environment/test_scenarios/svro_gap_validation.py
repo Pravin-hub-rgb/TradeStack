@@ -24,7 +24,7 @@ logger = logging.getLogger('SVROGapValidation')
 
 def test_svro_gap_validation():
     """Test SVRO gap validation requirements"""
-    print("🧪 Testing SVRO Gap Validation Requirements")
+    print("[TEST_TUBE] Testing SVRO Gap Validation Requirements")
     print("=" * 50)
     
     monitor = StockMonitor()
@@ -111,7 +111,7 @@ def test_svro_gap_validation():
         
         results.append(result)
         
-        status = "✅ PASS" if passed else "❌ FAIL"
+        status = "[OK] PASS" if passed else "[FAIL] FAIL"
         gap_type = "up" if result['gap_pct'] >= 0 else "down"
         
         print(f"{status} {test_case['symbol']}: {gap_type} {result['gap_pct']:+.1f}% - {test_case['reason']}")
@@ -122,13 +122,13 @@ def test_svro_gap_validation():
     passed_count = sum(1 for r in results if r['passed'])
     total_count = len(results)
     
-    print(f"\n📊 Gap Validation Results: {passed_count}/{total_count} passed")
+    print(f"\n[CHART] Gap Validation Results: {passed_count}/{total_count} passed")
     
     if passed_count == total_count:
-        print("🎉 All SVRO gap validation tests PASSED!")
+        print("[DONE] All SVRO gap validation tests PASSED!")
         return True
     else:
-        print("❌ Some SVRO gap validation tests FAILED!")
+        print("[FAIL] Some SVRO gap validation tests FAILED!")
         return False
 
 

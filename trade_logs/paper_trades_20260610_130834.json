@@ -1,0 +1,28 @@
+[
+  {
+    "timestamp": "2026-06-10T14:36:43.474607+05:30",
+    "type": "ENTRY",
+    "symbol": "TECHNOE",
+    "instrument_key": "NSE_EQ|INE285K01026",
+    "entry_price": 998.8,
+    "entry_high": 998.8,
+    "stop_loss": 958.85,
+    "open_price": 993.9,
+    "previous_close": 998.5,
+    "gap_pct": -0.46,
+    "session": "20260610_130834"
+  },
+  {
+    "timestamp": "2026-06-10T14:36:43.941136+05:30",
+    "type": "ENTRY",
+    "symbol": "TECHNOE",
+    "instrument_key": "NSE_EQ|INE285K01026",
+    "entry_price": 998.8,
+    "entry_high": 998.8,
+    "stop_loss": 958.85,
+    "open_price": 993.9,
+    "previous_close": 998.5,
+    "gap_pct": -0.46,
+    "session": "20260610_130834"
+  }
+]

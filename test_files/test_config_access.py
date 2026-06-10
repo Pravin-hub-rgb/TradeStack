@@ -18,7 +18,7 @@ def test_config_access():
     print(f"File exists: {os.path.exists(config_path)}")
 
     if not os.path.exists(config_path):
-        print("❌ Config file not found")
+        print("[FAIL] Config file not found")
         return False
 
     # Step 2: Try to read config file
@@ -26,11 +26,11 @@ def test_config_access():
         with open(config_path, 'r') as f:
             import json
             config = json.load(f)
-        print("✅ Config file readable")
+        print("[OK] Config file readable")
         print(f"   API Key: {'*' * 10}...{config.get('api_key', 'MISSING')[-4:] if config.get('api_key') else 'MISSING'}")
         print(f"   Access Token: {'*' * 10}...{config.get('access_token', 'MISSING')[-4:] if config.get('access_token') else 'MISSING'}")
     except Exception as e:
-        print(f"❌ Cannot read config file: {e}")
+        print(f"[FAIL] Cannot read config file: {e}")
         return False
 
     # Step 3: Test UpstoxFetcher initialization
@@ -54,19 +54,19 @@ def test_config_access():
         # Try to initialize UpstoxFetcher with absolute path
         from utils.upstox_fetcher import UpstoxFetcher
         fetcher = UpstoxFetcher(config_file=config_file_path)
-        print("✅ UpstoxFetcher initialized with absolute config path")
+        print("[OK] UpstoxFetcher initialized with absolute config path")
 
         # Test API call
         test_result = fetcher.get_ltp_data('RELIANCE')
         if test_result and 'cp' in test_result:
-            print(f"✅ API test successful: RELIANCE prev close = ₹{test_result['cp']}")
+            print(f"[OK] API test successful: RELIANCE prev close = ₹{test_result['cp']}")
             return True
         else:
-            print(f"❌ API test failed: {test_result}")
+            print(f"[FAIL] API test failed: {test_result}")
             return False
 
     except Exception as e:
-        print(f"❌ UpstoxFetcher test failed: {e}")
+        print(f"[FAIL] UpstoxFetcher test failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -79,12 +79,12 @@ def main():
     try:
         success = test_config_access()
         if success:
-            print("\n✅ Config access test PASSED")
+            print("\n[OK] Config access test PASSED")
         else:
-            print("\n❌ Config access test FAILED")
+            print("\n[FAIL] Config access test FAILED")
             sys.exit(1)
     except Exception as e:
-        print(f"\n❌ Test error: {e}")
+        print(f"\n[FAIL] Test error: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

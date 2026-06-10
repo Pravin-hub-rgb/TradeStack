@@ -157,7 +157,7 @@ class ExactArchitectureTest:
                     
                     self.test_results.append(result)
                     
-                    self.logger.info(f"🎯 ENTRY TRIGGERED: {stock_symbol}")
+                    self.logger.info(f"[TARGET] ENTRY TRIGGERED: {stock_symbol}")
                     self.logger.info(f"   Situation: {stock.situation}")
                     self.logger.info(f"   Entry Price: {stock.entry_price:.2f}")
                     self.logger.info(f"   Entry High: {stock.entry_high:.2f}")
@@ -166,7 +166,7 @@ class ExactArchitectureTest:
     
     def run_test(self):
         """Run the complete exact architecture test"""
-        print("🚀 Starting Exact Architecture Test")
+        print("[ROCKET] Starting Exact Architecture Test")
         print("Testing: Real reversal bot architecture with simulated data")
         print("Setup: OOPS and Strong Start stocks with real bot logic")
         print()
@@ -212,11 +212,11 @@ class ExactArchitectureTest:
         print("="*60)
         
         if not self.test_results:
-            print("❌ No entries triggered")
+            print("[FAIL] No entries triggered")
             return
         
         for result in self.test_results:
-            print(f"\n{result['symbol']} ({result['situation']}) - ✅ TRIGGERED")
+            print(f"\n{result['symbol']} ({result['situation']}) - [OK] TRIGGERED")
             print(f"  Entry Price: {result['entry_price']:.2f}")
             print(f"  Entry High: {result['entry_high']:.2f}")
             print(f"  Entry SL: {result['entry_sl']:.2f}")
@@ -234,10 +234,10 @@ class ExactArchitectureTest:
         print(f"\nTotal Entries: {len(self.test_results)}/2")
         
         if len(self.test_results) >= 2:
-            print("🎉 EXACT ARCHITECTURE TEST PASSED!")
+            print("[DONE] EXACT ARCHITECTURE TEST PASSED!")
             print("Both OOPS and Strong Start entries triggered correctly")
         else:
-            print("❌ EXACT ARCHITECTURE TEST FAILED!")
+            print("[FAIL] EXACT ARCHITECTURE TEST FAILED!")
             print("Not all expected entries were triggered")
 
 

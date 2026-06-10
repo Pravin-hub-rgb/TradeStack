@@ -35,7 +35,7 @@ def validate_gaps_after_opening_prices(stocks: Dict[str, 'ReversalStockState'],
             # Reject stocks with missing opening prices
             stock.reject(f"No opening price data available")
             rejected_stocks.append(stock)
-            logger.warning(f"❌ {symbol}: REJECTED - No opening price data available")
+            logger.warning(f"[FAIL] {symbol}: REJECTED - No opening price data available")
             continue
 
         open_price = opening_prices[symbol]
@@ -48,10 +48,10 @@ def validate_gaps_after_opening_prices(stocks: Dict[str, 'ReversalStockState'],
         if stock.is_active:
             qualified_stocks.append(stock)
             gap_pct = ((stock.open_price - stock.previous_close) / stock.previous_close * 100)
-            logger.info(f"✅ {symbol}: Gap validated ({gap_pct:+.1f}%) - QUALIFIED")
+            logger.info(f"[OK] {symbol}: Gap validated ({gap_pct:+.1f}%) - QUALIFIED")
         else:
             rejected_stocks.append(stock)
-            logger.info(f"❌ {symbol}: REJECTED - {stock.rejection_reason}")
+            logger.info(f"[FAIL] {symbol}: REJECTED - {stock.rejection_reason}")
 
     # Summary logging
     logger.info(f"GAP VALIDATION COMPLETE: {len(qualified_stocks)} qualified, {len(rejected_stocks)} rejected")

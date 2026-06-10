@@ -44,14 +44,14 @@ class TestPreOpenIEP:
                 self.access_token = config.get('access_token')
                 
                 if self.access_token:
-                    logger.info("✅ Upstox config loaded successfully")
+                    logger.info("[OK] Upstox config loaded successfully")
                 else:
-                    logger.error("❌ No access token found in config")
+                    logger.error("[FAIL] No access token found in config")
             else:
-                logger.error(f"❌ Config file {config_file} not found")
+                logger.error(f"[FAIL] Config file {config_file} not found")
                 
         except Exception as e:
-            logger.error(f"❌ Error loading config: {e}")
+            logger.error(f"[FAIL] Error loading config: {e}")
     
     def get_instrument_key(self, symbol: str) -> str:
         """Convert NSE symbol to Upstox instrument key"""
@@ -106,11 +106,11 @@ class TestPreOpenIEP:
         keys = [self.get_instrument_key(s) for s in symbols if self.get_instrument_key(s)]
         
         if not keys:
-            logger.error("❌ No valid instrument keys found")
+            logger.error("[FAIL] No valid instrument keys found")
             return iep_dict
         
         if not self.access_token:
-            logger.error("❌ No access token available")
+            logger.error("[FAIL] No access token available")
             return iep_dict
         
         try:
@@ -123,20 +123,20 @@ class TestPreOpenIEP:
                 "Authorization": f"Bearer {self.access_token}"
             }
             
-            logger.info(f"📡 Fetching IEP for {len(symbols)} stocks...")
-            logger.info(f"📡 API URL: {url}")
-            logger.info(f"📡 Instrument keys: {keys}")
+            logger.info(f"[SATELLITE] Fetching IEP for {len(symbols)} stocks...")
+            logger.info(f"[SATELLITE] API URL: {url}")
+            logger.info(f"[SATELLITE] Instrument keys: {keys}")
             
             resp = requests.get(url, headers=headers, timeout=10)
-            logger.info(f"📡 Response status: {resp.status_code}")
-            logger.info(f"📡 Response headers: {dict(resp.headers)}")
+            logger.info(f"[SATELLITE] Response status: {resp.status_code}")
+            logger.info(f"[SATELLITE] Response headers: {dict(resp.headers)}")
             
             if resp.status_code != 200:
-                logger.error(f"❌ HTTP Error: {resp.status_code} - {resp.text}")
+                logger.error(f"[FAIL] HTTP Error: {resp.status_code} - {resp.text}")
                 return iep_dict
             
             response_data = resp.json()
-            logger.info(f"📡 Response data: {response_data}")
+            logger.info(f"[SATELLITE] Response data: {response_data}")
             
             if response_data.get('status') == 'success':
                 data = response_data.get('data', {})
@@ -151,24 +151,24 @@ class TestPreOpenIEP:
                             # During pre-open, the 'open' field is nested in 'ohlc' object
                             ohlc_data = quote.get('ohlc', {})
                             iep = ohlc_data.get('open')
-                            logger.info(f"🔍 Debug: symbol={symbol}, iep={iep}, ohlc keys={list(ohlc_data.keys())}")
+                            logger.info(f"[SEARCH] Debug: symbol={symbol}, iep={iep}, ohlc keys={list(ohlc_data.keys())}")
                             
                             if iep is not None:
                                 iep_dict[symbol] = float(iep)
-                                logger.info(f"✅ Pre-open IEP for {symbol}: ₹{iep:.2f}")
+                                logger.info(f"[OK] Pre-open IEP for {symbol}: ₹{iep:.2f}")
                             else:
-                                logger.warning(f"⚠️ No IEP data for {symbol}")
+                                logger.warning(f"[WARN] No IEP data for {symbol}")
                         else:
-                            logger.warning(f"⚠️ Symbol {symbol} not in requested list")
+                            logger.warning(f"[WARN] Symbol {symbol} not in requested list")
                     else:
-                        logger.warning(f"⚠️ Unexpected key format: {key}")
+                        logger.warning(f"[WARN] Unexpected key format: {key}")
             else:
-                logger.error(f"❌ API response error: {response_data}")
+                logger.error(f"[FAIL] API response error: {response_data}")
                 
         except requests.exceptions.RequestException as e:
-            logger.error(f"❌ Network error: {e}")
+            logger.error(f"[FAIL] Network error: {e}")
         except Exception as e:
-            logger.error(f"❌ Error fetching pre-open IEP: {e}")
+            logger.error(f"[FAIL] Error fetching pre-open IEP: {e}")
         
         return iep_dict
     
@@ -191,7 +191,7 @@ class TestPreOpenIEP:
                 "Authorization": f"Bearer {self.access_token}"
             }
             
-            logger.info(f"📡 Fetching LTP for {len(symbols)} stocks...")
+            logger.info(f"[SATELLITE] Fetching LTP for {len(symbols)} stocks...")
             
             resp = requests.get(url, headers=headers, timeout=10)
             resp.raise_for_status()
@@ -217,60 +217,60 @@ class TestPreOpenIEP:
                             'low': float(quote.get('low_price', 0)),
                             'volume': int(quote.get('volume', 0))
                         }
-                        logger.info(f"✅ LTP for {symbol}: ₹{ltp_dict[symbol]['ltp']:.2f}")
+                        logger.info(f"[OK] LTP for {symbol}: ₹{ltp_dict[symbol]['ltp']:.2f}")
                         
         except Exception as e:
-            logger.error(f"❌ Error fetching LTP data: {e}")
+            logger.error(f"[FAIL] Error fetching LTP data: {e}")
         
         return ltp_dict
     
     def run_test(self, test_symbol: str = "RELIANCE"):
         """Run the pre-open IEP test"""
         print("=" * 60)
-        print("🧪 PRE-MARKET OPEN PRICE FETCH TEST")
+        print("[TEST_TUBE] PRE-MARKET OPEN PRICE FETCH TEST")
         print("=" * 60)
         
         current_time = datetime.now(IST)
-        print(f"⏰ Current time: {current_time.strftime('%Y-%m-%d %H:%M:%S %Z')}")
+        print(f"[ALARM] Current time: {current_time.strftime('%Y-%m-%d %H:%M:%S %Z')}")
         
         # Check if we're in pre-open session (9:00-9:15)
         market_open = time(9, 15)
         current_time_only = current_time.time()
         
         if current_time_only < market_open:
-            print("✅ Currently in pre-open session - IEP should be available")
+            print("[OK] Currently in pre-open session - IEP should be available")
         else:
-            print("⚠️ Currently in regular trading session - IEP may not be available")
+            print("[WARN] Currently in regular trading session - IEP may not be available")
         
-        print(f"🎯 Testing with symbol: {test_symbol}")
+        print(f"[TARGET] Testing with symbol: {test_symbol}")
         print()
         
         # Test 1: Fetch Pre-Open IEP
-        print("📡 TEST 1: Fetching Pre-Open IEP...")
+        print("[SATELLITE] TEST 1: Fetching Pre-Open IEP...")
         iep_results = self.get_pre_open_iep([test_symbol])
         
         if iep_results:
-            print(f"✅ SUCCESS: Got IEP for {test_symbol}: ₹{iep_results[test_symbol]:.2f}")
+            print(f"[OK] SUCCESS: Got IEP for {test_symbol}: ₹{iep_results[test_symbol]:.2f}")
         else:
-            print("❌ FAILED: No IEP data received")
+            print("[FAIL] FAILED: No IEP data received")
         
         print()
         
         # Test 2: Fetch LTP data
-        print("📡 TEST 2: Fetching LTP data...")
+        print("[SATELLITE] TEST 2: Fetching LTP data...")
         ltp_results = self.get_ltp_data([test_symbol])
         
         if ltp_results and test_symbol in ltp_results:
             ltp_data = ltp_results[test_symbol]
-            print(f"✅ SUCCESS: Got LTP data for {test_symbol}")
-            print(f"   📊 LTP: ₹{ltp_data['ltp']:.2f}")
-            print(f"   📊 Previous Close: ₹{ltp_data['prev_close']:.2f}")
-            print(f"   📊 Open: ₹{ltp_data['open']:.2f}")
-            print(f"   📊 High: ₹{ltp_data['high']:.2f}")
-            print(f"   📊 Low: ₹{ltp_data['low']:.2f}")
-            print(f"   📊 Volume: {ltp_data['volume']:,}")
+            print(f"[OK] SUCCESS: Got LTP data for {test_symbol}")
+            print(f"   [CHART] LTP: ₹{ltp_data['ltp']:.2f}")
+            print(f"   [CHART] Previous Close: ₹{ltp_data['prev_close']:.2f}")
+            print(f"   [CHART] Open: ₹{ltp_data['open']:.2f}")
+            print(f"   [CHART] High: ₹{ltp_data['high']:.2f}")
+            print(f"   [CHART] Low: ₹{ltp_data['low']:.2f}")
+            print(f"   [CHART] Volume: {ltp_data['volume']:,}")
         else:
-            print("❌ FAILED: No LTP data received")
+            print("[FAIL] FAILED: No LTP data received")
         
         print()
         
@@ -283,27 +283,27 @@ class TestPreOpenIEP:
                 diff = abs(iep_price - open_price)
                 diff_pct = (diff / open_price) * 100
                 
-                print("📊 TEST 3: IEP vs Open Price Comparison")
-                print(f"   📈 IEP: ₹{iep_price:.2f}")
-                print(f"   📈 Open: ₹{open_price:.2f}")
-                print(f"   📈 Difference: ₹{diff:.2f} ({diff_pct:.2f}%)")
+                print("[CHART] TEST 3: IEP vs Open Price Comparison")
+                print(f"   [TREND_UP] IEP: ₹{iep_price:.2f}")
+                print(f"   [TREND_UP] Open: ₹{open_price:.2f}")
+                print(f"   [TREND_UP] Difference: ₹{diff:.2f} ({diff_pct:.2f}%)")
                 
                 if diff_pct < 0.1:  # Less than 0.1% difference
-                    print("✅ EXCELLENT: IEP matches opening price perfectly!")
+                    print("[OK] EXCELLENT: IEP matches opening price perfectly!")
                 elif diff_pct < 0.5:  # Less than 0.5% difference
-                    print("✅ GOOD: IEP very close to opening price")
+                    print("[OK] GOOD: IEP very close to opening price")
                 else:
-                    print("⚠️ WARNING: IEP differs significantly from opening price")
+                    print("[WARN] WARNING: IEP differs significantly from opening price")
         
         print()
         print("=" * 60)
-        print("🏁 TEST COMPLETED")
+        print("[FLAG] TEST COMPLETED")
         print("=" * 60)
 
 
 def main():
     """Main test function"""
-    print("🚀 Starting Pre-Market Open Price Fetch Test")
+    print("[ROCKET] Starting Pre-Market Open Price Fetch Test")
     
     # Create test instance
     test = TestPreOpenIEP()

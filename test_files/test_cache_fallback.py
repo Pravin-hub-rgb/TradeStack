@@ -26,20 +26,20 @@ class CacheFallbackTester:
             from scanner.stock_scorer import stock_scorer
             self.upstox_fetcher = upstox_fetcher
             self.stock_scorer = stock_scorer
-            logger.info("✅ Upstox fetcher and stock scorer imported successfully")
+            logger.info("[OK] Upstox fetcher and stock scorer imported successfully")
         except ImportError as e:
-            logger.error(f"❌ Failed to import required modules: {e}")
+            logger.error(f"[FAIL] Failed to import required modules: {e}")
             raise
     
     def test_cache_fallback(self, symbols):
         """Test cache-based previous close as fallback"""
-        print("🔍 Testing Cache Fallback for Previous Close")
+        print("[SEARCH] Testing Cache Fallback for Previous Close")
         print("=" * 50)
         
         results = {}
         
         for symbol in symbols:
-            print(f"\n🧪 Testing {symbol}...")
+            print(f"\n[TEST_TUBE] Testing {symbol}...")
             
             try:
                 # Method 1: Upstox LTP (primary)
@@ -86,9 +86,9 @@ class CacheFallbackTester:
                     source = "Cache"
                 
                 if best_close:
-                    print(f"   ✅ Best available: ₹{best_close:.2f} ({source})")
+                    print(f"   [OK] Best available: ₹{best_close:.2f} ({source})")
                 else:
-                    print(f"   ❌ No previous close available")
+                    print(f"   [FAIL] No previous close available")
                 
                 results[symbol] = {
                     'upstox': upstox_close,
@@ -99,7 +99,7 @@ class CacheFallbackTester:
                 }
                 
             except Exception as e:
-                logger.error(f"❌ Error testing {symbol}: {e}")
+                logger.error(f"[FAIL] Error testing {symbol}: {e}")
                 results[symbol] = {
                     'upstox': None,
                     'historical': None,
@@ -166,7 +166,7 @@ class CacheFallbackTester:
     
     def test_fallback_scenarios(self, symbols):
         """Test various fallback scenarios"""
-        print(f"\n🎯 Testing Fallback Scenarios")
+        print(f"\n[TARGET] Testing Fallback Scenarios")
         print("=" * 40)
         
         for symbol in symbols:
@@ -179,9 +179,9 @@ class CacheFallbackTester:
             # Test cache availability
             cache_close = self.get_previous_close_from_cache(symbol)
             if cache_close:
-                print(f"   ✅ Cache fallback available: ₹{cache_close:.2f}")
+                print(f"   [OK] Cache fallback available: ₹{cache_close:.2f}")
             else:
-                print(f"   ❌ Cache fallback not available")
+                print(f"   [FAIL] Cache fallback not available")
             
             # Test complete fallback chain
             print("   Fallback chain test:")
@@ -302,7 +302,7 @@ class EnhancedPreviousCloseFixer:
     
     def apply_enhanced_fix(self):
         """Apply the enhanced fix with cache fallback"""
-        print("🔧 Applying Enhanced Previous Close Fix with Cache Fallback")
+        print("[WRENCH] Applying Enhanced Previous Close Fix with Cache Fallback")
         print("=" * 60)
         
         # Create the enhanced method
@@ -311,7 +311,7 @@ class EnhancedPreviousCloseFixer:
         # Apply the fix
         self.upstox_fetcher.get_ltp_data = enhanced_method
         
-        print("✅ Enhanced fix applied successfully")
+        print("[OK] Enhanced fix applied successfully")
         print("   - Upstox LTP API (primary)")
         print("   - Historical API (secondary)")
         print("   - Cache fallback (tertiary)")
@@ -319,7 +319,7 @@ class EnhancedPreviousCloseFixer:
 
 def main():
     """Main execution function"""
-    print("🚀 Cache Fallback Test for Previous Close")
+    print("[ROCKET] Cache Fallback Test for Previous Close")
     print("=" * 60)
     
     # Test symbols
@@ -336,7 +336,7 @@ def main():
         fixer.apply_enhanced_fix()
         
         # Test the enhanced fix
-        print(f"\n🧪 Testing Enhanced Fix")
+        print(f"\n[TEST_TUBE] Testing Enhanced Fix")
         print("=" * 30)
         
         for symbol in test_symbols[:2]:  # Test first 2 symbols
@@ -363,25 +363,25 @@ def main():
         with open('cache_fallback_status.json', 'w') as f:
             json.dump(fallback_status, f, indent=2)
         
-        print(f"\n📋 Cache Fallback Status Saved to cache_fallback_status.json")
+        print(f"\n[CLIPBOARD] Cache Fallback Status Saved to cache_fallback_status.json")
         
         # Final summary
-        print(f"\n🏁 Cache Fallback Test Complete")
+        print(f"\n[FLAG] Cache Fallback Test Complete")
         print("=" * 40)
         
         cache_available = sum(1 for r in results.values() if r['cache'] is not None)
-        print(f"✅ Cache fallback available for {cache_available}/{len(test_symbols)} symbols")
+        print(f"[OK] Cache fallback available for {cache_available}/{len(test_symbols)} symbols")
         
         if cache_available > 0:
-            print("✅ Cache fallback system ready for use")
+            print("[OK] Cache fallback system ready for use")
         else:
-            print("⚠️  Cache fallback not available - may need cache initialization")
+            print("[WARN]  Cache fallback not available - may need cache initialization")
         
-        print(f"\n📝 Enhanced fix applied with full fallback chain")
+        print(f"\n[NOTE] Enhanced fix applied with full fallback chain")
         
     except Exception as e:
         logger.error(f"Error in main execution: {e}")
-        print(f"❌ Execution failed: {e}")
+        print(f"[FAIL] Execution failed: {e}")
 
 if __name__ == "__main__":
     main()

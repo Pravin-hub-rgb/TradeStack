@@ -1,8 +1,28 @@
 {
   "stocks": [
     {
-      "symbol": "NATCOPHARM",
-      "added_at": "2026-03-27T22:07:49.144684",
+      "symbol": "ALKYLAMINE",
+      "added_at": "2026-06-10T12:48:54.838562",
+      "added_from": "scan_results"
+    },
+    {
+      "symbol": "JAYKAY",
+      "added_at": "2026-06-10T12:48:55.219371",
+      "added_from": "scan_results"
+    },
+    {
+      "symbol": "V2RETAIL",
+      "added_at": "2026-06-10T12:48:55.631386",
+      "added_from": "scan_results"
+    },
+    {
+      "symbol": "VIPIND",
+      "added_at": "2026-06-10T12:48:56.332863",
+      "added_from": "scan_results"
+    },
+    {
+      "symbol": "ADFFOODS",
+      "added_at": "2026-06-10T12:48:56.425956",
       "added_from": "scan_results"
     }
   ]

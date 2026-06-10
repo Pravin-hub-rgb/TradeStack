@@ -144,7 +144,7 @@ class ReversalMonitor:
                     stock.prev_close = prev_closes[stock.symbol]
                     print(f"Set prev_close for {stock.symbol}: ₹{stock.prev_close:.2f}")
                 else:
-                    print(f"⚠ No prev_close found for {stock.symbol}")
+                    print(f"[WARN] No prev_close found for {stock.symbol}")
 
 
     def get_opening_price_from_api(self, symbol: str) -> Optional[float]:

@@ -37,15 +37,15 @@ def test_volume_system_simple():
         mean_volume = metadata.get('volume_baseline', 0)
         
         if mean_volume > 0:
-            print(f"✅ Mean volume baseline found from cache: {mean_volume:,} shares")
+            print(f"[OK] Mean volume baseline found from cache: {mean_volume:,} shares")
         else:
-            print(f"❌ No cache data found for {test_stock}")
+            print(f"[FAIL] No cache data found for {test_stock}")
             print("Will use fallback volume baseline for testing")
             mean_volume = 800000  # Fallback baseline (800K)
             print(f"Using fallback baseline: {mean_volume:,} shares")
             
     except Exception as e:
-        print(f"❌ Error getting mean volume: {e}")
+        print(f"[FAIL] Error getting mean volume: {e}")
         print("Using fallback baseline for testing")
         mean_volume = 800000  # Fallback baseline
     
@@ -79,15 +79,15 @@ def test_volume_system_simple():
                 
                 # Check if meets SVRO threshold (7.5%)
                 threshold_met = volume_pct >= 7.5
-                status = "✅ PASS" if threshold_met else "❌ FAIL"
+                status = "[OK] PASS" if threshold_met else "[FAIL] FAIL"
                 
                 print(f"{elapsed:2d}s  | {vol_str:>12} | {volume_pct:5.1f}% | {status}")
                 
             else:
-                print(f"{elapsed:2d}s  | {'No data':>12} | {'N/A':>5} | ❌ FAIL")
+                print(f"{elapsed:2d}s  | {'No data':>12} | {'N/A':>5} | [FAIL] FAIL")
                 
         except Exception as e:
-            print(f"{elapsed:2d}s  | {'Error':>12} | {'N/A':>5} | ❌ FAIL ({e})")
+            print(f"{elapsed:2d}s  | {'Error':>12} | {'N/A':>5} | [FAIL] FAIL ({e})")
         
         # Wait 3 seconds between checks
         time.sleep(3)
@@ -105,9 +105,9 @@ def test_volume_system_simple():
             print(f"Mean volume baseline: {mean_volume:,} shares")
             print(f"Threshold met: {'YES' if final_pct >= 7.5 else 'NO'}")
         else:
-            print("❌ Could not get final volume reading")
+            print("[FAIL] Could not get final volume reading")
     except Exception as e:
-        print(f"❌ Error in final reading: {e}")
+        print(f"[FAIL] Error in final reading: {e}")
     
     return True
 
@@ -122,10 +122,10 @@ def main():
     success = test_volume_system_simple()
     
     if success:
-        print("\n✅ Volume system test completed")
+        print("\n[OK] Volume system test completed")
         print("Check the output above to see if volume accumulation is working correctly")
     else:
-        print("\n❌ Volume system test failed")
+        print("\n[FAIL] Volume system test failed")
         print("Check if cache data is available and Upstox API is working")
     
     return success

@@ -126,7 +126,7 @@ class SmartBhavcopyUpdater:
         start_time = datetime.now()
 
         # Get all cached stocks info
-        print("\n🔍 Analyzing cached stocks...")
+        print("\n[SEARCH] Analyzing cached stocks...")
         stocks_info = self.get_cached_stocks_info()
         total_stocks = len(stocks_info)
 
@@ -136,7 +136,7 @@ class SmartBhavcopyUpdater:
         print(f"Found {total_stocks} cached stocks")
 
         # Find missing dates for each stock
-        print("\n📅 Finding missing dates...")
+        print("\n[CALENDAR] Finding missing dates...")
         stocks_missing_data = {}
 
         for symbol, info in stocks_info.items():
@@ -151,11 +151,11 @@ class SmartBhavcopyUpdater:
         print(f"Found {stocks_with_gaps} stocks with potential data gaps")
 
         if stocks_with_gaps == 0:
-            print("\n✅ All stocks appear to be up to date!")
+            print("\n[OK] All stocks appear to be up to date!")
             return {'message': 'All stocks up to date'}
 
         # Check which missing dates have available bhavcopy
-        print("\n📥 Checking available bhavcopy data...")
+        print("\n[OUTBOX] Checking available bhavcopy data...")
         all_missing_dates = set()
         for stock_data in stocks_missing_data.values():
             all_missing_dates.update(stock_data['missing_dates'])
@@ -167,11 +167,11 @@ class SmartBhavcopyUpdater:
         print(f"Found {len(available_dates)} dates with available bhavcopy")
 
         if not available_dates:
-            print("\n❌ No new bhavcopy data available to add")
+            print("\n[FAIL] No new bhavcopy data available to add")
             return {'message': 'No new data available'}
 
         # Update stocks with available data
-        print("\n🔄 Updating stocks with missing data...")
+        print("\n[REFRESH] Updating stocks with missing data...")
         results = {
             'total_stocks_analyzed': total_stocks,
             'stocks_with_gaps': stocks_with_gaps,
@@ -201,8 +201,8 @@ class SmartBhavcopyUpdater:
         end_time = datetime.now()
         duration = end_time - start_time
 
-        print(f"\n⏱️  Total time: {duration}")
-        print("\n📊 UPDATE SUMMARY:")
+        print(f"\n[STOPWATCH]  Total time: {duration}")
+        print("\n[CHART] UPDATE SUMMARY:")
         print(f"   Stocks analyzed: {results['total_stocks_analyzed']}")
         print(f"   Stocks with gaps: {results['stocks_with_gaps']}")
         print(f"   Available bhavcopy dates: {results['available_dates']}")
@@ -213,7 +213,7 @@ class SmartBhavcopyUpdater:
 
         # Show sample updated stocks
         if results['stock_results']:
-            print("\n📈 Sample updates:")
+            print("\n[TREND_UP] Sample updates:")
             for result in results['stock_results'][:3]:  # Show first 3
                 if result['success_count'] > 0:
                     print(f"   {result['symbol']}: +{result['success_count']} days")
@@ -239,11 +239,11 @@ def main():
         result = updater.update_all_stocks_smart()
 
         if 'error' in result:
-            print(f"\n❌ Error: {result['error']}")
+            print(f"\n[FAIL] Error: {result['error']}")
         elif 'message' in result:
-            print(f"\nℹ️  {result['message']}")
+            print(f"\nℹ  {result['message']}")
         else:
-            print("\n✅ Smart update completed successfully!")
+            print("\n[OK] Smart update completed successfully!")
     else:
         print("Operation cancelled.")
 

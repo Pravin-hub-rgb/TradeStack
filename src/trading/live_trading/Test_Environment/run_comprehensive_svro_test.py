@@ -41,7 +41,7 @@ class ComprehensiveSVROTestRunner:
 
     def run_all_tests(self):
         """Run all SVRO tests and collect results"""
-        print("🧪 Starting Comprehensive SVRO Test Suite")
+        print("[TEST_TUBE] Starting Comprehensive SVRO Test Suite")
         print("=" * 70)
         print("Testing: Complete SVRO continuation system with realistic conditions")
         print("Modules: Volume tracking, open range monitoring, realistic scenarios")
@@ -50,7 +50,7 @@ class ComprehensiveSVROTestRunner:
         self.start_time = datetime.now()
 
         # Test 1: Realistic SVRO Conditions
-        print("📋 Running Test 1: Realistic SVRO Conditions")
+        print("[CLIPBOARD] Running Test 1: Realistic SVRO Conditions")
         print("-" * 50)
         try:
             realistic_test = RealisticSVROTest()
@@ -72,7 +72,7 @@ class ComprehensiveSVROTestRunner:
         print("\n" + "="*70)
 
         # Test 2: Volume Tracking
-        print("📋 Running Test 2: Volume Tracking")
+        print("[CLIPBOARD] Running Test 2: Volume Tracking")
         print("-" * 50)
         try:
             volume_test = VolumeTrackingTest()
@@ -106,7 +106,7 @@ class ComprehensiveSVROTestRunner:
         print("\n" + "="*70)
 
         # Test 3: Open Range Monitoring
-        print("📋 Running Test 3: Open Range Monitoring")
+        print("[CLIPBOARD] Running Test 3: Open Range Monitoring")
         print("-" * 50)
         try:
             open_range_test = OpenRangeMonitoringTest()
@@ -151,18 +151,18 @@ class ComprehensiveSVROTestRunner:
         print("="*70)
 
         # Test execution summary
-        print(f"\n⏱️  TEST EXECUTION SUMMARY:")
+        print(f"\n[STOPWATCH]  TEST EXECUTION SUMMARY:")
         print(f"  Start Time: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"  End Time: {self.end_time.strftime('%Y-%m-%d %H:%M:%S')}")
         print(f"  Duration: {(self.end_time - self.start_time).total_seconds():.2f} seconds")
 
         # Module results
-        print(f"\n📊 MODULE TEST RESULTS:")
+        print(f"\n[CHART] MODULE TEST RESULTS:")
         total_modules = len(self.test_results)
         passed_modules = sum(1 for result in self.test_results.values() if result['success'])
         
         for module, result in self.test_results.items():
-            status = "✅ PASS" if result['success'] else "❌ FAIL"
+            status = "[OK] PASS" if result['success'] else "[FAIL] FAIL"
             print(f"  {status} {result['module']}")
             print(f"     Description: {result['description']}")
             print(f"     Result: {'SUCCESS' if result['success'] else 'FAILED'}")
@@ -181,58 +181,58 @@ class ComprehensiveSVROTestRunner:
             print()
 
         # Overall assessment
-        print(f"\n🎯 OVERALL ASSESSMENT:")
+        print(f"\n[TARGET] OVERALL ASSESSMENT:")
         print(f"  Total Modules: {total_modules}")
         print(f"  Passed Modules: {passed_modules}")
         print(f"  Failed Modules: {total_modules - passed_modules}")
         print(f"  Success Rate: {passed_modules/total_modules*100:.1f}%")
 
         # Critical functionality validation
-        print(f"\n🔍 CRITICAL SVRO FUNCTIONALITY VALIDATION:")
+        print(f"\n[SEARCH] CRITICAL SVRO FUNCTIONALITY VALIDATION:")
 
         # Volume validation (7.5% requirement)
         volume_result = self.test_results.get('volume_tracking', {})
         if volume_result.get('success', False):
-            print(f"  ✅ Volume validation (7.5% requirement) - WORKING")
+            print(f"  [OK] Volume validation (7.5% requirement) - WORKING")
         else:
-            print(f"  ❌ Volume validation (7.5% requirement) - FAILED")
+            print(f"  [FAIL] Volume validation (7.5% requirement) - FAILED")
 
         # Gap validation (0.3% minimum)
         realistic_result = self.test_results.get('realistic_conditions', {})
         if realistic_result.get('success', False):
-            print(f"  ✅ Gap validation (0.3% minimum) - WORKING")
+            print(f"  [OK] Gap validation (0.3% minimum) - WORKING")
         else:
-            print(f"  ❌ Gap validation (0.3% minimum) - FAILED")
+            print(f"  [FAIL] Gap validation (0.3% minimum) - FAILED")
 
         # Low violation detection (1% threshold)
         open_range_result = self.test_results.get('open_range_monitoring', {})
         if open_range_result.get('success', False):
-            print(f"  ✅ Low violation detection (1% threshold) - WORKING")
+            print(f"  [OK] Low violation detection (1% threshold) - WORKING")
         else:
-            print(f"  ❌ Low violation detection (1% threshold) - FAILED")
+            print(f"  [FAIL] Low violation detection (1% threshold) - FAILED")
 
         # Entry signal generation
         if open_range_result.get('success', False):
-            print(f"  ✅ Entry signal generation - WORKING")
+            print(f"  [OK] Entry signal generation - WORKING")
         else:
-            print(f"  ❌ Entry signal generation - FAILED")
+            print(f"  [FAIL] Entry signal generation - FAILED")
 
         # Final verdict
         overall_success = passed_modules == total_modules
         
         print("\n" + "="*70)
         if overall_success:
-            print("🎉 COMPREHENSIVE SVRO TEST SUITE PASSED!")
+            print("[DONE] COMPREHENSIVE SVRO TEST SUITE PASSED!")
             print("All SVRO continuation system components are working correctly:")
-            print("  ✅ Volume tracking and 7.5% validation")
-            print("  ✅ Gap validation (0.3% minimum)")
-            print("  ✅ Low violation detection (1% threshold)")
-            print("  ✅ High tracking during monitoring window")
-            print("  ✅ Entry signal generation")
-            print("  ✅ Realistic market condition handling")
+            print("  [OK] Volume tracking and 7.5% validation")
+            print("  [OK] Gap validation (0.3% minimum)")
+            print("  [OK] Low violation detection (1% threshold)")
+            print("  [OK] High tracking during monitoring window")
+            print("  [OK] Entry signal generation")
+            print("  [OK] Realistic market condition handling")
             print("\nThe SVRO system is ready for live trading!")
         else:
-            print("❌ SOME SVRO TESTS FAILED!")
+            print("[FAIL] SOME SVRO TESTS FAILED!")
             print("Issues detected that need to be addressed before live trading:")
             
             failed_modules = [module for module, result in self.test_results.items() if not result['success']]

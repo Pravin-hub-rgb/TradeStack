@@ -31,7 +31,7 @@ class ReportingSystem:
         daily_dir = self.reports_dir / date_str
         daily_dir.mkdir(exist_ok=True)
 
-        print(f"📊 Generating reports in: {daily_dir}")
+        print(f"[CHART] Generating reports in: {daily_dir}")
 
         # Generate all report types
         reports = {
@@ -45,7 +45,7 @@ class ReportingSystem:
         # Create index file
         self._create_report_index(daily_dir, update_date, reports)
 
-        print(f"✅ Generated {len(reports)} reports in {daily_dir}")
+        print(f"[OK] Generated {len(reports)} reports in {daily_dir}")
         return str(daily_dir)
 
     def _generate_update_summary(self, daily_dir: Path, update_date: date, update_stats: Dict) -> str:
@@ -58,7 +58,7 @@ class ReportingSystem:
             f.write("=" * 60 + "\n\n")
 
             if update_stats:
-                f.write("📊 UPDATE STATISTICS:\n")
+                f.write("[CHART] UPDATE STATISTICS:\n")
                 f.write(f"   Date Processed: {update_stats.get('date', update_date)}\n")
                 f.write(f"   Bhavcopy Stocks: {update_stats.get('bhavcopy_stocks', 0):,}\n")
                 f.write(f"   Stocks Updated: {update_stats.get('stocks_updated', 0):,}\n")
@@ -67,17 +67,17 @@ class ReportingSystem:
                 f.write(f"   Success Rate: {update_stats.get('success_rate', 0):.1f}%\n")
                 f.write(f"   Duration: {update_stats.get('duration_seconds', 0):.1f} seconds\n\n")
 
-            f.write("📈 CACHE STATUS:\n")
+            f.write("[TREND_UP] CACHE STATUS:\n")
             cache_info = self._get_cache_info()
             f.write(f"   Total Cached Stocks: {cache_info['total_stocks']:,}\n")
             f.write(f"   Cache Size: {cache_info['total_size_mb']:.1f} MB\n")
             f.write(f"   Data Range: {cache_info['date_range']}\n\n")
 
-            f.write("🎯 SYSTEM HEALTH:\n")
-            f.write("   ✅ Bhavcopy Download: Working\n")
-            f.write("   ✅ Data Processing: Working\n")
-            f.write("   ✅ Cache Updates: Working\n")
-            f.write("   ✅ Scanner Ready: Working\n")
+            f.write("[TARGET] SYSTEM HEALTH:\n")
+            f.write("   [OK] Bhavcopy Download: Working\n")
+            f.write("   [OK] Data Processing: Working\n")
+            f.write("   [OK] Cache Updates: Working\n")
+            f.write("   [OK] Scanner Ready: Working\n")
 
         return filename
 
@@ -143,7 +143,7 @@ class ReportingSystem:
                 for i, symbol in enumerate(sorted(missing_stocks), 1):  # Show ALL stocks
                     f.write(f"{i:3d}. {symbol}\n")
 
-                f.write("\n💡 These stocks will be added to cache if they trade consistently.\n")
+                f.write("\n[IDEA] These stocks will be added to cache if they trade consistently.\n")
                 f.write("   They are typically new listings, ETFs, or low-volume stocks.\n")
             else:
                 f.write("All bhavcopy stocks are already in your cache.\n")
@@ -163,7 +163,7 @@ class ReportingSystem:
             f.write(f"DATA QUALITY REPORT - {update_date.strftime('%d-%b-%Y')}\n")
             f.write("=" * 60 + "\n\n")
 
-            f.write("📊 CACHE QUALITY SUMMARY:\n")
+            f.write("[CHART] CACHE QUALITY SUMMARY:\n")
             f.write(f"   Total Stocks: {quality_stats['total_stocks']:,}\n")
             f.write(f"   Complete Data (120+ days): {quality_stats['complete_data']:,} ({quality_stats['complete_pct']:.1f}%)\n")
             f.write(f"   Good Data (60-119 days): {quality_stats['good_data']:,} ({quality_stats['good_pct']:.1f}%)\n")
@@ -171,14 +171,14 @@ class ReportingSystem:
             f.write(f"   Very Limited (<30 days): {quality_stats['very_limited']:,} ({quality_stats['very_limited_pct']:.1f}%)\n\n")
 
             if quality_stats['problem_stocks']:
-                f.write("⚠️  STOCKS WITH LIMITED DATA (<60 days):\n")
+                f.write("[WARN]  STOCKS WITH LIMITED DATA (<60 days):\n")
                 for stock in quality_stats['problem_stocks'][:20]:  # First 20
                     f.write(f"   {stock['symbol']}: {stock['days']} days\n")
 
                 if len(quality_stats['problem_stocks']) > 20:
                     f.write(f"   ... and {len(quality_stats['problem_stocks']) - 20} more\n")
 
-                f.write("\n💡 Consider refreshing data for these stocks if needed.\n")
+                f.write("\n[IDEA] Consider refreshing data for these stocks if needed.\n")
 
         return filename
 
@@ -193,18 +193,18 @@ class ReportingSystem:
             f.write(f"CACHE HEALTH REPORT - {update_date.strftime('%d-%b-%Y')}\n")
             f.write("=" * 60 + "\n\n")
 
-            f.write("💾 CACHE STATISTICS:\n")
+            f.write("[FLOPPY] CACHE STATISTICS:\n")
             f.write(f"   Total Stocks: {cache_info['total_stocks']:,}\n")
             f.write(f"   Total Size: {cache_info['total_size_mb']:.1f} MB\n")
             f.write(f"   Average Days per Stock: {cache_info['avg_days']:.1f}\n")
             f.write(f"   Date Range: {cache_info['date_range']}\n\n")
 
-            f.write("📈 DATA DISTRIBUTION:\n")
+            f.write("[TREND_UP] DATA DISTRIBUTION:\n")
             for range_name, count in cache_info['data_ranges'].items():
                 pct = (count / cache_info['total_stocks']) * 100 if cache_info['total_stocks'] > 0 else 0
                 f.write(f"   {range_name}: {count:,} stocks ({pct:.1f}%)\n")
 
-            f.write("\n✅ SYSTEM STATUS:\n")
+            f.write("\n[OK] SYSTEM STATUS:\n")
             f.write("   Cache Integrity: OK\n")
             f.write("   Data Accessibility: OK\n")
             f.write("   Update System: OK\n")
@@ -219,18 +219,18 @@ class ReportingSystem:
             f.write(f"DAILY REPORTS - {update_date.strftime('%d-%b-%Y')}\n")
             f.write("=" * 50 + "\n\n")
 
-            f.write("📋 REPORTS GENERATED:\n")
+            f.write("[CLIPBOARD] REPORTS GENERATED:\n")
             for report_type, filename in reports.items():
                 f.write(f"   • {filename}\n")
 
-            f.write("\n📖 REPORT DESCRIPTIONS:\n")
+            f.write("\n[BOOK] REPORT DESCRIPTIONS:\n")
             f.write("   • update_summary.txt - Overall update statistics\n")
             f.write("   • new_stocks_added.txt - Stocks newly added to cache\n")
             f.write("   • missing_from_cache.txt - Stocks in bhavcopy but not cached\n")
             f.write("   • data_quality_report.txt - Data completeness analysis\n")
             f.write("   • cache_health.txt - Overall cache statistics\n")
 
-            f.write("\n📊 GENERATED AT:\n")
+            f.write("\n[CHART] GENERATED AT:\n")
             f.write(f"   {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
         reports['index'] = "README.txt"

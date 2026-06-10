@@ -35,7 +35,7 @@ class TestReversalStock:
         if not self.first_tick_captured:
             self.open_price = price
             self.first_tick_captured = True
-            logger.info(f"✅ {self.symbol}: Captured first tick as open = ₹{price:.2f} (bot start time)")
+            logger.info(f"[OK] {self.symbol}: Captured first tick as open = ₹{price:.2f} (bot start time)")
             return True
         return False
     
@@ -43,10 +43,10 @@ class TestReversalStock:
         """Calculate gap percentage using first tick as opening price"""
         if self.open_price and self.prev_close:
             gap_pct = ((self.open_price - self.prev_close) / self.prev_close) * 100
-            logger.info(f"📊 {self.symbol}: Gap % = {gap_pct:.2f}% (Open: ₹{self.open_price:.2f}, Prev Close: ₹{self.prev_close:.2f})")
+            logger.info(f"[CHART] {self.symbol}: Gap % = {gap_pct:.2f}% (Open: ₹{self.open_price:.2f}, Prev Close: ₹{self.prev_close:.2f})")
             self.gap_calculated = True
             return gap_pct
-        logger.warning(f"⚠️ {self.symbol}: Missing open or prev_close for gap calculation")
+        logger.warning(f"[WARN] {self.symbol}: Missing open or prev_close for gap calculation")
         return None
     
     def check_oops_conditions(self, current_price):
@@ -58,7 +58,7 @@ class TestReversalStock:
         crosses_prev_close = current_price > self.prev_close
         
         if gap_pct <= -2.0 and crosses_prev_close:
-            logger.info(f"🎯 {self.symbol}: OOPS conditions met! Gap: {gap_pct:.2f}%, Crossed Prev Close: ₹{current_price:.2f}")
+            logger.info(f"[TARGET] {self.symbol}: OOPS conditions met! Gap: {gap_pct:.2f}%, Crossed Prev Close: ₹{current_price:.2f}")
             return True
         return False
     
@@ -71,13 +71,13 @@ class TestReversalStock:
         open_equals_low = abs(self.open_price - current_low) / self.open_price <= 0.01
         
         if gap_pct >= 2.0 and open_equals_low:
-            logger.info(f"🚀 {self.symbol}: Strong Start conditions met! Gap: {gap_pct:.2f}%, Open≈Low: ₹{current_low:.2f}")
+            logger.info(f"[ROCKET] {self.symbol}: Strong Start conditions met! Gap: {gap_pct:.2f}%, Open≈Low: ₹{current_low:.2f}")
             return True
         return False
 
 def test_gap_calculation():
     """Test gap calculation with sample data"""
-    logger.info("🧪 Testing Gap Calculation Logic (No WebSocket)")
+    logger.info("[TEST_TUBE] Testing Gap Calculation Logic (No WebSocket)")
     logger.info(f"Current time: {datetime.now(IST).strftime('%H:%M:%S')}")
     
     # Test stocks with sample data
@@ -126,35 +126,35 @@ def test_gap_calculation():
                 if 'current_price' in test_data:
                     oops_triggered = stock.check_oops_conditions(test_data['current_price'])
                     if oops_triggered:
-                        logger.info(f"✅ OOPS test PASSED for {test_data['symbol']}")
+                        logger.info(f"[OK] OOPS test PASSED for {test_data['symbol']}")
                     else:
-                        logger.info(f"❌ OOPS test FAILED for {test_data['symbol']}")
+                        logger.info(f"[FAIL] OOPS test FAILED for {test_data['symbol']}")
                         all_tests_passed = False
                 
                 # Test Strong Start conditions  
                 if 'current_low' in test_data:
                     strong_start_triggered = stock.check_strong_start_conditions(test_data['current_low'])
                     if strong_start_triggered:
-                        logger.info(f"✅ Strong Start test PASSED for {test_data['symbol']}")
+                        logger.info(f"[OK] Strong Start test PASSED for {test_data['symbol']}")
                     else:
-                        logger.info(f"❌ Strong Start test FAILED for {test_data['symbol']}")
+                        logger.info(f"[FAIL] Strong Start test FAILED for {test_data['symbol']}")
                         all_tests_passed = False
             else:
-                logger.error(f"❌ Gap calculation FAILED for {test_data['symbol']}")
+                logger.error(f"[FAIL] Gap calculation FAILED for {test_data['symbol']}")
                 all_tests_passed = False
         else:
-            logger.error(f"❌ First tick capture FAILED for {test_data['symbol']}")
+            logger.error(f"[FAIL] First tick capture FAILED for {test_data['symbol']}")
             all_tests_passed = False
     
     logger.info(f"\n{'='*50}")
     if all_tests_passed:
-        logger.info("🎉 ALL TESTS PASSED!")
-        logger.info("✅ First tick as opening price logic works correctly")
-        logger.info("✅ Gap calculation works correctly")
-        logger.info("✅ OOPS detection works correctly")
-        logger.info("✅ Strong Start detection works correctly")
+        logger.info("[DONE] ALL TESTS PASSED!")
+        logger.info("[OK] First tick as opening price logic works correctly")
+        logger.info("[OK] Gap calculation works correctly")
+        logger.info("[OK] OOPS detection works correctly")
+        logger.info("[OK] Strong Start detection works correctly")
     else:
-        logger.error("❌ Some tests failed")
+        logger.error("[FAIL] Some tests failed")
     logger.info(f"{'='*50}")
     
     return all_tests_passed
@@ -168,11 +168,11 @@ def main():
     success = test_gap_calculation()
     
     if success:
-        logger.info("🎉 Logic test completed successfully!")
+        logger.info("[DONE] Logic test completed successfully!")
         logger.info("The expert's solution works: First tick = opening price")
         logger.info("Ready to implement in reversal bot!")
     else:
-        logger.error("❌ Logic test failed")
+        logger.error("[FAIL] Logic test failed")
     
     logger.info("=" * 60)
 

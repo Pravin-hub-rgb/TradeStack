@@ -12,14 +12,14 @@ from datetime import time
 
 def test_market_context_logic():
     """Test the market context execution logic"""
-    print("🚀 Testing Market Context Execution Logic\n")
+    print("[ROCKET] Testing Market Context Execution Logic\n")
 
     monitor = ReversalMonitor()
 
     # Load watchlist
     success = monitor.load_watchlist()
     if not success:
-        print("❌ Failed to load watchlist")
+        print("[FAIL] Failed to load watchlist")
         return
 
     # Rank stocks
@@ -30,7 +30,7 @@ def test_market_context_logic():
     print("="*60)
 
     # Test 1: Multiple OOPS candidates (gap down day)
-    print("\n🎯 SCENARIO 1: MULTIPLE OOPS CANDIDATES (GAP DOWN DAY)")
+    print("\n[TARGET] SCENARIO 1: MULTIPLE OOPS CANDIDATES (GAP DOWN DAY)")
     market_data_scenario1 = {
         'MEESHO': {'open': 150.0, 'prev_close': 164.29, 'ltp': 166.0, 'low': 149.0},  # 8.5% gap down
         'ORIENTTECH': {'open': 330.0, 'prev_close': 368.50, 'ltp': 372.0, 'low': 329.0},  # 10.5% gap down
@@ -43,7 +43,7 @@ def test_market_context_logic():
     monitor.execute_market_context_logic(market_data_scenario1, current_time)
 
     # Test 2: Single OOPS candidate (mixed day)
-    print("\n🔄 SCENARIO 2: SINGLE OOPS CANDIDATE (MIXED DAY)")
+    print("\n[REFRESH] SCENARIO 2: SINGLE OOPS CANDIDATE (MIXED DAY)")
     market_data_scenario2 = {
         'MEESHO': {'open': 170.0, 'prev_close': 164.29, 'ltp': 168.0, 'low': 169.0},  # 3.3% gap up (Strong Start)
         'ORIENTTECH': {'open': 330.0, 'prev_close': 368.50, 'ltp': 372.0, 'low': 329.0},  # 10.5% gap down (OOPS)
@@ -54,7 +54,7 @@ def test_market_context_logic():
     monitor.execute_market_context_logic(market_data_scenario2, current_time)
 
     # Test 3: No OOPS candidates (gap up day)
-    print("\n📈 SCENARIO 3: NO OOPS CANDIDATES (GAP UP DAY)")
+    print("\n[TREND_UP] SCENARIO 3: NO OOPS CANDIDATES (GAP UP DAY)")
     market_data_scenario3 = {
         'MEESHO': {'open': 170.0, 'prev_close': 164.29, 'ltp': 168.0, 'low': 169.0},  # 3.3% gap up (Strong Start)
         'ELECON': {'open': 410.0, 'prev_close': 395.95, 'ltp': 415.0, 'low': 408.0},  # 3.6% gap up (Strong Start)
@@ -64,7 +64,7 @@ def test_market_context_logic():
     monitor.reset_daily_state()
     monitor.execute_market_context_logic(market_data_scenario3, current_time_strong_start)
 
-    print("\n✅ All market context scenarios tested!")
+    print("\n[OK] All market context scenarios tested!")
 
 if __name__ == "__main__":
     test_market_context_logic()

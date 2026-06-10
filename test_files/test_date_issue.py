@@ -17,7 +17,7 @@ from src.utils.data_fetcher import data_fetcher
 
 def test_different_dates():
     """Test the scanner with different dates to see when MMFL/TENNIND appear"""
-    print("🔍 TESTING DIFFERENT DATES")
+    print("[SEARCH] TESTING DIFFERENT DATES")
     print("=" * 60)
     
     # Test dates
@@ -51,7 +51,7 @@ def test_different_dates():
                 )
                 
                 if data.empty:
-                    print(f"   ❌ No data for {symbol}")
+                    print(f"   [FAIL] No data for {symbol}")
                     continue
                 
                 # Calculate technical indicators
@@ -63,7 +63,7 @@ def test_different_dates():
                 has_date = target_timestamp in data.index
                 
                 if not has_date:
-                    print(f"   ❌ Date {test_date} not found in data")
+                    print(f"   [FAIL] Date {test_date} not found in data")
                     continue
                 
                 # Get the row for the specific date
@@ -88,12 +88,12 @@ def test_different_dates():
                 print(f"   Would pass scanner: {near_or_above_ma}")
                 
         except Exception as e:
-            print(f"   ❌ Error testing {symbol}: {e}")
+            print(f"   [FAIL] Error testing {symbol}: {e}")
 
 def test_scanner_auto_date():
     """Test what date the scanner automatically detects"""
     print("\n" + "="*60)
-    print("🔍 TESTING SCANNER AUTO-DATE DETECTION")
+    print("[SEARCH] TESTING SCANNER AUTO-DATE DETECTION")
     print("=" * 60)
     
     try:
@@ -107,7 +107,7 @@ def test_scanner_auto_date():
             nonlocal detected_date
             if message.startswith("SCAN_DATE:"):
                 detected_date = message.split(":", 1)[1]
-                print(f"   📅 Scanner detected date: {detected_date}")
+                print(f"   [CALENDAR] Scanner detected date: {detected_date}")
         
         results = scanner.run_continuation_scan(
             scan_date=None,  # Auto-detect
@@ -115,9 +115,9 @@ def test_scanner_auto_date():
         )
         
         if detected_date:
-            print(f"✅ Scanner used date: {detected_date}")
+            print(f"[OK] Scanner used date: {detected_date}")
         else:
-            print("❌ Could not detect scanner date")
+            print("[FAIL] Could not detect scanner date")
         
         print(f"   Found {len(results)} candidates")
         
@@ -129,24 +129,24 @@ def test_scanner_auto_date():
             symbol = stock.get('symbol', '')
             if symbol in target_stocks:
                 found_stocks.append(symbol)
-                print(f"   🎯 FOUND {symbol} in results!")
+                print(f"   [TARGET] FOUND {symbol} in results!")
                 print(f"      Close: {stock.get('close', 'N/A')}")
                 print(f"      SMA20: {stock.get('sma20', 'N/A')}")
                 print(f"      Dist to MA: {stock.get('dist_to_ma_pct', 'N/A')}%")
         
         if found_stocks:
-            print(f"\n❌ PROBLEM: Scanner returned {found_stocks}")
+            print(f"\n[FAIL] PROBLEM: Scanner returned {found_stocks}")
         else:
-            print(f"\n✅ GOOD: Scanner correctly filtered out {target_stocks}")
+            print(f"\n[OK] GOOD: Scanner correctly filtered out {target_stocks}")
         
     except Exception as e:
-        print(f"❌ Error testing scanner auto-date: {e}")
+        print(f"[FAIL] Error testing scanner auto-date: {e}")
         import traceback
         traceback.print_exc()
 
 def main():
     """Main test function"""
-    print("🔍 DATE ISSUE INVESTIGATION")
+    print("[SEARCH] DATE ISSUE INVESTIGATION")
     print("=" * 60)
     print("Testing to identify the exact date causing the 20 MA bug")
     

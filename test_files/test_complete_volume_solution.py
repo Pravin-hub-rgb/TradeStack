@@ -110,11 +110,11 @@ def main():
     success = test_complete_volume_solution()
     
     if success:
-        print("\n✅ Complete volume solution test completed successfully")
+        print("\n[OK] Complete volume solution test completed successfully")
         print("The continuation bot will now show detailed volume information using real cache data")
         print("No mock stock_scorer needed - using real volume baseline from cache data!")
     else:
-        print("\n❌ Complete volume solution test failed")
+        print("\n[FAIL] Complete volume solution test failed")
     
     return success
 

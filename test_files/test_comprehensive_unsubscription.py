@@ -13,7 +13,7 @@ sys.path.insert(0, 'src')
 def test_comprehensive_unsubscription():
     """Test comprehensive unsubscription logging scenarios"""
     
-    print("🧪 COMPREHENSIVE UNSUBSCRIPTION LOGGING TEST")
+    print("[TEST_TUBE] COMPREHENSIVE UNSUBSCRIPTION LOGGING TEST")
     print("=" * 60)
     print("Testing both Gap validation failures and VAH validation failures")
     print()
@@ -22,9 +22,9 @@ def test_comprehensive_unsubscription():
     try:
         from src.trading.live_trading.continuation_modules.subscription_manager import ContinuationSubscriptionManager
         from src.trading.live_trading.continuation_stock_monitor import StockState
-        print("✅ Successfully imported modules")
+        print("[OK] Successfully imported modules")
     except ImportError as e:
-        print(f"❌ Failed to import modules: {e}")
+        print(f"[FAIL] Failed to import modules: {e}")
         return
     
     # Create mock data streamer
@@ -33,7 +33,7 @@ def test_comprehensive_unsubscription():
             self.subscribed_keys = set()
         
         def unsubscribe(self, keys):
-            print(f"   📡 UNSUBSCRIBED {len(keys)} keys: {keys}")
+            print(f"   [SATELLITE] UNSUBSCRIBED {len(keys)} keys: {keys}")
             self.subscribed_keys.difference_update(keys)
     
     # Create test stocks with different scenarios
@@ -101,7 +101,7 @@ def test_comprehensive_unsubscription():
     for stock in test_stocks.values():
         subscription_manager.subscribed_keys.add(stock.instrument_key)
     
-    print(f"📊 INITIAL STATUS:")
+    print(f"[CHART] INITIAL STATUS:")
     print(f"   Total stocks: {len(test_stocks)}")
     print(f"   Subscribed: {len(subscription_manager.subscribed_keys)}")
     print(f"   Gap-validated: {sum(1 for s in test_stocks.values() if s.gap_validated)}")
@@ -111,12 +111,12 @@ def test_comprehensive_unsubscription():
     print()
     
     # Run Phase 1 unsubscription
-    print("🚀 RUNNING PHASE 1: UNSUBSCRIBE GAP+VAH REJECTED STOCKS")
+    print("[ROCKET] RUNNING PHASE 1: UNSUBSCRIBE GAP+VAH REJECTED STOCKS")
     subscription_manager.unsubscribe_gap_and_vah_rejected()
     print()
     
     # Check results
-    print("📊 POST-PHASE 1 STATUS:")
+    print("[CHART] POST-PHASE 1 STATUS:")
     print(f"   Subscribed: {len(subscription_manager.subscribed_keys)}")
     print(f"   Unsubscribed: {len(test_stocks) - len(subscription_manager.subscribed_keys)}")
     
@@ -131,21 +131,21 @@ def test_comprehensive_unsubscription():
     expected_subscribed = ['ROSSTECH', 'SHANTIGOLD']  # Only stocks that passed both gap and VAH
     expected_unsubscribed = [s for s in test_stocks.keys() if s not in expected_subscribed]
     
-    print("✅ VERIFICATION:")
+    print("[OK] VERIFICATION:")
     if set(subscribed_symbols) == set(expected_subscribed):
-        print(f"   ✅ Correctly subscribed: {subscribed_symbols}")
+        print(f"   [OK] Correctly subscribed: {subscribed_symbols}")
     else:
-        print(f"   ❌ Expected subscribed: {expected_subscribed}")
-        print(f"   ❌ Actually subscribed: {subscribed_symbols}")
+        print(f"   [FAIL] Expected subscribed: {expected_subscribed}")
+        print(f"   [FAIL] Actually subscribed: {subscribed_symbols}")
     
     if set(unsubscribed_symbols) == set(expected_unsubscribed):
-        print(f"   ✅ Correctly unsubscribed: {unsubscribed_symbols}")
+        print(f"   [OK] Correctly unsubscribed: {unsubscribed_symbols}")
     else:
-        print(f"   ❌ Expected unsubscribed: {expected_unsubscribed}")
-        print(f"   ❌ Actually unsubscribed: {unsubscribed_symbols}")
+        print(f"   [FAIL] Expected unsubscribed: {expected_unsubscribed}")
+        print(f"   [FAIL] Actually unsubscribed: {unsubscribed_symbols}")
     
     print()
-    print("🎯 EXPECTED LOG OUTPUT:")
+    print("[TARGET] EXPECTED LOG OUTPUT:")
     print("When you run the continuation bot, you should see:")
     print("   === PHASE 1: UNSUBSCRIBING GAP+VAH REJECTED STOCKS ===")
     print("   Unsubscribing 4 stocks: ['ADANIPOWER', 'ANGELONE', 'ELECON', 'GRSE']")
@@ -164,15 +164,15 @@ def test_comprehensive_unsubscription():
     print("      - SHANTIGOLD")
     
     if set(subscribed_symbols) == set(expected_subscribed) and set(unsubscribed_symbols) == set(expected_unsubscribed):
-        print("\n🎉 COMPREHENSIVE UNSUBSCRIPTION LOGGING TEST PASSED!")
+        print("\n[DONE] COMPREHENSIVE UNSUBSCRIPTION LOGGING TEST PASSED!")
         return True
     else:
-        print("\n❌ COMPREHENSIVE UNSUBSCRIPTION LOGGING TEST FAILED!")
+        print("\n[FAIL] COMPREHENSIVE UNSUBSCRIPTION LOGGING TEST FAILED!")
         return False
 
 if __name__ == "__main__":
     success = test_comprehensive_unsubscription()
     if success:
-        print("\n✅ Ready to test with live bot!")
+        print("\n[OK] Ready to test with live bot!")
     else:
-        print("\n❌ Fix needed before live testing!")
+        print("\n[FAIL] Fix needed before live testing!")

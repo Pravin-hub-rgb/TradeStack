@@ -31,7 +31,7 @@ def test_cache_mean_volume():
     print(f"File exists: {os.path.exists(cache_file)}")
     
     if not os.path.exists(cache_file):
-        print("❌ Cache file does not exist")
+        print("[FAIL] Cache file does not exist")
         return False
     
     try:
@@ -50,7 +50,7 @@ def test_cache_mean_volume():
         print(f"Volume columns found: {volume_columns}")
         
         if not volume_columns:
-            print("❌ No volume column found in cache data")
+            print("[FAIL] No volume column found in cache data")
             return False
         
         # Get the main volume column (usually just 'volume')
@@ -73,14 +73,14 @@ def test_cache_mean_volume():
                 print(f"  {date.strftime('%Y-%m-%d')}: {volume:,.0f} shares")
             
             print()
-            print("✅ Cache mean volume calculation successful")
+            print("[OK] Cache mean volume calculation successful")
             return True
         else:
-            print(f"❌ Not enough data: only {len(cache_data)} days available, need 10")
+            print(f"[FAIL] Not enough data: only {len(cache_data)} days available, need 10")
             return False
             
     except Exception as e:
-        print(f"❌ Error loading cache data: {e}")
+        print(f"[FAIL] Error loading cache data: {e}")
         return False
 
 def test_multiple_stocks_cache():
@@ -110,15 +110,15 @@ def test_multiple_stocks_cache():
                             'days_available': len(cache_data),
                             'threshold_7_5pct': mean_volume * 0.075
                         }
-                        print(f"✅ {symbol}: Mean volume = {mean_volume:,.0f}, 7.5% threshold = {mean_volume * 0.075:,.0f}")
+                        print(f"[OK] {symbol}: Mean volume = {mean_volume:,.0f}, 7.5% threshold = {mean_volume * 0.075:,.0f}")
                     else:
-                        print(f"❌ {symbol}: No volume column found")
+                        print(f"[FAIL] {symbol}: No volume column found")
                 else:
-                    print(f"❌ {symbol}: Insufficient data ({len(cache_data)} days)")
+                    print(f"[FAIL] {symbol}: Insufficient data ({len(cache_data)} days)")
             except Exception as e:
-                print(f"❌ {symbol}: Error - {e}")
+                print(f"[FAIL] {symbol}: Error - {e}")
         else:
-            print(f"❌ {symbol}: Cache file not found")
+            print(f"[FAIL] {symbol}: Cache file not found")
     
     print(f"\nSummary: {len(results)} stocks have valid cache data")
     return results
@@ -139,7 +139,7 @@ def main():
     print("\n" + "=" * 40)
     print("TEST SUMMARY")
     print("=" * 40)
-    print(f"Single stock test: {'✅ PASS' if single_result else '❌ FAIL'}")
+    print(f"Single stock test: {'[OK] PASS' if single_result else '[FAIL] FAIL'}")
     print(f"Multiple stocks test: {len(multi_results)} stocks with valid data")
     
     if multi_results:
@@ -154,6 +154,6 @@ def main():
 if __name__ == "__main__":
     success = main()
     if success:
-        print("\n✅ Cache data test completed successfully")
+        print("\n[OK] Cache data test completed successfully")
     else:
-        print("\n❌ Cache data test failed")
+        print("\n[FAIL] Cache data test failed")

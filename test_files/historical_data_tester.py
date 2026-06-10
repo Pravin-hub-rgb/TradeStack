@@ -135,7 +135,7 @@ class HistoricalDataCacher:
             batch_num = (batch_start // batch_size) + 1
             total_batches = (total_stocks + batch_size - 1) // batch_size
 
-            print(f"\n🔄 Processing batch {batch_num}/{total_batches} (stocks {batch_start+1}-{batch_end})")
+            print(f"\n[REFRESH] Processing batch {batch_num}/{total_batches} (stocks {batch_start+1}-{batch_end})")
 
             batch_results = self._download_batch(batch_stocks, batch_num, total_batches)
 
@@ -148,16 +148,16 @@ class HistoricalDataCacher:
             # Progress report
             completed = results['total_success'] + results['total_failed']
             success_rate = (results['total_success'] / completed * 100) if completed > 0 else 0
-            print(f"📊 Progress: {completed}/{total_stocks} stocks processed ({success_rate:.1f}% success)")
+            print(f"[CHART] Progress: {completed}/{total_stocks} stocks processed ({success_rate:.1f}% success)")
 
             # Optional: Add delay between batches to be respectful to API
             if batch_num < total_batches:
                 import time
-                print("⏳ Waiting 10 seconds before next batch...")
+                print("[WAIT] Waiting 10 seconds before next batch...")
                 time.sleep(10)
 
         # Final completeness check
-        print("\n🔍 Performing final completeness check...")
+        print("\n[SEARCH] Performing final completeness check...")
         for stock in nse_stocks:
             symbol = stock['symbol']
             if not self.check_data_complete(symbol):
@@ -316,7 +316,7 @@ def main():
                 result = data_cacher.download_first_50_stocks()
 
                 if 'error' not in result:
-                    print(f"\n✅ Download completed!")
+                    print(f"\n[OK] Download completed!")
                     print(f"   Successful: {result['success']}/{result['total_attempted']}")
                     if result['failed'] > 0:
                         print(f"   Failed: {result['failed']} ({', '.join(result['failed_list'])})")
@@ -324,10 +324,10 @@ def main():
                     # Print updated status
                     data_cacher.print_status()
                 else:
-                    print(f"❌ Error: {result['error']}")
+                    print(f"[FAIL] Error: {result['error']}")
 
             elif choice == '2':
-                print("\n⚠️  WARNING: This will download data for ALL NSE stocks (~2084 stocks)")
+                print("\n[WARN]  WARNING: This will download data for ALL NSE stocks (~2084 stocks)")
                 print("   Estimated time: Several hours")
                 print("   Data volume: ~400-500 MB")
                 confirm = input("Are you sure you want to continue? (yes/no): ").strip().lower()
@@ -336,7 +336,7 @@ def main():
                     result = data_cacher.download_all_nse_stocks()
 
                     if 'error' not in result:
-                        print(f"\n✅ All NSE stocks download completed!")
+                        print(f"\n[OK] All NSE stocks download completed!")
                         print(f"   Successful: {result['total_success']}/{result['total_stocks']} ({result['final_success_rate']}%)")
                         print(f"   Failed: {result['total_failed']}")
                         print(f"   Incomplete: {result['final_incomplete_count']}")
@@ -345,7 +345,7 @@ def main():
                         # Print updated status
                         data_cacher.print_status()
                     else:
-                        print(f"❌ Error: {result['error']}")
+                        print(f"[FAIL] Error: {result['error']}")
                 else:
                     print("Operation cancelled.")
 

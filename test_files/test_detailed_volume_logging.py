@@ -58,7 +58,7 @@ def test_detailed_volume_logging():
     qualified_stocks = monitor.get_qualified_stocks()
     print(f"Qualified stocks count: {len(qualified_stocks)}")
     print()
-    print("✅ Check the log messages above for detailed volume information!")
+    print("[OK] Check the log messages above for detailed volume information!")
     print("Expected format: 'Volume: 15.0% (120.0K) >= 7.5% of (800.0K)'")
     print()
     
@@ -75,10 +75,10 @@ def main():
     success = test_detailed_volume_logging()
     
     if success:
-        print("\n✅ Detailed volume logging test completed successfully")
+        print("\n[OK] Detailed volume logging test completed successfully")
         print("The continuation bot should now show detailed volume information in the logs")
     else:
-        print("\n❌ Detailed volume logging test failed")
+        print("\n[FAIL] Detailed volume logging test failed")
     
     return success
 

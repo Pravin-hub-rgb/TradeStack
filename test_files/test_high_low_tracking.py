@@ -77,26 +77,26 @@ def test_high_low_tracking():
     if stock.daily_high == 105.0:
         print("✓ PASS: Daily high correctly tracked to Rs105.00")
     else:
-        print(f"✗ FAIL: Daily high is Rs{stock.daily_high:.2f}, expected Rs105.00")
+        print(f"[FAIL] FAIL: Daily high is Rs{stock.daily_high:.2f}, expected Rs105.00")
     
     # Test 2: Entry high follows daily high
     if stock.entry_high == 105.0:
         print("✓ PASS: Entry high correctly follows daily high")
     else:
-        print(f"✗ FAIL: Entry high is Rs{stock.entry_high:.2f}, expected Rs105.00")
+        print(f"[FAIL] FAIL: Entry high is Rs{stock.entry_high:.2f}, expected Rs105.00")
     
     # Test 3: SL is calculated correctly
     expected_sl = 105.0 * 0.96  # 4% below entry
     if abs(stock.entry_sl - expected_sl) < 0.01:
         print(f"✓ PASS: Entry SL correctly calculated as Rs{stock.entry_sl:.2f}")
     else:
-        print(f"✗ FAIL: Entry SL is Rs{stock.entry_sl:.2f}, expected Rs{expected_sl:.2f}")
+        print(f"[FAIL] FAIL: Entry SL is Rs{stock.entry_sl:.2f}, expected Rs{expected_sl:.2f}")
     
     # Test 4: Low tracking works
     if stock.daily_low == 101.5:
         print("✓ PASS: Daily low correctly tracked to Rs101.50")
     else:
-        print(f"✗ FAIL: Daily low is Rs{stock.daily_low:.2f}, expected Rs101.50")
+        print(f"[FAIL] FAIL: Daily low is Rs{stock.daily_low:.2f}, expected Rs101.50")
     
     print()
     print("=== TEST COMPLETE ===")
@@ -110,10 +110,10 @@ def test_high_low_tracking():
     )
     
     if all_tests_passed:
-        print("🎉 ALL TESTS PASSED! High/low tracking fix is working correctly.")
+        print("[DONE] ALL TESTS PASSED! High/low tracking fix is working correctly.")
         return True
     else:
-        print("❌ SOME TESTS FAILED! Please review the implementation.")
+        print("[FAIL] SOME TESTS FAILED! Please review the implementation.")
         return False
 
 if __name__ == "__main__":

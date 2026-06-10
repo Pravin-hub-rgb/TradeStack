@@ -39,14 +39,14 @@ def diagnose_websocket_issues():
         print("Testing API access...")
         test_data = upstox_fetcher.get_ltp_data("RELIANCE")
         if test_data:
-            print(f"✅ API access working - got data for RELIANCE")
+            print(f"[OK] API access working - got data for RELIANCE")
             print(f"   LTP: {test_data.get('ltp', 'N/A')}")
             print(f"   Previous Close: {test_data.get('cp', 'N/A')}")
         else:
-            print("❌ API access failed")
+            print("[FAIL] API access failed")
             
     except Exception as e:
-        print(f"❌ Authentication/API test failed: {e}")
+        print(f"[FAIL] Authentication/API test failed: {e}")
     
     print()
     
@@ -58,7 +58,7 @@ def diagnose_websocket_issues():
     
     def simple_tick_handler(instrument_key, symbol, price, timestamp, ohlc_list=None):
         """Simple tick handler for testing"""
-        print(f"📡 TICK RECEIVED: {symbol} @ {timestamp.strftime('%H:%M:%S')} - Price: Rs{price:.2f}")
+        print(f"[SATELLITE] TICK RECEIVED: {symbol} @ {timestamp.strftime('%H:%M:%S')} - Price: Rs{price:.2f}")
         return False  # Continue receiving ticks
     
     # Create data streamer
@@ -69,7 +69,7 @@ def diagnose_websocket_issues():
     
     try:
         if data_streamer.connect():
-            print("✅ WebSocket connected successfully")
+            print("[OK] WebSocket connected successfully")
             
             # Wait for ticks
             print("Waiting for ticks (30 seconds)...")
@@ -80,13 +80,13 @@ def diagnose_websocket_issues():
                 time.sleep(1)
                 # Check if any ticks were received (would be printed by handler)
             
-            print("✅ WebSocket test completed - check above for received ticks")
+            print("[OK] WebSocket test completed - check above for received ticks")
             
         else:
-            print("❌ WebSocket connection failed")
+            print("[FAIL] WebSocket connection failed")
             
     except Exception as e:
-        print(f"❌ WebSocket test failed: {e}")
+        print(f"[FAIL] WebSocket test failed: {e}")
     
     print()
     
@@ -98,10 +98,10 @@ def diagnose_websocket_issues():
         print("Cleaning up existing connections...")
         if hasattr(data_streamer, 'close'):
             data_streamer.close()
-        print("✅ Connection cleanup completed")
+        print("[OK] Connection cleanup completed")
         
     except Exception as e:
-        print(f"❌ Connection cleanup failed: {e}")
+        print(f"[FAIL] Connection cleanup failed: {e}")
     
     print()
     print("=== DIAGNOSIS COMPLETE ===")
@@ -116,7 +116,7 @@ def test_reconnection_strategy():
     
     def test_tick_handler(instrument_key, symbol, price, timestamp, ohlc_list=None):
         """Test tick handler"""
-        print(f"📡 TEST TICK: {symbol} @ {timestamp.strftime('%H:%M:%S')} - Price: Rs{price:.2f}")
+        print(f"[SATELLITE] TEST TICK: {symbol} @ {timestamp.strftime('%H:%M:%S')} - Price: Rs{price:.2f}")
         return False
     
     # Test multiple connection attempts
@@ -128,15 +128,15 @@ def test_reconnection_strategy():
         
         try:
             if data_streamer.connect():
-                print(f"✅ Attempt {attempt + 1} successful")
+                print(f"[OK] Attempt {attempt + 1} successful")
                 # Try to receive a few ticks
                 time.sleep(5)
                 break
             else:
-                print(f"❌ Attempt {attempt + 1} failed")
+                print(f"[FAIL] Attempt {attempt + 1} failed")
                 
         except Exception as e:
-            print(f"❌ Attempt {attempt + 1} error: {e}")
+            print(f"[FAIL] Attempt {attempt + 1} error: {e}")
         
         # Wait before retry
         if attempt < 2:

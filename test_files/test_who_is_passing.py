@@ -14,7 +14,7 @@ from src.scanner.scanner import scanner
 
 def test_who_is_passing(scan_date: date):
     """Test which stocks are passing the scanner and why"""
-    print("🔍 WHO IS PASSING THE SCANNER?")
+    print("[SEARCH] WHO IS PASSING THE SCANNER?")
     print("=" * 60)
     
     try:
@@ -22,7 +22,7 @@ def test_who_is_passing(scan_date: date):
         print(f"\n1. RUNNING CONTINUATION SCAN:")
         result = scanner.run_continuation_scan(scan_date)
         
-        print(f"   📊 Total candidates found: {len(result)}")
+        print(f"   [CHART] Total candidates found: {len(result)}")
         
         if len(result) > 0:
             print(f"\n2. CANDIDATE DETAILS:")
@@ -38,12 +38,12 @@ def test_who_is_passing(scan_date: date):
                 print(f"      Depth: {candidate['depth_rs']:.2f} ({candidate['depth_pct']:.1f}%)")
                 print(f"      ADR: {candidate['adr_pct']:.1f}%")
         else:
-            print(f"   ❌ No candidates found")
+            print(f"   [FAIL] No candidates found")
         
         return result
         
     except Exception as e:
-        print(f"\n❌ Error running scanner: {e}")
+        print(f"\n[FAIL] Error running scanner: {e}")
         import traceback
         traceback.print_exc()
         return []
