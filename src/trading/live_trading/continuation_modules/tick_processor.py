@@ -148,12 +148,6 @@ class ContinuationTickProcessor:
         # Calculate current profit percentage
         profit_pct = (price - self.stock.entry_price) / self.stock.entry_price
         
-        # Trailing SL: Move SL to entry when 5% profit
-        if profit_pct >= 0.05 and self.stock.entry_sl < self.stock.entry_price:
-            old_sl = self.stock.entry_sl
-            self.stock.entry_sl = self.stock.entry_price  # Move to breakeven
-            logger.info(f"[{self.stock.symbol}] Trailing SL adjusted: Rs{old_sl:.2f} → Rs{self.stock.entry_sl:.2f} (5% profit reached)")
-        
         # Check exit signal: SL hit
         if price <= self.stock.entry_sl:
             pnl = profit_pct * 100

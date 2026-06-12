@@ -229,23 +229,6 @@ class ReversalTickProcessor:
         # Calculate current profit percentage
         profit_pct = (price - self.stock.entry_price) / self.stock.entry_price
         
-        # Import constants from main module - FIXED: Use absolute import
-        try:
-            from src.trading.live_trading.reversal_stock_monitor import TRAILING_SL_THRESHOLD
-        except ImportError:
-            # Fallback to relative import
-            try:
-                from ..reversal_stock_monitor import TRAILING_SL_THRESHOLD
-            except ImportError:
-                # Final fallback - use hardcoded value
-                TRAILING_SL_THRESHOLD = 0.05
-        
-        # Trailing SL: Move SL to entry when 5% profit
-        if profit_pct >= TRAILING_SL_THRESHOLD and self.stock.entry_sl < self.stock.entry_price:
-            old_sl = self.stock.entry_sl
-            self.stock.entry_sl = self.stock.entry_price  # Move to breakeven
-            logger.info(f"[{self.stock.symbol}] Trailing SL adjusted: Rs{old_sl:.2f} → Rs{self.stock.entry_sl:.2f} (5% profit reached)")
-        
         # Check exit signal: SL hit
         if price <= self.stock.entry_sl:
             pnl = profit_pct * 100
