@@ -1,0 +1,426 @@
+"use client";
+
+import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  Box, Typography, Card, CardContent, Button,
+  Table, TableBody, TableCell, TableContainer, TableHead,
+  TableRow, TableSortLabel, IconButton, Tooltip,
+  Chip,
+} from "@mui/material";
+import {
+  Download as DownloadIcon,
+  ContentCopy as CopyIcon,
+  Assessment as ResultsIcon,
+  TrendingDown as DeclineIcon,
+  Add as AddIcon,
+  Close as CloseIcon,
+  ShowChart as ChartIcon,
+  TableChart as TableIcon,
+} from "@mui/icons-material";
+import { useAppState } from "@/lib/AppStateContext";
+import CandleProgress from "./CandleProgress";
+import ScannerSplitPane from "./scanner/ScannerSplitPane";
+
+const API = "http://127.0.0.1:8001";
+
+const loadFilter = (key: string, def: number) => {
+  if (typeof window === "undefined") return def;
+  const v = localStorage.getItem(`rev_${key}`);
+  return v ? parseInt(v, 10) : def;
+};
+
+export default function ReversalScanner() {
+  const [minPrice, setMinPrice] = useState(() => loadFilter("minPrice", 100));
+  const [maxPrice, setMaxPrice] = useState(() => loadFilter("maxPrice", 2000));
+  const [minDeclinePct, setMinDeclinePct] = useState(() => loadFilter("minDeclinePct", 10));
+  const [savedSymbols, setSavedSymbols] = useState<string[]>([]);
+  const chartCacheRef = useRef<Record<string, any>>({});
+  const { state, setReversalResults, setRevScanProgress, setReversalViewMode } = useAppState();
+  const { revScanProgress: { scanning, progress, status, operationId } } = state;
+  const viewMode = state.reversalViewMode;
+  const [sortKey, setSortKey] = useState<keyof (typeof state.reversalResults)[number]>("decline_percent");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => { localStorage.setItem("rev_minPrice", String(minPrice)); }, [minPrice]);
+  useEffect(() => { localStorage.setItem("rev_maxPrice", String(maxPrice)); }, [maxPrice]);
+  useEffect(() => { localStorage.setItem("rev_minDeclinePct", String(minDeclinePct)); }, [minDeclinePct]);
+
+  useEffect(() => {
+    fetch(`${API}/api/settings`)
+      .then(r => r.json())
+      .then(data => {
+        const s: Record<string, string> = {};
+        for (const item of data.settings || []) {
+          if (item.key) s[item.key] = item.value;
+        }
+        if (localStorage.getItem("rev_minPrice") === null && s.price_min)
+          setMinPrice(parseInt(s.price_min, 10));
+        if (localStorage.getItem("rev_maxPrice") === null && s.price_max)
+          setMaxPrice(parseInt(s.price_max, 10));
+        if (localStorage.getItem("rev_minDeclinePct") === null && s.rev_min_decline_pct)
+          setMinDeclinePct(Math.round(parseFloat(s.rev_min_decline_pct)));
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API}/api/stock-list/reversal`)
+      .then(r => r.json())
+      .then(d => setSavedSymbols((d.stocks || []).map((s: any) => s.symbol)))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!scanning || !operationId) return;
+    intervalRef.current = setInterval(async () => {
+      try {
+        const r = await fetch(`${API}/api/scanner/status/${operationId}`);
+        const d = await r.json();
+        if (d.detail) {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setRevScanProgress({ scanning: false, progress: 0, status: "Scan expired (server was restarted)", operationId: null });
+          return;
+        }
+        setRevScanProgress({ scanning: true, progress: d.progress || 0, status: d.message || "Processing...", operationId });
+
+        if (d.status === "completed") {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          const rows = (d.result?.results || []).map((r: any) => ({
+            ...r, close: r.close ?? 0, adr_pct: r.adr_pct ?? 0,
+          }));
+          setReversalResults(rows);
+          setRevScanProgress({ scanning: false, progress: 100, status: `Scan completed! Found ${rows.length} reversal setups`, operationId: null });
+        } else if (d.status === "error") {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          setRevScanProgress({ scanning: false, progress: 0, status: `Scan failed: ${d.message}`, operationId: null });
+        }
+      } catch {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        intervalRef.current = null;
+        setRevScanProgress({ scanning: false, progress: 0, status: "Lost connection to scan process", operationId: null });
+      }
+    }, 1000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    };
+  }, [scanning, operationId, setRevScanProgress, setReversalResults]);
+
+  const runScan = async () => {
+    setRevScanProgress({ scanning: true, progress: 0, status: "Starting reversal scan...", operationId: null });
+    setReversalResults([]);
+
+    try {
+      const res = await fetch(`${API}/api/scanner/reversal`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: null,
+          filters: {
+            min_price: minPrice,
+            max_price: maxPrice,
+            rev_min_decline_pct: minDeclinePct,
+          },
+        }),
+      });
+      const d = await res.json();
+      if (d.status !== "started") throw new Error(d.message || "Failed to start");
+      setRevScanProgress({ scanning: true, progress: 0, status: "Scan started...", operationId: d.operation_id });
+    } catch (e: any) {
+      setRevScanProgress({ scanning: false, progress: 0, status: `Failed to start scan: ${e.message}`, operationId: null });
+    }
+  };
+
+  const handleSort = (key: string) => {
+    const dir = sortKey === key && sortDir === "asc" ? "desc" : "asc";
+    setSortKey(key as any);
+    setSortDir(dir);
+    const sorted = [...state.reversalResults].sort((a, b) => {
+      const av = (a as any)[key] ?? 0; const bv = (b as any)[key] ?? 0;
+      return dir === "asc" ? (av < bv ? -1 : 1) : (av > bv ? -1 : 1);
+    });
+    setReversalResults(sorted);
+  };
+
+  const copyClipboard = () => {
+    const syms = state.reversalResults.map(r => r.symbol);
+    navigator.clipboard.writeText(syms.map(s => `NSE:${s}-EQ`).join(","));
+    setRevScanProgress({ scanning, progress, status: `Copied ${syms.length} symbols to clipboard`, operationId });
+  };
+
+  const exportCsv = () => {
+    if (!state.reversalResults.length) return;
+    const h = "Symbol,Close,Period,Green Days,First Red Date,Decline %,Trend,ADR %";
+    const rows = state.reversalResults.map(r =>
+      `${r.symbol},${r.close.toFixed(2)},${r.period},${r.green_days},${r.first_red_date},${(r.decline_percent * 100).toFixed(2)}%,${r.trend_context},${r.adr_pct.toFixed(1)}`
+    );
+    const blob = new Blob([[h, ...rows].join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `reversal_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  const toggleReversal = useCallback(async (row: any) => {
+    const symbol = row.symbol;
+    const isIn = savedSymbols.includes(symbol);
+    try {
+      if (isIn) {
+        await fetch(`${API}/api/stock-list/reversal/${symbol}`, { method: "DELETE" });
+        setSavedSymbols(prev => prev.filter(s => s !== symbol));
+        setRevScanProgress({ scanning, progress, status: `Removed ${symbol} from reversal list`, operationId });
+      } else {
+        await fetch(`${API}/api/stock-list/reversal`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ symbol, close: row.close, trend_context: row.trend_context, period: row.period }),
+        });
+        setSavedSymbols(prev => [...prev, symbol]);
+        setRevScanProgress({ scanning, progress, status: `Added ${symbol} to reversal list`, operationId });
+      }
+    } catch {
+      setRevScanProgress({ scanning, progress, status: `Failed to update ${symbol}`, operationId });
+    }
+  }, [savedSymbols, scanning, progress, operationId, setRevScanProgress]);
+
+  const cardSx = {
+    background: "linear-gradient(135deg, #111111 0%, #1a1a1a 100%)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    borderRadius: 3,
+  };
+
+  return (
+    <Box sx={{ minHeight: "100vh" }}>
+      <Card sx={{ background: "#0d1117", border: "1px solid #1e293b", borderRadius: 2 }}>
+        <CardContent sx={{ px: 3, py: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px 16px" }}>
+            <Typography sx={{ fontWeight: 700, color: "#f1f5f9", fontSize: "0.85rem" }}>
+              Filters
+            </Typography>
+            <Box sx={{ height: 20, width: 1, bgcolor: "#1e293b" }} />
+            {[
+              { label: "Min Price", val: minPrice, set: setMinPrice, min: 10, max: 5000 },
+              { label: "Max Price", val: maxPrice, set: setMaxPrice, min: 100, max: 10000 },
+              { label: "Min Decline %", val: minDeclinePct, set: setMinDeclinePct, min: 5, max: 30 },
+            ].map(f => (
+              <Box key={f.label} sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                <Typography sx={{ color: "#94a3b8", fontSize: "0.8rem", whiteSpace: "nowrap" }}>
+                  {f.label}
+                </Typography>
+                <Box
+                  component="input"
+                  type="number"
+                  value={f.val}
+                  onChange={e => f.set(Number(e.target.value))}
+                  min={f.min}
+                  max={f.max}
+                  sx={{
+                    width: 90, px: 2, py: 0.7, borderRadius: 1.5,
+                    bgcolor: "#1e293b", color: "#f8fafc",
+                    border: "1px solid #334155", outline: "none",
+                    fontSize: "0.85rem", fontFamily: '"SF Mono", "Fira Code", monospace',
+                    textAlign: "left", transition: "border-color 0.15s",
+                    "&:focus": { borderColor: "#f59e0b" },
+                  }}
+                />
+              </Box>
+            ))}
+            <Box sx={{ flex: 1, minWidth: 40 }} />
+            <Button
+              variant="contained" disableElevation
+              disabled={scanning}
+              onClick={runScan}
+              sx={{
+                px: 3, py: 0.8, fontSize: "0.85rem", fontWeight: 600,
+                bgcolor: "#f59e0b", color: "#0f172a",
+                borderRadius: 1.5, textTransform: "none", minWidth: 120,
+                "&:hover": { bgcolor: "#d97706" },
+                "&:disabled": { bgcolor: "#1e293b", color: "#475569" },
+              }}
+            >
+              {scanning ? "Scanning..." : "Run Scan"}
+            </Button>
+          </Box>
+        </CardContent>
+      </Card>
+
+      {scanning && (
+        <Box sx={{ mt: 1.5, px: 0.5 }}>
+          <CandleProgress progress={progress} />
+          <Typography sx={{ color: "#cbd5e1", fontSize: "0.8rem", mt: 1 }}>
+            {status}
+          </Typography>
+        </Box>
+      )}
+
+      {status && !scanning && (
+        <Box sx={{ mt: 1.5, px: 2, py: 1, borderRadius: 1, display: "inline-block", bgcolor: "#1e293b" }}>
+          <Typography sx={{
+            color: status.includes("completed") ? "#22c55e" :
+                   status.includes("failed") ? "#ef4444" : "#cbd5e1",
+            fontSize: "0.85rem", fontWeight: 500,
+          }}>
+            {status}
+          </Typography>
+        </Box>
+      )}
+
+      {state.reversalResults.length > 0 && (
+        <Card sx={{ ...cardSx, border: "1px solid rgba(255,255,255,0.06)", borderLeft: "3px solid #f59e0b" }}>
+          <CardContent sx={{ p: 0 }}>
+            <Box sx={{
+              px: 2.5, py: 1.5,
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+            }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <DeclineIcon sx={{ color: "#f59e0b", fontSize: 20 }} />
+                <Typography sx={{ fontWeight: 600, color: "#f8fafc", fontSize: "0.95rem" }}>
+                  Scan Results ({state.reversalResults.length} stocks)
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", gap: 0.5, alignItems: "center" }}>
+                <Box sx={{
+                  display: "flex", bgcolor: "#1e293b", borderRadius: 1.5, p: 0.3, mr: 1,
+                }}>
+                  <Tooltip title="Table View">
+                    <IconButton
+                      size="small"
+                      onClick={() => setReversalViewMode("table")}
+                      sx={{
+                        color: viewMode === "table" ? "#f59e0b" : "#475569",
+                        bgcolor: viewMode === "table" ? "rgba(245,158,11,0.15)" : "transparent",
+                        borderRadius: 1,
+                        p: 0.5,
+                        "&:hover": { bgcolor: "rgba(245,158,11,0.1)" },
+                      }}
+                    >
+                      <TableIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Chart View">
+                    <IconButton
+                      size="small"
+                      onClick={() => setReversalViewMode("chart")}
+                      sx={{
+                        color: viewMode === "chart" ? "#f59e0b" : "#475569",
+                        bgcolor: viewMode === "chart" ? "rgba(245,158,11,0.15)" : "transparent",
+                        borderRadius: 1,
+                        p: 0.5,
+                        "&:hover": { bgcolor: "rgba(245,158,11,0.1)" },
+                      }}
+                    >
+                      <ChartIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <Tooltip title="Copy to Clipboard (Fyers format)">
+                  <IconButton onClick={copyClipboard} sx={{ color: "#475569", "&:hover": { color: "#06b6d4" } }}><CopyIcon sx={{ fontSize: 18 }} /></IconButton>
+                </Tooltip>
+                <Tooltip title="Export to CSV">
+                  <IconButton onClick={exportCsv} sx={{ color: "#475569", "&:hover": { color: "#10b981" } }}><DownloadIcon sx={{ fontSize: 18 }} /></IconButton>
+                </Tooltip>
+              </Box>
+            </Box>
+            <Box sx={{ height: 2, bgcolor: "rgba(245,158,11,0.08)" }} />
+
+            {viewMode === "table" ? (
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: "rgba(255,255,255,0.02)" }}>
+                      <TableCell sx={{ color: "#94a3b8", fontWeight: 600, width: 80, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                        Actions
+                      </TableCell>
+                      {[
+                        { k: "symbol", l: "Symbol" },
+                        { k: "close", l: "Close" },
+                        { k: "period", l: "Period" },
+                        { k: "green_days", l: "Green Days" },
+                        { k: "first_red_date", l: "First Red" },
+                        { k: "decline_percent", l: "Decline %" },
+                        { k: "trend_context", l: "Trend" },
+                        { k: "adr_pct", l: "ADR %" },
+                      ].map(col => (
+                        <TableCell key={col.k} sx={{ color: "#94a3b8", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                          <TableSortLabel
+                            active={sortKey === col.k}
+                            direction={sortKey === col.k ? sortDir : "asc"}
+                            onClick={() => handleSort(col.k)}
+                            sx={{
+                              color: "#94a3b8 !important",
+                              "&:hover": { color: "#f8fafc !important" },
+                              "&.MuiTableSortLabel-active": { color: "#f59e0b !important" },
+                            }}
+                          >
+                            {col.l}
+                          </TableSortLabel>
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {state.reversalResults.map((row: any) => {
+                      const inList = savedSymbols.includes(row.symbol);
+                      return (
+                      <TableRow key={row.symbol} hover
+                        sx={{ "&:hover": { backgroundColor: "rgba(255,255,255,0.02)" } }}
+                      >
+                        <TableCell>
+                          <Tooltip title={inList ? "Remove from reversal list" : "Add to reversal list"} placement="right">
+                            <IconButton size="small" onClick={() => toggleReversal(row)}
+                              sx={{ color: inList ? "#ef4444" : "#f59e0b" }}>
+                              {inList ? <CloseIcon fontSize="small" /> : <AddIcon fontSize="small" />}
+                            </IconButton>
+                          </Tooltip>
+                        </TableCell>
+                        <TableCell sx={{ color: "#f8fafc", fontWeight: 600 }}>{row.symbol}</TableCell>
+                        <TableCell sx={{ color: "#f8fafc" }}>₹{row.close.toFixed(2)}</TableCell>
+                        <TableCell sx={{ color: "#f8fafc" }}>{row.period}</TableCell>
+                        <TableCell sx={{ color: "#f8fafc" }}>{row.green_days}</TableCell>
+                        <TableCell sx={{ color: "#f8fafc" }}>{row.first_red_date}</TableCell>
+                        <TableCell sx={{ color: "#ef4444", fontWeight: 600 }}>
+                          {(row.decline_percent * 100).toFixed(1)}%
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={row.trend_context}
+                            size="small"
+                            sx={{
+                              color: row.trend_context === "uptrend" ? "#10b981" : "#f59e0b",
+                              bgcolor: row.trend_context === "uptrend" ? "rgba(16,185,129,0.1)" : "rgba(245,158,11,0.1)",
+                              fontWeight: 600,
+                              border: `1px solid ${row.trend_context === "uptrend" ? "rgba(16,185,129,0.3)" : "rgba(245,158,11,0.3)"}`,
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell sx={{ color: (row.adr_pct ?? 0) >= 3 ? "#10b981" : "#f8fafc" }}>
+                          {row.adr_pct.toFixed(1)}%
+                        </TableCell>
+                      </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            ) : (
+              <Box sx={{ p: 2 }}>
+                <ScannerSplitPane
+                  stocks={state.reversalResults}
+                  mode="reversal"
+                  savedSymbols={savedSymbols}
+                  onToggle={toggleReversal}
+                  chartCacheRef={chartCacheRef}
+                />
+              </Box>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </Box>
+  );
+}

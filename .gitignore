@@ -52,6 +52,8 @@ coverage.xml
 
 # Data and cache files
 data/
+*.pkl
+*.csv.gz
 
 # Temporary files
 *.tmp
@@ -84,6 +86,9 @@ Thumbs.db
 *.sln
 *.sw?
 
+# Next.js build output
+.next/
+
 # Project specific
 docs/prompts.md
 debug_*.py
@@ -93,6 +98,11 @@ data
 
 # API credentials
 upstox_config.json
+
+# Legacy data artifacts
+trade_logs/
+test_upstox_output/
+option-trading-bot/data_saver/
 
 
 market_breadth_reports

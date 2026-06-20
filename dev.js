@@ -1,27 +1,49 @@
-const { spawn, execSync } = require('child_process');
-const path = require('path');
+const { execSync } = require('child_process');
+const concurrently = require('concurrently');
 
-const root = __dirname;
-const py = spawn('python', [path.join(root, 'server.py')], { stdio: 'inherit', shell: true });
-const vite = spawn('npm', ['run', 'dev'], { stdio: 'inherit', shell: true, cwd: path.join(root, 'frontend') });
-
-const children = [py, vite];
-
-function treeKill(proc) {
-  if (!proc || proc.killed) return;
+// ====================================================================
+// Zombie cleanup — kill leftovers from previous runs that weren't
+// cleaned up by Ctrl+C (Windows doesn't propagate SIGINT to children).
+// ====================================================================
+function killPort(port) {
   try {
-    execSync(`taskkill /PID ${proc.pid} /T /F`, { stdio: 'ignore' });
-  } catch {}
+    execSync(
+      `powershell -Command "$(Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Where-Object { $_.OwningProcess -gt 0 } | Select-Object -ExpandProperty OwningProcess -Unique) | ForEach-Object { Stop-Process -Id $_ -Force }"`,
+      { stdio: 'ignore', timeout: 3000 },
+    );
+  } catch (_) {}
 }
 
-function cleanup() {
-  children.forEach(treeKill);
-  process.exit();
-}
+killPort(8001);
+killPort(3000);
 
-process.on('SIGINT', cleanup);
-process.on('SIGTERM', cleanup);
-process.on('exit', cleanup);
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-py.on('close', (code) => { console.log(`[dev] Python exited (${code})`); cleanup(); });
-vite.on('close', (code) => { console.log(`[dev] Vite exited (${code})`); cleanup(); });
+(async () => {
+  await sleep(1000);
+
+  const isProd = process.argv.includes('--prod');
+
+  const { result } = concurrently(
+    [
+      {
+        command: isProd ? 'bun run start' : 'bun run dev',
+        name: 'next',
+        cwd: 'frontend',
+        prefixColor: 'blue',
+      },
+      {
+        command: `.\\venv\\Scripts\\python server.py${isProd ? '' : ''}`,
+        name: 'py',
+        cwd: 'backend',
+        prefixColor: 'yellow',
+      },
+    ],
+    {
+      prefix: 'name',
+      killOthersOnFail: true,
+    },
+  );
+
+  result.catch(() => process.exit(1));
+})();

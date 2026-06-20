@@ -1,0 +1,1 @@
+the scan is running and we swtich to other tab and come back to same scan tab so the progress  UI is gone although the process do runs in the background and the result are also shown after thatn .. it just that the progress UI is gone that's i
