@@ -117,3 +117,9 @@ docs/
 
 # Tests (local verification, not pushed)
 tests/
+
+# Fix/dev notes
+fix/
+
+# Old legacy code (reference only)
+old-legacy-code/
