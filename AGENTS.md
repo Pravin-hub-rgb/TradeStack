@@ -21,7 +21,7 @@ They share a SQLite database in `data/` for settings, trade logs, and cache inde
 ## Folder Structure
 
 ```
-MA_Stock_Trader_NA/
+TradeStack/
 ├── AGENTS.md                         ← THIS FILE — read first
 ├── package.json                      ← Root scripts (bun run dev launches both servers)
 │
@@ -53,7 +53,7 @@ MA_Stock_Trader_NA/
 │   ├── settings.db                   ← SQLite database for config + trade logs
 │   └── logs/
 │
-└── MA_Stock_Trader_OLD/              ← Reference: original codebase at ../MA_Stock_Trader_OLD
+└── old-legacy-code/              ← Reference: original codebase archive
 ```
 
 ---
@@ -137,7 +137,7 @@ MA_Stock_Trader_NA/
 
 ### Run the project
 ```powershell
-cd MA_Stock_Trader_NA
+cd TradeStack
 bun run dev
 ```
 This starts:
@@ -162,7 +162,7 @@ Every phase in the roadmap gets a `docs/steps/stepN_name_date.md` file written D
 
 ## How to Read the Old Code (Reference)
 
-The original codebase is at `C:\Users\Pravin\Desktop\main\MA_Stock_Trader_OLD\`. When rebuilding a feature:
+The original codebase is in `old-legacy-code/`. When rebuilding a feature:
 
 1. Read the old file to understand the original logic
 2. Check the roadmap doc (`docs/REBUILD_FROM_SCRATCH_ROADMAP_V2_8June26.md`) to see which phase we're in
@@ -187,7 +187,7 @@ Each step produces test scripts in `tests/` that verify the new code works corre
 
 **How to run tests:**
 ```powershell
-cd MA_Stock_Trader_NA\backend
+cd TradeStack\backend
 .\venv\Scripts\python ..\tests\step8_upstox_downloader.py
 ```
 
