@@ -111,3 +111,9 @@ continuation_scans/
 reports/
 bhavcopy_cache/
 temp_bhavcopy/
+
+# Docs (build notes, not pushed)
+docs/
+
+# Tests (local verification, not pushed)
+tests/
