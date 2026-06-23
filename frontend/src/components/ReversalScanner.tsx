@@ -20,6 +20,7 @@ import {
 import { useAppState } from "@/lib/AppStateContext";
 import CandleProgress from "./CandleProgress";
 import ScannerSplitPane from "./scanner/ScannerSplitPane";
+import ToastNotification from "./ToastNotification";
 
 const API = "http://127.0.0.1:8001";
 
@@ -37,6 +38,13 @@ export default function ReversalScanner() {
   const chartCacheRef = useRef<Record<string, any>>({});
   const { state, setReversalResults, setRevScanProgress, setReversalViewMode } = useAppState();
   const { revScanProgress: { scanning, progress, status, operationId } } = state;
+  const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "warning"; position: number }[]>([]);
+  const removeToast = useCallback((id: string) => setToasts(prev => prev.filter(t => t.id !== id)), []);
+  const showToast = useCallback((message: string, type: "success" | "error" | "warning") => {
+    const id = `t-${Date.now()}-${Math.random()}`;
+    setToasts(prev => [...prev, { id, message, type, position: prev.length }]);
+    setTimeout(() => removeToast(id), 4000);
+  }, [removeToast]);
   const viewMode = state.reversalViewMode;
   const [sortKey, setSortKey] = useState<keyof (typeof state.reversalResults)[number]>("decline_percent");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -93,15 +101,18 @@ export default function ReversalScanner() {
           }));
           setReversalResults(rows);
           setRevScanProgress({ scanning: false, progress: 100, status: `Scan completed! Found ${rows.length} reversal setups`, operationId: null });
+          showToast(`Found ${rows.length} reversal setups`, "success");
         } else if (d.status === "error") {
           if (intervalRef.current) clearInterval(intervalRef.current);
           intervalRef.current = null;
           setRevScanProgress({ scanning: false, progress: 0, status: `Scan failed: ${d.message}`, operationId: null });
+          showToast(`Scan failed: ${d.message}`, "error");
         }
       } catch {
         if (intervalRef.current) clearInterval(intervalRef.current);
         intervalRef.current = null;
         setRevScanProgress({ scanning: false, progress: 0, status: "Lost connection to scan process", operationId: null });
+        showToast("Lost connection to scan process", "error");
       }
     }, 1000);
 
@@ -150,7 +161,7 @@ export default function ReversalScanner() {
   const copyClipboard = () => {
     const syms = state.reversalResults.map(r => r.symbol);
     navigator.clipboard.writeText(syms.map(s => `NSE:${s}-EQ`).join(","));
-    setRevScanProgress({ scanning, progress, status: `Copied ${syms.length} symbols to clipboard`, operationId });
+    showToast(`Copied ${syms.length} symbols`, "success");
   };
 
   const exportCsv = () => {
@@ -173,7 +184,7 @@ export default function ReversalScanner() {
       if (isIn) {
         await fetch(`${API}/api/stock-list/reversal/${symbol}`, { method: "DELETE" });
         setSavedSymbols(prev => prev.filter(s => s !== symbol));
-        setRevScanProgress({ scanning, progress, status: `Removed ${symbol} from reversal list`, operationId });
+        showToast(`Removed ${symbol} from list`, "success");
       } else {
         await fetch(`${API}/api/stock-list/reversal`, {
           method: "POST",
@@ -181,12 +192,12 @@ export default function ReversalScanner() {
           body: JSON.stringify({ symbol, close: row.close, trend_context: row.trend_context, period: row.period }),
         });
         setSavedSymbols(prev => [...prev, symbol]);
-        setRevScanProgress({ scanning, progress, status: `Added ${symbol} to reversal list`, operationId });
+        showToast(`Added ${symbol} to list`, "success");
       }
     } catch {
-      setRevScanProgress({ scanning, progress, status: `Failed to update ${symbol}`, operationId });
+      showToast(`Failed to update ${symbol}`, "error");
     }
-  }, [savedSymbols, scanning, progress, operationId, setRevScanProgress]);
+  }, [savedSymbols]);
 
   const cardSx = {
     background: "linear-gradient(135deg, #111111 0%, #1a1a1a 100%)",
@@ -196,6 +207,11 @@ export default function ReversalScanner() {
 
   return (
     <Box sx={{ minHeight: "100vh" }}>
+      {toasts.map((t) => (
+        <Box key={t.id} sx={{ position: "fixed", bottom: 24 + t.position * 60, [viewMode === "chart" ? "left" : "right"]: 24, zIndex: 9999 }}>
+          <ToastNotification message={t.message} type={t.type} onClose={() => removeToast(t.id)} slideFrom={viewMode === "chart" ? "left" : "right"} />
+        </Box>
+      ))}
       <Card sx={{ background: "#0d1117", border: "1px solid #1e293b", borderRadius: 2 }}>
         <CardContent sx={{ px: 3, py: 2 }}>
           <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "8px 16px" }}>
@@ -253,18 +269,6 @@ export default function ReversalScanner() {
         <Box sx={{ mt: 1.5, px: 0.5 }}>
           <CandleProgress progress={progress} />
           <Typography sx={{ color: "#cbd5e1", fontSize: "0.8rem", mt: 1 }}>
-            {status}
-          </Typography>
-        </Box>
-      )}
-
-      {status && !scanning && (
-        <Box sx={{ mt: 1.5, px: 2, py: 1, borderRadius: 1, display: "inline-block", bgcolor: "#1e293b" }}>
-          <Typography sx={{
-            color: status.includes("completed") ? "#22c55e" :
-                   status.includes("failed") ? "#ef4444" : "#cbd5e1",
-            fontSize: "0.85rem", fontWeight: 500,
-          }}>
             {status}
           </Typography>
         </Box>

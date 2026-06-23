@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box, Typography, Card, CardContent, Button, IconButton, Tooltip, Chip, Grid,
 } from "@mui/material";
@@ -10,6 +10,7 @@ import {
   TrendingUp as UpIcon,
   TrendingDown as DownIcon,
 } from "@mui/icons-material";
+import ToastNotification from "./ToastNotification";
 
 const API = "http://127.0.0.1:8001";
 
@@ -22,14 +23,13 @@ interface StockItem {
 export default function StockList() {
   const [contStocks, setContStocks] = useState<StockItem[]>([]);
   const [revStocks, setRevStocks] = useState<StockItem[]>([]);
-  const [status, setStatus] = useState("");
-  const statusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const showStatus = (msg: string) => {
-    setStatus(msg);
-    if (statusTimer.current) clearTimeout(statusTimer.current);
-    statusTimer.current = setTimeout(() => setStatus(""), 3000);
-  };
+  const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "warning"; position: number }[]>([]);
+  const removeToast = useCallback((id: string) => setToasts(prev => prev.filter(t => t.id !== id)), []);
+  const showToast = useCallback((message: string, type: "success" | "error" | "warning") => {
+    const id = `t-${Date.now()}-${Math.random()}`;
+    setToasts(prev => [...prev, { id, message, type, position: prev.length }]);
+    setTimeout(() => removeToast(id), 4000);
+  }, [removeToast]);
 
   const fetchLists = useCallback(async () => {
     try {
@@ -40,7 +40,7 @@ export default function StockList() {
       setContStocks(cr.stocks || []);
       setRevStocks(rr.stocks || []);
     } catch {
-      showStatus("Failed to load stock lists");
+      showToast("Failed to load stock lists", "error");
     }
   }, []);
 
@@ -50,9 +50,9 @@ export default function StockList() {
     try {
       await fetch(`${API}/api/stock-list/${listType}/${symbol}`, { method: "DELETE" });
       await fetchLists();
-      showStatus(`Removed ${symbol}`);
+      showToast(`Removed ${symbol}`, "success");
     } catch {
-      showStatus(`Failed to remove ${symbol}`);
+      showToast(`Failed to remove ${symbol}`, "error");
     }
   };
 
@@ -61,9 +61,9 @@ export default function StockList() {
       const r = await fetch(`${API}/api/stock-list/${listType}`, { method: "DELETE" });
       const d = await r.json();
       await fetchLists();
-      showStatus(`Cleared ${d.count} stocks`);
+      showToast(`Cleared ${d.count} stocks`, "success");
     } catch {
-      showStatus(`Failed to clear ${listType} list`);
+      showToast(`Failed to clear ${listType} list`, "error");
     }
   };
 
@@ -216,20 +216,11 @@ export default function StockList() {
 
   return (
     <Box>
-      {status && (
-        <Box sx={{
-          mb: 1.5, px: 2, py: 0.75,
-          borderRadius: 1, display: "inline-block",
-          bgcolor: status.includes("fail") ? "rgba(239,68,68,0.1)" : "rgba(16,185,129,0.1)",
-        }}>
-          <Typography sx={{
-            color: status.includes("fail") ? "#ef4444" : "#10b981",
-            fontSize: "0.8rem", fontWeight: 500,
-          }}>
-            {status}
-          </Typography>
+      {toasts.map((t) => (
+        <Box key={t.id} sx={{ position: "fixed", bottom: 24 + t.position * 60, right: 24, zIndex: 9999 }}>
+          <ToastNotification message={t.message} type={t.type} onClose={() => removeToast(t.id)} slideFrom="right" />
         </Box>
-      )}
+      ))}
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 7 }}>

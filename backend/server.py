@@ -5,6 +5,7 @@ Entry point for the Python data microservice.
 import logging
 import threading
 import uuid
+from contextlib import asynccontextmanager
 from datetime import date, datetime
 from typing import Optional
 
@@ -36,11 +37,9 @@ from src.volume_fetcher import volume_fetcher
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="TradeStack", version="0.1.0")
 
-
-@app.on_event("startup")
-def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """On server start, rebuild the cache index if it's empty."""
     stats = get_cache_stats()
     if stats["stock_count"] == 0:
@@ -49,6 +48,10 @@ def startup():
         logger.info(f"Cache index rebuilt: {count} entries")
     else:
         logger.info(f"Cache index has {stats['stock_count']} entries — no rebuild needed")
+    yield
+
+
+app = FastAPI(title="TradeStack", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

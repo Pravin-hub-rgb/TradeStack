@@ -6,7 +6,6 @@ import {
 } from "@mui/material";
 import { Add as AddIcon, Close as CloseIcon } from "@mui/icons-material";
 import StockChart from "./StockChart";
-import StockTooltip from "./StockTooltip";
 
 const API = "http://127.0.0.1:8001";
 
@@ -39,10 +38,7 @@ export default function ScannerSplitPane({ stocks, mode, savedSymbols, onToggle,
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [chartData, setChartData] = useState<Record<string, CandleData>>({});
   const [loaded, setLoaded] = useState(false);
-  const [hoveredSymbol, setHoveredSymbol] = useState<string | null>(null);
-  const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
   const listRef = useRef<HTMLDivElement>(null);
-  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selected = stocks[selectedIdx];
 
@@ -87,10 +83,10 @@ export default function ScannerSplitPane({ stocks, mode, savedSymbols, onToggle,
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setSelectedIdx(prev => Math.min(prev + 1, stocks.length - 1));
+      setSelectedIdx(prev => (prev + 1) % stocks.length);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      setSelectedIdx(prev => Math.max(prev - 1, 0));
+      setSelectedIdx(prev => (prev - 1 + stocks.length) % stocks.length);
     }
   }, [stocks.length]);
 
@@ -127,6 +123,7 @@ export default function ScannerSplitPane({ stocks, mode, savedSymbols, onToggle,
                   <MiniStat label="Decline" value={`${((selected as RevStats).decline_percent * 100).toFixed(1)}%`} color="#ef4444" />
                   <MiniStat label="Trend" value={(selected as RevStats).trend_context} color={(selected as RevStats).trend_context === "uptrend" ? "#10b981" : "#f59e0b"} />
                   <MiniStat label="Green Days" value={`${(selected as RevStats).green_days}`} />
+                  <MiniStat label="First Red" value={(selected as RevStats).first_red_date} />
                 </>
               ) : (
                 <>
@@ -168,17 +165,6 @@ export default function ScannerSplitPane({ stocks, mode, savedSymbols, onToggle,
             <Box
               key={s.symbol}
               onClick={() => setSelectedIdx(i)}
-              onMouseEnter={(e) => {
-                if (hoverTimer.current) clearTimeout(hoverTimer.current);
-                hoverTimer.current = setTimeout(() => {
-                  setHoveredSymbol(s.symbol);
-                  setHoverPos({ x: e.clientX, y: e.clientY });
-                }, 300);
-              }}
-              onMouseLeave={() => {
-                if (hoverTimer.current) clearTimeout(hoverTimer.current);
-                setHoveredSymbol(null);
-              }}
               sx={{
                 display: "flex",
                 alignItems: "center",
@@ -208,7 +194,7 @@ export default function ScannerSplitPane({ stocks, mode, savedSymbols, onToggle,
                 <IconButton
                   size="small"
                   onClick={(e) => { e.stopPropagation(); onToggle(s); }}
-                  sx={{ color: inList ? "#ef4444" : "#475569", p: 0.3 }}
+                  sx={{ color: inList ? "#ef4444" : "#e2e8f0", p: 0.3 }}
                 >
                   {inList ? <CloseIcon sx={{ fontSize: 14 }} /> : <AddIcon sx={{ fontSize: 14 }} />}
                 </IconButton>
@@ -217,16 +203,6 @@ export default function ScannerSplitPane({ stocks, mode, savedSymbols, onToggle,
           );
         })}
       </Box>
-
-      {hoveredSymbol && (() => {
-        const stk = stocks.find(s => s.symbol === hoveredSymbol);
-        if (!stk) return null;
-        return (
-          <Box sx={{ position: "fixed", left: hoverPos.x + 12, top: hoverPos.y - 80, zIndex: 9999, pointerEvents: "none" }}>
-            <StockTooltip stats={stk as any} />
-          </Box>
-        );
-      })()}
     </Box>
   );
 }
