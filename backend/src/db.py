@@ -115,10 +115,11 @@ def get_connection() -> sqlite3.Connection:
     """Get the current thread's SQLite connection, creating it if needed."""
     if not hasattr(_local, "conn") or _local.conn is None:
         DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-        _local.conn = sqlite3.connect(str(DB_PATH))
+        _local.conn = sqlite3.connect(str(DB_PATH), timeout=10)
         _local.conn.row_factory = sqlite3.Row
         _local.conn.execute("PRAGMA journal_mode=WAL")
         _local.conn.execute("PRAGMA synchronous=NORMAL")
+        _local.conn.execute("PRAGMA busy_timeout=5000")
         logger.debug(f"SQLite connection opened for thread {threading.current_thread().name}")
     return _local.conn
 
@@ -156,6 +157,35 @@ def upsert_cache_index(
         (symbol.upper(), row_count, first_date, last_date, file_size_bytes, datetime.now().isoformat()),
     )
     conn.commit()
+
+
+def upsert_cache_index_batch(
+    symbol: str,
+    row_count: int,
+    first_date: Optional[str],
+    last_date: Optional[str],
+    file_size_bytes: int,
+):
+    """Same as upsert_cache_index but WITHOUT commit (for batch operations)."""
+    conn = get_connection()
+    conn.execute(
+        """
+        INSERT INTO cache_index (symbol, row_count, first_date, last_date, file_size_bytes, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(symbol) DO UPDATE SET
+            row_count = excluded.row_count,
+            first_date = excluded.first_date,
+            last_date = excluded.last_date,
+            file_size_bytes = excluded.file_size_bytes,
+            updated_at = excluded.updated_at
+        """,
+        (symbol.upper(), row_count, first_date, last_date, file_size_bytes, datetime.now().isoformat()),
+    )
+
+
+def commit_cache_index():
+    """Commit pending cache_index changes for the current thread."""
+    get_connection().commit()
 
 
 def delete_cache_index(symbol: str):

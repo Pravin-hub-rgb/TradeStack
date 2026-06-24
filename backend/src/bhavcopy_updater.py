@@ -4,6 +4,7 @@ Downloads bhavcopy data and merges it into the per-stock cache.
 """
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, timedelta, datetime
 from typing import Optional
 
@@ -11,8 +12,40 @@ import pandas as pd
 
 from src.nse_fetcher import download_bhavcopy
 from src.cache_manager import cache_manager
+from src import db
 
 logger = logging.getLogger(__name__)
+
+_MAX_WORKERS = 8
+
+
+def _process_stock(
+    symbol: str,
+    target_date: date,
+    row: pd.Series,
+) -> tuple[str, str]:
+    """Process a single stock: load cache, check dupe, merge + save.
+    Returns (symbol, status) where status is 'updated', 'skipped', or 'failed'.
+    This runs in a thread pool worker.
+    """
+    try:
+        stock_df = pd.DataFrame([{
+            "open": row["open"],
+            "high": row["high"],
+            "low": row["low"],
+            "close": row["close"],
+            "volume": row["volume"],
+        }], index=pd.to_datetime([target_date]))
+
+        existing = cache_manager.load(symbol)
+        if existing is not None and pd.Timestamp(target_date) in existing.index:
+            return (symbol, "skipped")
+
+        cache_manager.update_with_data(symbol, stock_df, existing=existing, commit=False)
+        return (symbol, "updated")
+    except Exception as e:
+        logger.warning("Failed to update %s: %s", symbol, e)
+        return (symbol, "failed")
 
 
 def update_cache_for_date(
@@ -22,8 +55,9 @@ def update_cache_for_date(
 ) -> dict:
     """
     Download bhavcopy for target_date and update all cached stocks.
+    Uses hash-indexed lookups and parallel thread pool for speed.
+
     Returns stats dict with counts of updated/skipped/failed/not_found.
-    If progress_callback is provided, calls it as callback(pct, message, log_entry=None).
     """
     start = datetime.now()
     stats = {"date": target_date.isoformat(), "updated": 0, "skipped": 0, "failed": 0, "not_in_bhavcopy": 0}
@@ -35,6 +69,9 @@ def update_cache_for_date(
         if progress_callback:
             progress_callback(100, "Failed — no bhavcopy data")
         return stats
+
+    # Build hash index for O(1) symbol lookups
+    bhavcopy_indexed = bhavcopy.set_index("symbol")
 
     symbols = cache_manager.list_symbols()
     if not symbols:
@@ -50,60 +87,56 @@ def update_cache_for_date(
     if progress_callback:
         progress_callback(0, f"Starting update for {target_date} — {len(symbols)} stocks")
 
-    for i, symbol in enumerate(symbols):
-        try:
-            log_line = f"Checking cache for {symbol}"
-            if i % 10 == 0 and progress_callback:
-                progress_callback(None, None, log_entry=log_line)
+    # Build work items: only symbols that are in bhavcopy data
+    work_items = []
+    for symbol in symbols:
+        if symbol in bhavcopy_indexed.index:
+            work_items.append((symbol, bhavcopy_indexed.loc[symbol]))
+        else:
+            stats["not_in_bhavcopy"] += 1
 
-            match = bhavcopy[bhavcopy["symbol"] == symbol]
-            if match.empty:
-                stats["not_in_bhavcopy"] += 1
-                continue
+    total = len(work_items)
+    if total == 0:
+        stats["duration_sec"] = round((datetime.now() - start).total_seconds(), 1)
+        if progress_callback:
+            progress_callback(100, f"No matching stocks in bhavcopy — {stats['not_in_bhavcopy']} not found")
+        return stats
 
-            row = match.iloc[0]
-            stock_df = pd.DataFrame([{
-                "open": row["open"],
-                "high": row["high"],
-                "low": row["low"],
-                "close": row["close"],
-                "volume": row["volume"],
-            }], index=pd.to_datetime([target_date]))
+    processed = 0
+    # Process in batches for progress reporting and periodic commits
+    for batch_start in range(0, total, batch_size):
+        batch = work_items[batch_start:batch_start + batch_size]
+        batch_results = {"updated": 0, "skipped": 0, "failed": 0}
 
-            existing = cache_manager.load(symbol)
-            if existing is not None:
-                log_line = f"Loaded cached data for {symbol}: {len(existing)} days"
-                if i % 5 == 0 and progress_callback:
-                    progress_callback(None, None, log_entry=log_line)
+        with ThreadPoolExecutor(max_workers=min(_MAX_WORKERS, len(batch))) as pool:
+            futures = {
+                pool.submit(_process_stock, symbol, target_date, row): symbol
+                for symbol, row in batch
+            }
+            for future in as_completed(futures):
+                _, status = future.result()
+                batch_results[status] += 1
 
-            if existing is not None and pd.Timestamp(target_date) in existing.index:
-                stats["skipped"] += 1
-                continue
+        # Flush SQLite commits for the batch
+        db.commit_cache_index()
 
-            cache_manager.update(symbol, stock_df)
-            stats["updated"] += 1
-            log_line = f"Updated cache for {symbol}: {target_date}"
-            logger.info(log_line)
-            if progress_callback:
-                progress_callback(None, None, log_entry=log_line)
+        stats["updated"] += batch_results["updated"]
+        stats["skipped"] += batch_results["skipped"]
+        stats["failed"] += batch_results["failed"]
+        processed += len(batch)
 
-        except Exception as e:
-            log_line = f"Failed to update {symbol}: {e}"
-            logger.warning(log_line)
-            stats["failed"] += 1
-            if progress_callback:
-                progress_callback(None, None, log_entry=log_line)
-
-        if (i + 1) % 10 == 0 or (i + 1) == len(symbols):
-            pct = round((i + 1) / len(symbols) * 100, 1)
-            msg = f"{i+1}/{len(symbols)} — {stats['updated']} updated, {stats['skipped']} skipped"
-            logger.info(f"Progress: {msg} ({pct}%)")
-            if progress_callback:
-                progress_callback(pct, msg)
+        pct = round(processed / total * 100, 1)
+        msg = f"{processed}/{total} stocks — {stats['updated']} updated, {stats['skipped']} skipped"
+        logger.info("Progress: %s (%s%%)", msg, pct)
+        if progress_callback:
+            progress_callback(pct, msg)
 
     stats["duration_sec"] = round((datetime.now() - start).total_seconds(), 1)
     stats["success_rate"] = round(stats["updated"] / max(stats["total_cached_stocks"], 1) * 100, 1)
-    logger.info(f"Update for {target_date}: {stats['updated']} updated, {stats['skipped']} skipped, {stats['failed']} failed")
+    logger.info(
+        "Update for %s: %s updated, %s skipped, %s failed",
+        target_date, stats["updated"], stats["skipped"], stats["failed"],
+    )
     if progress_callback:
         progress_callback(100, f"Done — {stats['updated']} updated, {stats['success_rate']}% success")
     return stats
@@ -134,7 +167,6 @@ def fill_cache_gaps(batch_size: int = 100, progress_callback: Optional[callable]
     """
     Download bhavcopy for all missing dates and update cache.
     Returns list of per-date stats dicts.
-    If progress_callback is provided, calls it between dates.
     """
     gaps = find_cache_gaps()
     if not gaps:
@@ -143,7 +175,7 @@ def fill_cache_gaps(batch_size: int = 100, progress_callback: Optional[callable]
             progress_callback(100, "No gaps found — cache is up to date")
         return []
 
-    logger.info(f"Found {len(gaps)} gap date(s): {gaps[0]} to {gaps[-1]}")
+    logger.info("Found %s gap date(s): %s to %s", len(gaps), gaps[0], gaps[-1])
     if progress_callback:
         progress_callback(0, f"Found {len(gaps)} gap(s): {gaps[0]} to {gaps[-1]}")
 
@@ -158,7 +190,7 @@ def fill_cache_gaps(batch_size: int = 100, progress_callback: Optional[callable]
         results.append(result)
         if "error" not in result:
             msg = f"Filled {gap_date}: {result['updated']} stocks updated"
-            logger.info(f"  {msg}")
+            logger.info("  %s", msg)
             if progress_callback:
                 progress_callback(None, None, log_entry=msg)
 

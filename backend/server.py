@@ -15,6 +15,14 @@ from pydantic import BaseModel
 
 from src.cache_manager import cache_manager
 from src.bhavcopy_updater import update_cache_for_date, fill_cache_gaps, find_cache_gaps, get_cache_dates
+
+_MAX_LOG_ENTRIES = 500
+
+
+def _log(op: dict, message: str):
+    """Add a log entry to an operation, capping at MAX_LOG_ENTRIES to prevent unbounded memory growth."""
+    if len(op.get("logs", [])) < _MAX_LOG_ENTRIES:
+        op.setdefault("logs", []).append(f"[{datetime.now().strftime('%H:%M:%S')}] {message}")
 from src.nse_fetcher import get_latest_trading_date
 from src.db import (
     get_cache_stats,
@@ -801,9 +809,8 @@ def _run_bhavcopy_update(operation_id: str, target_date: date):
         op["message"] = f"Downloading bhavcopy for {target_date}..."
 
         def progress(pct: Optional[float] = None, msg: Optional[str] = None, log_entry: Optional[str] = None):
-            now = datetime.now().strftime('%H:%M:%S')
             if log_entry:
-                op["logs"].append(f"[{now}] {log_entry}")
+                _log(op, log_entry)
             if pct is not None:
                 op["progress"] = pct
             if msg is not None:
@@ -814,10 +821,10 @@ def _run_bhavcopy_update(operation_id: str, target_date: date):
 
         error = result.get("error")
         if error:
-            op["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] Failed — {error}")
+            _log(op, f"Failed — {error}")
             op.update(status="error", progress=100, message=error, error=error, result=result)
         else:
-            op["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] Done — {result['updated']} updated, {result['skipped']} skipped")
+            _log(op, f"Done — {result['updated']} updated, {result['skipped']} skipped")
             op.update(
                 status="completed",
                 progress=100,
@@ -837,9 +844,8 @@ def _run_fill_gaps(operation_id: str):
         op["message"] = f"Filling {len(gaps)} gap(s)..."
 
         def progress(pct=None, msg=None, log_entry=None):
-            now = datetime.now().strftime('%H:%M:%S')
             if log_entry:
-                op["logs"].append(f"[{now}] {log_entry}")
+                _log(op, log_entry)
             if pct is not None:
                 op["progress"] = pct
             if msg is not None:
@@ -851,10 +857,10 @@ def _run_fill_gaps(operation_id: str):
         total_updated = sum(r.get("updated", 0) for r in results)
         errors = [r.get("error") for r in results if r.get("error")]
         if errors:
-            op["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] Done with errors: {total_updated} updated, {len(errors)} failed")
+            _log(op, f"Done with errors: {total_updated} updated, {len(errors)} failed")
             op.update(status="completed", progress=100, result={"dates_filled": len(results), "total_updated": total_updated, "details": results})
         else:
-            op["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] Filled {len(results)} date(s), {total_updated} stocks updated")
+            _log(op, f"Filled {len(results)} date(s), {total_updated} stocks updated")
             op.update(status="completed", progress=100, result={"dates_filled": len(results), "total_updated": total_updated, "details": results})
     except Exception as e:
         logger.error(f"Gap fill failed: {e}")
@@ -874,9 +880,8 @@ def _run_historical_download(operation_id: str):
         op["status"] = "running"
 
         def progress(pct: Optional[float] = None, msg: Optional[str] = None, log_entry: Optional[str] = None):
-            now = datetime.now().strftime('%H:%M:%S')
             if log_entry:
-                op.setdefault("logs", []).append(f"[{now}] {log_entry}")
+                _log(op, log_entry)
             if pct is not None:
                 op["progress"] = pct
             if msg is not None:
@@ -885,10 +890,10 @@ def _run_historical_download(operation_id: str):
         download_days = int(settings_get("historical_download_days") or 180)
         result = fetch_all_stocks(token, days=download_days, progress_callback=progress)
 
-        op["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] Rebuilding SQLite cache index from .pkl files...")
+        _log(op, "Rebuilding SQLite cache index from .pkl files...")
         op["message"] = "Rebuilding cache index..."
         idx_count = cache_manager.rebuild_index()
-        op["logs"].append(f"[{datetime.now().strftime('%H:%M:%S')}] Cache index rebuilt: {idx_count} entries")
+        _log(op, f"Cache index rebuilt: {idx_count} entries")
 
         op.update(
             status="completed",
