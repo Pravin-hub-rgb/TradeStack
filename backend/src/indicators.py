@@ -97,6 +97,7 @@ def compute_all_indicators(data: pd.DataFrame, indicator_params: Optional[dict] 
 
     df = data.copy()
     df["sma_20"] = calc_sma(df, period=sma_period)
+    df["sma_50"] = calc_sma(df, period=50)
     df["ma_angle"] = calc_ma_angle(df["sma_20"], points=ma_angle_points)
     df["adr_percent"] = calc_adr(df, period=adr_period)
     df["adr"] = calc_adr_absolute(df, period=adr_period)

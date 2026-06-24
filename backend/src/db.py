@@ -69,6 +69,20 @@ CREATE TABLE IF NOT EXISTS stock_list_items (
     UNIQUE(list_type, symbol)
 );
 
+CREATE TABLE IF NOT EXISTS breadth_results (
+    date_key    TEXT PRIMARY KEY,
+    up_4_5      INTEGER NOT NULL DEFAULT 0,
+    down_4_5    INTEGER NOT NULL DEFAULT 0,
+    up_20_5d    INTEGER NOT NULL DEFAULT 0,
+    down_20_5d  INTEGER NOT NULL DEFAULT 0,
+    above_20ma  INTEGER NOT NULL DEFAULT 0,
+    below_20ma  INTEGER NOT NULL DEFAULT 0,
+    above_50ma  INTEGER NOT NULL DEFAULT 0,
+    below_50ma  INTEGER NOT NULL DEFAULT 0,
+    stocks_with_data INTEGER NOT NULL DEFAULT 0,
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS trade_log (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     symbol          TEXT NOT NULL,
@@ -405,6 +419,67 @@ def clear_stock_list(list_type: str) -> int:
     cur = conn.execute("DELETE FROM stock_list_items WHERE list_type = ?", (list_type,))
     conn.commit()
     return cur.rowcount
+
+
+# --- Breadth Results CRUD ---
+
+
+def upsert_breadth(
+    date_key: str,
+    up_4_5: int = 0,
+    down_4_5: int = 0,
+    up_20_5d: int = 0,
+    down_20_5d: int = 0,
+    above_20ma: int = 0,
+    below_20ma: int = 0,
+    above_50ma: int = 0,
+    below_50ma: int = 0,
+    stocks_with_data: int = 0,
+):
+    """Insert or update breadth results for a date."""
+    conn = get_connection()
+    conn.execute(
+        """INSERT INTO breadth_results (date_key, up_4_5, down_4_5, up_20_5d, down_20_5d,
+                                         above_20ma, below_20ma, above_50ma, below_50ma, stocks_with_data, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           ON CONFLICT(date_key) DO UPDATE SET
+               up_4_5 = excluded.up_4_5,
+               down_4_5 = excluded.down_4_5,
+               up_20_5d = excluded.up_20_5d,
+               down_20_5d = excluded.down_20_5d,
+               above_20ma = excluded.above_20ma,
+               below_20ma = excluded.below_20ma,
+               above_50ma = excluded.above_50ma,
+               below_50ma = excluded.below_50ma,
+               stocks_with_data = excluded.stocks_with_data,
+               updated_at = excluded.updated_at""",
+        (date_key, up_4_5, down_4_5, up_20_5d, down_20_5d,
+         above_20ma, below_20ma, above_50ma, below_50ma, stocks_with_data, datetime.now().isoformat()),
+    )
+    conn.commit()
+
+
+def get_all_breadth() -> list[dict]:
+    """Return all breadth results ordered by date descending."""
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT * FROM breadth_results ORDER BY date_key DESC"
+    ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def get_breadth_date_keys() -> list[str]:
+    """Return all date keys that have breadth results."""
+    conn = get_connection()
+    rows = conn.execute("SELECT date_key FROM breadth_results ORDER BY date_key").fetchall()
+    return [r["date_key"] for r in rows]
+
+
+def clear_breadth():
+    """Delete all breadth results."""
+    conn = get_connection()
+    conn.execute("DELETE FROM breadth_results")
+    conn.commit()
 
 
 # --- Trade Log CRUD ---

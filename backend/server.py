@@ -29,8 +29,10 @@ from src.upstox_config import get_status as token_status, validate_token as vali
 from src.upstox_fetcher import fetch_all_stocks, instrument_keys_loaded
 from src.settings import get_all as settings_get_all, get as settings_get, set as settings_set, reset_category, reset_all
 from src.scanner import ContinuationScanner, ReversalScanner, get_default_params, get_default_reversal_params
-from src.market_breadth import breadth_cache, calculate_breadth
-from src.db import add_trade_log, get_trade_logs, update_trade_log, delete_trade_log, get_daily_pnl, get_yearly_pnl, update_get_trade_stats, get_capital_stats
+from src.market_breadth import calculate_breadth
+from src.db import (add_trade_log, get_trade_logs, update_trade_log, delete_trade_log,
+                    get_daily_pnl, get_yearly_pnl, update_get_trade_stats, get_capital_stats,
+                    get_all_breadth, get_breadth_date_keys)
 from src.iep_fetcher import iep_fetcher
 from src.volume_profile import volume_profile_calculator
 from src.volume_fetcher import volume_fetcher
@@ -578,36 +580,27 @@ def clear_stock_list_endpoint(list_type: str):
 
 @app.get("/api/breadth/data")
 def get_breadth_data():
-    """Get cached breadth data from breadth_data.pkl"""
+    """Get cached breadth data from SQLite."""
     try:
-        all_dates = breadth_cache.get_all_cached_dates()
-        if not all_dates:
+        rows = get_all_breadth()
+        if not rows:
             return {"data": [], "total_dates": 0, "last_updated": None, "message": "No breadth data available. Click 'Update' to calculate."}
 
         results = []
-        for date_key in sorted(all_dates, reverse=True):
-            cached_data = breadth_cache.get_cached_breadth(date_key)
-            if cached_data:
-                results.append({
-                    "date": date_key,
-                    "up_4_5_pct": cached_data.get("up_4_5", 0),
-                    "down_4_5_pct": cached_data.get("down_4_5", 0),
-                    "up_20_pct_5d": cached_data.get("up_20_5d", 0),
-                    "down_20_pct_5d": cached_data.get("down_20_5d", 0),
-                    "above_20ma": cached_data.get("above_20ma", 0),
-                    "below_20ma": cached_data.get("below_20ma", 0),
-                    "above_50ma": cached_data.get("above_50ma", 0),
-                    "below_50ma": cached_data.get("below_50ma", 0),
-                })
+        for row in rows:
+            results.append({
+                "date": row["date_key"],
+                "up_4_5_pct": row["up_4_5"],
+                "down_4_5_pct": row["down_4_5"],
+                "up_20_pct_5d": row["up_20_5d"],
+                "down_20_pct_5d": row["down_20_5d"],
+                "above_20ma": row["above_20ma"],
+                "below_20ma": row["below_20ma"],
+                "above_50ma": row["above_50ma"],
+                "below_50ma": row["below_50ma"],
+            })
 
-        from pathlib import Path
-        cache_file = Path(__file__).resolve().parent.parent / "data" / "breadth_cache" / "breadth_data.pkl"
-        last_updated = None
-        if cache_file.exists():
-            mtime = cache_file.stat().st_mtime
-            last_updated = datetime.fromtimestamp(mtime).isoformat()
-
-        return {"data": results, "total_dates": len(results), "last_updated": last_updated}
+        return {"data": results, "total_dates": len(results), "last_updated": datetime.now().isoformat()}
     except Exception as e:
         logger.error(f"Failed to load breadth data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -966,18 +959,11 @@ def _run_breadth_update(operation_id: str):
 
         results = calculate_breadth(progress_callback=progress)
 
-        from pathlib import Path
-        cache_file = Path(__file__).resolve().parent.parent / "data" / "breadth_cache" / "breadth_data.pkl"
-        last_updated = datetime.now().isoformat()
-        if cache_file.exists():
-            mtime = cache_file.stat().st_mtime
-            last_updated = datetime.fromtimestamp(mtime).isoformat()
-
         op.update(
             status="completed",
             progress=100,
             message=f"Breadth analysis completed: {len(results)} dates",
-            result={"data": results, "total_dates": len(results), "last_updated": last_updated},
+            result={"data": results, "total_dates": len(results), "last_updated": datetime.now().isoformat()},
         )
     except Exception as e:
         logger.error(f"Breadth update failed: {e}")

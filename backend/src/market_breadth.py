@@ -1,260 +1,181 @@
 """
 Market Breadth Analyzer
-Generates daily market breadth metrics from cached stock data
+Generates daily market breadth metrics from cached stock data.
+Uses parallel loading + single-pass counting + SQLite storage.
 """
 
 import logging
-import pickle
-from datetime import date, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional
+import os
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from typing import Optional
 
 import pandas as pd
 
 from src.cache_manager import cache_manager
 from src.indicators import compute_all_indicators
+from src import db
 
 logger = logging.getLogger(__name__)
 
-BREADTH_CACHE_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "breadth_cache"
-BREADTH_CACHE_FILE = BREADTH_CACHE_DIR / "breadth_data.pkl"
 
-
-class BreadthCacheManager:
-    def __init__(self):
-        self.breadth_cache = self._load_cache()
-
-    def _load_cache(self) -> Dict[str, Dict]:
-        try:
-            if BREADTH_CACHE_FILE.exists():
-                with open(BREADTH_CACHE_FILE, "rb") as f:
-                    return pickle.load(f)
-        except Exception as e:
-            logger.warning(f"Failed to load breadth cache: {e}")
-        return {}
-
-    def _save_cache(self):
-        try:
-            BREADTH_CACHE_DIR.mkdir(parents=True, exist_ok=True)
-            with open(BREADTH_CACHE_FILE, "wb") as f:
-                pickle.dump(self.breadth_cache, f)
-        except Exception as e:
-            logger.error(f"Failed to save breadth cache: {e}")
-
-    def get_cached_breadth(self, date_key: str) -> Optional[Dict]:
-        return self.breadth_cache.get(date_key)
-
-    def update_breadth_cache(self, date_key: str, breadth_data: Dict):
-        self.breadth_cache[date_key] = breadth_data
-        self._save_cache()
-
-    def get_all_cached_dates(self) -> List[str]:
-        return list(self.breadth_cache.keys())
-
-    def needs_update(self, target_date: date) -> bool:
-        date_key = target_date.strftime("%Y-%m-%d")
-        today = date.today()
-        if (today - target_date).days <= 7:
-            return True
-        return date_key not in self.breadth_cache
-
-
-breadth_cache = BreadthCacheManager()
-
-
-def calculate_breadth(progress_callback=None) -> List[Dict]:
-    if progress_callback:
-        progress_callback(5, "Loading cached stock data...")
-
-    cached_files = list(cache_manager.cache_dir.glob("*.pkl"))
-    if not cached_files:
-        raise Exception("No cached stock data found")
-
-    if progress_callback:
-        progress_callback(10, f"Found {len(cached_files)} cached stocks")
-
-    all_stocks_data = {}
-    total_files = len(cached_files[:2000])
-    for i, cache_file in enumerate(cached_files[:2000]):
-        symbol = cache_file.stem
+def _load_stock_chunk(symbols: list[str]) -> dict[str, pd.DataFrame]:
+    """Load and compute indicators for a chunk of symbols (module-level for pickling)."""
+    result = {}
+    for symbol in symbols:
         try:
             df = cache_manager.load(symbol)
             if df is not None and not df.empty:
                 df = compute_all_indicators(df)
-                all_stocks_data[symbol] = df
-            if (i + 1) % 50 == 0 and progress_callback:
-                pct = int(5 + ((i + 1) / total_files) * 20)
-                progress_callback(pct, f"Loaded {i + 1} stocks...")
+                result[symbol] = df
         except Exception:
             continue
+    return result
 
-    available_stocks = len(all_stocks_data)
+
+def calculate_breadth(progress_callback=None) -> list[dict]:
     if progress_callback:
-        progress_callback(25, f"Loaded {available_stocks} stocks with data")
+        progress_callback(5, "Loading cached stock data...")
 
-    if available_stocks == 0:
+    symbols = cache_manager.list_symbols()
+    if not symbols:
+        raise Exception("No cached stock data found")
+
+    total_symbols = len(symbols)
+
+    if progress_callback:
+        progress_callback(10, f"Found {total_symbols} cached stocks")
+
+    # --- Phase 1: Parallel loading ---
+    num_workers = min(os.cpu_count() or 4, 8, total_symbols)
+    chunk_size = max(1, total_symbols // max(num_workers, 1))
+    chunks = [symbols[i:i + chunk_size] for i in range(0, total_symbols, chunk_size)]
+
+    all_stocks_data = {}
+    loaded = 0
+
+    if len(chunks) <= 1:
+        for ch in chunks:
+            all_stocks_data.update(_load_stock_chunk(ch))
+            loaded = total_symbols
+            if progress_callback:
+                progress_callback(25, f"Loaded {loaded} stocks with data")
+    else:
+        with ProcessPoolExecutor(max_workers=num_workers) as pool:
+            future_map = {pool.submit(_load_stock_chunk, ch): len(ch) for ch in chunks}
+            for future in as_completed(future_map):
+                chunk_len = future_map[future]
+                try:
+                    all_stocks_data.update(future.result())
+                except Exception as e:
+                    logger.error(f"Load chunk failed: {e}")
+                loaded += chunk_len
+                if progress_callback:
+                    pct = int(10 + (loaded / total_symbols) * 15)
+                    progress_callback(pct, f"Loaded {loaded}/{total_symbols} stocks...")
+
+    available = len(all_stocks_data)
+    if progress_callback:
+        progress_callback(25, f"Loaded {available} stocks with data")
+    if available == 0:
         raise Exception("No valid stock data found")
 
-    all_dates = set()
-    for df in all_stocks_data.values():
-        all_dates.update(df.index.date)
-
-    weekday_dates = {d for d in all_dates if d.weekday() < 5}
-    sorted_dates = sorted(weekday_dates)
-
-    breadth_results = {}
-    dates_to_calculate = []
-
-    cached_dates = breadth_cache.get_all_cached_dates()
+    # --- Phase 2: Vectorized single-pass counting ---
     if progress_callback:
-        progress_callback(30, f"Found {len(cached_dates)} cached dates")
+        progress_callback(30, "Counting breadth metrics...")
 
-    for date_key in cached_dates:
-        try:
-            cached_data = breadth_cache.get_cached_breadth(date_key)
-            if cached_data:
-                breadth_results[date_key] = {
-                    "date": date_key,
-                    "up_4_5_pct": cached_data.get("up_4_5", 0),
-                    "down_4_5_pct": cached_data.get("down_4_5", 0),
-                    "up_20_pct_5d": cached_data.get("up_20_5d", 0),
-                    "down_20_pct_5d": cached_data.get("down_20_5d", 0),
-                    "above_20ma": cached_data.get("above_20ma", 0),
-                    "below_20ma": cached_data.get("below_20ma", 0),
-                    "above_50ma": cached_data.get("above_50ma", 0),
-                    "below_50ma": cached_data.get("below_50ma", 0),
-                }
-        except Exception:
+    all_counts = {}
+    total = len(all_stocks_data)
+
+    for idx, (symbol, df) in enumerate(all_stocks_data.items()):
+        weekdays = df[df.index.dayofweek < 5].copy()
+        if weekdays.empty:
             continue
 
-    if progress_callback:
-        progress_callback(40, f"Loaded {len(breadth_results)} results from cache")
+        pc1 = weekdays["price_change_1d"].fillna(0)
+        pc5 = weekdays["price_change_5d"].fillna(0)
+        close = weekdays["close"]
+        sma20 = weekdays["sma_20"]
+        sma50 = weekdays["sma_50"]
 
-    for target_date in sorted_dates:
+        up45 = (pc1 >= 0.045).values
+        down45 = (pc1 <= -0.045).values
+        up20_5d = (pc5 >= 0.20).values
+        down20_5d = (pc5 <= -0.20).values
+
+        sma20_ok = sma20.notna().values
+        above20 = (close >= sma20).values & sma20_ok
+        below20 = (close < sma20).values & sma20_ok
+
+        sma50_ok = sma50.notna().values
+        above50 = (close >= sma50).values & sma50_ok
+        below50 = (close < sma50).values & sma50_ok
+
+        dates = weekdays.index.date
+
+        for i, d in enumerate(dates):
+            if d not in all_counts:
+                all_counts[d] = [0] * 9  # [count, up45, down45, up20, down20, a20, b20, a50, b50]
+            c = all_counts[d]
+            c[0] += 1
+            if up45[i]: c[1] += 1
+            if down45[i]: c[2] += 1
+            if up20_5d[i]: c[3] += 1
+            if down20_5d[i]: c[4] += 1
+            if above20[i]: c[5] += 1
+            if below20[i]: c[6] += 1
+            if above50[i]: c[7] += 1
+            if below50[i]: c[8] += 1
+
+        if (idx + 1) % 200 == 0 and progress_callback:
+            pct = int(30 + ((idx + 1) / total) * 20)
+            progress_callback(pct, f"Counted {idx+1}/{total} stocks...")
+
+    del all_stocks_data
+
+    # Filter dates with < 100 stocks
+    valid_dates = {d: c for d, c in all_counts.items() if c[0] >= 100}
+    sorted_dates = sorted(valid_dates.keys(), reverse=True)
+
+    if progress_callback:
+        progress_callback(50, f"Processing {len(sorted_dates)} dates...")
+
+    # --- Phase 3: Store to SQLite ---
+    db.clear_breadth()
+    results = []
+    total_dates = len(sorted_dates)
+
+    for i, target_date in enumerate(sorted_dates):
+        counts = valid_dates[target_date]
         date_key = target_date.strftime("%Y-%m-%d")
-        if breadth_cache.needs_update(target_date):
-            dates_to_calculate.append(target_date)
 
-    if progress_callback:
-        progress_callback(50, f"Calculating {len(dates_to_calculate)} new dates")
+        c = counts  # [count, up45, down45, up20, down20, a20, b20, a50, b50]
+        result = {
+            "date": date_key,
+            "up_4_5_pct": c[1],
+            "down_4_5_pct": c[2],
+            "up_20_pct_5d": c[3],
+            "down_20_pct_5d": c[4],
+            "above_20ma": c[5],
+            "below_20ma": c[6],
+            "above_50ma": c[7],
+            "below_50ma": c[8],
+        }
+        results.append(result)
 
-    total_dates = len(dates_to_calculate)
-    for i, target_date in enumerate(dates_to_calculate):
+        db.upsert_breadth(
+            date_key=date_key,
+            up_4_5=c[1], down_4_5=c[2],
+            up_20_5d=c[3], down_20_5d=c[4],
+            above_20ma=c[5], below_20ma=c[6],
+            above_50ma=c[7], below_50ma=c[8],
+            stocks_with_data=c[0],
+        )
+
         if progress_callback:
-            pct = int(50 + ((i + 1) / total_dates) * 40)
-            progress_callback(pct, f"Calculating date {i+1}/{total_dates}: {target_date}")
-
-        counts = _calculate_date_breadth(all_stocks_data, target_date)
-
-        if counts:
-            result = {
-                "date": target_date.strftime("%Y-%m-%d"),
-                "up_4_5_pct": counts["up_4_5"],
-                "down_4_5_pct": counts["down_4_5"],
-                "up_20_pct_5d": counts["up_20_5d"],
-                "down_20_pct_5d": counts["down_20_5d"],
-                "above_20ma": counts["above_20ma"],
-                "below_20ma": counts["below_20ma"],
-                "above_50ma": counts["above_50ma"],
-                "below_50ma": counts["below_50ma"],
-            }
-            breadth_results[date_key] = result
-            breadth_cache.update_breadth_cache(target_date.strftime("%Y-%m-%d"), counts)
-
-    breadth_results_list = list(breadth_results.values())
-    breadth_results_list.sort(key=lambda x: x["date"], reverse=True)
-
-    today = date.today()
-    recent_dates = []
-    for i in range(7):
-        check_date = today - timedelta(days=i)
-        if check_date.weekday() < 5:
-            recent_dates.append(check_date)
-
-    for recent_date in recent_dates:
-        date_key = recent_date.strftime("%Y-%m-%d")
-        if date_key not in breadth_results:
-            counts = _calculate_date_breadth(all_stocks_data, recent_date)
-            if counts:
-                result = {
-                    "date": date_key,
-                    "up_4_5_pct": counts["up_4_5"],
-                    "down_4_5_pct": counts["down_4_5"],
-                    "up_20_pct_5d": counts["up_20_5d"],
-                    "down_20_pct_5d": counts["down_20_5d"],
-                    "above_20ma": counts["above_20ma"],
-                    "below_20ma": counts["below_20ma"],
-                    "above_50ma": counts["above_50ma"],
-                    "below_50ma": counts["below_50ma"],
-                }
-                breadth_results[date_key] = result
-                breadth_results_list.insert(0, result)
+            pct = int(50 + ((i + 1) / total_dates) * 50)
+            progress_callback(pct, f"Stored {i+1}/{total_dates} dates...")
 
     if progress_callback:
-        progress_callback(100, f"Completed: {len(breadth_results_list)} dates")
+        progress_callback(100, f"Completed: {len(results)} dates")
 
-    return breadth_results_list
-
-
-def _calculate_date_breadth(all_stocks_data: Dict[str, pd.DataFrame], target_date: date) -> Dict[str, int]:
-    counts = {
-        "up_4_5": 0,
-        "down_4_5": 0,
-        "up_20_5d": 0,
-        "down_20_5d": 0,
-        "above_20ma": 0,
-        "below_20ma": 0,
-        "above_50ma": 0,
-        "below_50ma": 0,
-    }
-    stocks_with_data = 0
-
-    for symbol, df in all_stocks_data.items():
-        try:
-            if target_date not in [idx.date() for idx in df.index]:
-                continue
-
-            date_data = df[df.index.date == target_date]
-            if date_data.empty:
-                continue
-
-            latest = date_data.iloc[-1]
-            stocks_with_data += 1
-
-            price_change = latest.get("price_change_1d", 0)
-            price_change_5d = latest.get("price_change_5d", 0)
-            close = latest.get("close", 0)
-            sma_20 = latest.get("sma_20", None)
-
-            if price_change >= 0.045:
-                counts["up_4_5"] += 1
-            elif price_change <= -0.045:
-                counts["down_4_5"] += 1
-
-            if price_change_5d >= 0.20:
-                counts["up_20_5d"] += 1
-            elif price_change_5d <= -0.20:
-                counts["down_20_5d"] += 1
-
-            if sma_20 is not None and not pd.isna(sma_20):
-                if close >= sma_20:
-                    counts["above_20ma"] += 1
-                else:
-                    counts["below_20ma"] += 1
-
-            if len(df) >= 50:
-                date_idx = pd.Timestamp(target_date)
-                if date_idx in df.index:
-                    end_idx = df.index.get_loc(date_idx)
-                    if end_idx >= 49:
-                        ma_50_window = df.iloc[end_idx - 49 : end_idx + 1]["close"].mean()
-                        if close >= ma_50_window:
-                            counts["above_50ma"] += 1
-                        else:
-                            counts["below_50ma"] += 1
-        except Exception:
-            continue
-
-    if stocks_with_data >= 100:
-        return counts
-    return {}
+    return results
