@@ -12,7 +12,6 @@ import pandas as pd
 
 from src.nse_fetcher import download_bhavcopy
 from src.cache_manager import cache_manager
-from src import db
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +40,7 @@ def _process_stock(
         if existing is not None and pd.Timestamp(target_date) in existing.index:
             return (symbol, "skipped")
 
-        cache_manager.update_with_data(symbol, stock_df, existing=existing, commit=False)
+        cache_manager.update_with_data(symbol, stock_df, existing=existing, commit=True)
         return (symbol, "updated")
     except Exception as e:
         logger.warning("Failed to update %s: %s", symbol, e)
@@ -116,9 +115,6 @@ def update_cache_for_date(
             for future in as_completed(futures):
                 _, status = future.result()
                 batch_results[status] += 1
-
-        # Flush SQLite commits for the batch
-        db.commit_cache_index()
 
         stats["updated"] += batch_results["updated"]
         stats["skipped"] += batch_results["skipped"]
