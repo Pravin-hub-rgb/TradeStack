@@ -4,6 +4,8 @@ Continuation and reversal analysis with zig-zag pattern detection
 """
 
 import logging
+import os
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import date, timedelta
 from typing import Optional, Callable
 import pandas as pd
@@ -41,47 +43,88 @@ def _stock_has_date(data: pd.DataFrame, target: date) -> bool:
     return False
 
 
+def _run_chunk(symbols: list, params: dict, scan_date: Optional[date], mode: str) -> list[dict]:
+    """Process a chunk of symbols in a worker process (module-level for pickling)."""
+    from src.cache_manager import cache_manager
+    from src.indicators import compute_all_indicators
+
+    is_continuation = mode == "continuation"
+    min_rows = params.get("cont_min_data_rows" if is_continuation else "rev_min_data_rows", 50)
+
+    if is_continuation:
+        scanner = ContinuationScanner(params)
+    else:
+        scanner = ReversalScanner(params)
+
+    ind_params = {
+        "sma_period": params.get("sma_period", 20),
+        "adr_period": params.get("adr_period", 14),
+        "high_low_period": params.get("high_low_period", 20),
+        "ma_angle_points": params.get("ma_angle_points", 5),
+        "price_change_periods": params.get("price_change_periods", [1, 5, 20]),
+    }
+
+    results = []
+    for symbol in symbols:
+        try:
+            data = cache_manager.load(symbol)
+            if data is None or len(data) < min_rows:
+                continue
+            if scan_date is not None and not _stock_has_date(data, scan_date):
+                continue
+
+            data = compute_all_indicators(data, indicator_params=ind_params)
+            latest = data.iloc[-1]
+
+            if scanner._passes_filters(latest, data):
+                if is_continuation:
+                    hit = scanner._analyze_pattern(data)
+                else:
+                    hit = scanner._analyze_pattern(data, scan_date)
+                if hit is not None:
+                    results.append({
+                        **hit,
+                        "symbol": symbol,
+                        "close": round(float(latest["close"]), 2),
+                    })
+        except Exception:
+            pass
+    return results
+
+
 class ContinuationScanner:
     def __init__(self, params: dict):
         self.params = params
 
-    def run(self, progress_callback: Optional[Callable] = None) -> list[dict]:
+    def run(self, progress_callback: Optional[Callable] = None, num_workers: Optional[int] = None) -> list[dict]:
         scan_date = _detect_scan_date()
         symbols = cache_manager.list_symbols()
         total = len(symbols)
+        if total == 0:
+            return []
+
+        if num_workers is None:
+            num_workers = min(os.cpu_count() or 4, total)
+
+        chunk_size = max(1, total // num_workers)
+        chunks = [symbols[i:i + chunk_size] for i in range(0, total, chunk_size)]
+
         results = []
-        next_report = 1
+        processed = 0
 
-        for i, symbol in enumerate(symbols, 1):
-            try:
-                data = cache_manager.load(symbol)
-                if data is None or len(data) < self.params.get("cont_min_data_rows", 50):
-                    continue
-                if scan_date is not None and not _stock_has_date(data, scan_date):
-                    continue
-
-                ind_params = {
-                    "sma_period": self.params.get("sma_period", 20),
-                    "adr_period": self.params.get("adr_period", 14),
-                    "high_low_period": self.params.get("high_low_period", 20),
-                    "ma_angle_points": self.params.get("ma_angle_points", 5),
-                    "price_change_periods": self.params.get("price_change_periods", [1, 5, 20]),
-                }
-                data = compute_all_indicators(data, indicator_params=ind_params)
-                latest = data.iloc[-1]
-
-                if self._passes_filters(latest, data):
-                    hit = self._analyze_pattern(data)
-                    if hit is not None:
-                        results.append({**hit, "symbol": symbol, "close": round(float(latest["close"]), 2)})
-
-            except Exception:
-                pass
-
-            if i >= next_report and progress_callback:
-                pct = int((i / total) * 100)
-                progress_callback(pct, f"Scanned {i}/{total} stocks, found {len(results)} candidates")
-                next_report = i + 20
+        with ProcessPoolExecutor(max_workers=num_workers) as pool:
+            future_map = {pool.submit(_run_chunk, ch, self.params, scan_date, "continuation"): len(ch) for ch in chunks}
+            for future in as_completed(future_map):
+                chunk_len = future_map[future]
+                try:
+                    chunk_results = future.result()
+                    results.extend(chunk_results)
+                except Exception as e:
+                    logger.error(f"Continuation chunk failed: {e}")
+                processed += chunk_len
+                if progress_callback:
+                    pct = int((processed / total) * 100)
+                    progress_callback(pct, f"Scanned {processed}/{total} stocks, found {len(results)} candidates")
 
         results.sort(key=lambda r: r["symbol"])
         return results
@@ -111,7 +154,10 @@ class ContinuationScanner:
         adr_period = self.params.get("adr_period", 14)
 
         df = data.copy()
-        df["SMA20"] = df["close"].rolling(sma_period).mean()
+        if "sma_20" in df.columns:
+            df["SMA20"] = df["sma_20"]
+        else:
+            df["SMA20"] = df["close"].rolling(sma_period).mean()
         df["Above_MA"] = df["close"] > df["SMA20"]
         df["Dist_to_MA_pct"] = abs(df["close"] - df["SMA20"]) / df["close"]
         df["Near_MA"] = df["Above_MA"] & (df["Dist_to_MA_pct"] <= NEAR_TH)
@@ -184,43 +230,35 @@ class ReversalScanner:
     def __init__(self, params: dict):
         self.params = params
 
-    def run(self, progress_callback: Optional[Callable] = None) -> list[dict]:
+    def run(self, progress_callback: Optional[Callable] = None, num_workers: Optional[int] = None) -> list[dict]:
         scan_date = _detect_scan_date()
         symbols = cache_manager.list_symbols()
         total = len(symbols)
+        if total == 0:
+            return []
+
+        if num_workers is None:
+            num_workers = min(os.cpu_count() or 4, total)
+
+        chunk_size = max(1, total // num_workers)
+        chunks = [symbols[i:i + chunk_size] for i in range(0, total, chunk_size)]
+
         results = []
-        next_report = 1
+        processed = 0
 
-        for i, symbol in enumerate(symbols, 1):
-            try:
-                data = cache_manager.load(symbol)
-                if data is None or len(data) < self.params.get("rev_min_data_rows", 30):
-                    continue
-                if scan_date is not None and not _stock_has_date(data, scan_date):
-                    continue
-
-                ind_params = {
-                    "sma_period": self.params.get("sma_period", 20),
-                    "adr_period": self.params.get("adr_period", 14),
-                    "high_low_period": self.params.get("high_low_period", 20),
-                    "ma_angle_points": self.params.get("ma_angle_points", 5),
-                    "price_change_periods": self.params.get("price_change_periods", [1, 5, 20]),
-                }
-                data = compute_all_indicators(data, indicator_params=ind_params)
-                latest = data.iloc[-1]
-
-                if self._passes_filters(latest, data):
-                    hit = self._analyze_pattern(data, scan_date)
-                    if hit is not None:
-                        results.append({**hit, "symbol": symbol, "close": round(float(latest["close"]), 2)})
-
-            except Exception:
-                pass
-
-            if i >= next_report and progress_callback:
-                pct = int((i / total) * 100)
-                progress_callback(pct, f"Scanned {i}/{total} stocks, found {len(results)} candidates")
-                next_report = i + 20
+        with ProcessPoolExecutor(max_workers=num_workers) as pool:
+            future_map = {pool.submit(_run_chunk, ch, self.params, scan_date, "reversal"): len(ch) for ch in chunks}
+            for future in as_completed(future_map):
+                chunk_len = future_map[future]
+                try:
+                    chunk_results = future.result()
+                    results.extend(chunk_results)
+                except Exception as e:
+                    logger.error(f"Reversal chunk failed: {e}")
+                processed += chunk_len
+                if progress_callback:
+                    pct = int((processed / total) * 100)
+                    progress_callback(pct, f"Scanned {processed}/{total} stocks, found {len(results)} candidates")
 
         results.sort(key=lambda r: r["symbol"])
         return results
