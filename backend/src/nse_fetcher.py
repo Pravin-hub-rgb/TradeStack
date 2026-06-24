@@ -16,18 +16,32 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-def _session() -> requests.Session:
-    s = requests.Session()
-    s.headers.update({
-        "User-Agent": (
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/120.0.0.0 Safari/537.36"
-        ),
-        "Accept": "application/zip,*/*",
-        "Accept-Language": "en-US,en;q=0.9",
-    })
-    return s
+# Module-level session for HTTP connection pooling (reuse TCP connections)
+_shared_session: Optional[requests.Session] = None
+
+
+def _get_session() -> requests.Session:
+    """Return the shared HTTP session (connection pooling via keep-alive)."""
+    global _shared_session
+    if _shared_session is None:
+        s = requests.Session()
+        s.headers.update({
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+            "Accept": "application/zip,*/*",
+            "Accept-Language": "en-US,en;q=0.9",
+        })
+        adapter = requests.adapters.HTTPAdapter(
+            pool_connections=4,
+            pool_maxsize=8,
+            max_retries=2,
+        )
+        s.mount("https://", adapter)
+        _shared_session = s
+    return _shared_session
 
 
 def _standardize(df: pd.DataFrame, target_date: date, source: str) -> Optional[pd.DataFrame]:
@@ -99,7 +113,7 @@ def download_bhavcopy(target_date: date) -> Optional[pd.DataFrame]:
         ("historical", _url_historical(target_date)),
     ]
 
-    session = _session()
+    session = _get_session()
 
     for name, url in strategies:
         try:
@@ -150,12 +164,11 @@ _holiday_cache: tuple[float, set[date]] | None = None
 def _fetch_nse_holidays() -> set[date]:
     """Hit the NSE holiday-master API and return trading holidays as a set of dates."""
     try:
-        session = _session()
-        session.headers.update({
+        session = _get_session()
+        resp = session.get(_HOLIDAY_URL, timeout=15, headers={
             "Accept": "application/json, */*",
             "Referer": "https://www.nseindia.com/",
         })
-        resp = session.get(_HOLIDAY_URL, timeout=15)
         resp.raise_for_status()
         data = resp.json()
         holidays: set[date] = set()

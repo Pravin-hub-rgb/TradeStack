@@ -49,18 +49,18 @@ class CacheManager:
             logger.warning(f"Failed to load cache for {symbol}: {e}")
             return None
 
-    def save(self, symbol: str, data: pd.DataFrame):
+    def save(self, symbol: str, data: pd.DataFrame, commit: bool = True):
         path = self.get_cache_path(symbol)
         try:
             with open(path, "wb") as f:
                 pickle.dump(data, f)
-            self._update_index(symbol, data, path)
+            self._update_index(symbol, data, path, commit=commit)
             logger.debug(f"Saved cache for {symbol}: {len(data)} rows")
         except Exception as e:
             logger.error(f"Failed to save cache for {symbol}: {e}")
             raise
 
-    def _update_index(self, symbol: str, data: pd.DataFrame, path: Path):
+    def _update_index(self, symbol: str, data: pd.DataFrame, path: Path, commit: bool = True):
         """Write metadata to the SQLite cache_index table after saving a .pkl file."""
         if not isinstance(data, pd.DataFrame) or data.empty:
             return
@@ -70,7 +70,10 @@ class CacheManager:
         first_date = str(first.date()) if hasattr(first, "date") else str(first)
         last_date = str(last.date()) if hasattr(last, "date") else str(last)
         file_size = path.stat().st_size
-        db.upsert_cache_index(symbol, row_count, first_date, last_date, file_size)
+        if commit:
+            db.upsert_cache_index(symbol, row_count, first_date, last_date, file_size)
+        else:
+            db.upsert_cache_index_batch(symbol, row_count, first_date, last_date, file_size)
 
     def get_last_date(self, symbol: str) -> Optional[date]:
         data = self.load(symbol)
@@ -110,8 +113,10 @@ class CacheManager:
             return True
         return (date.today() - last_date).days >= max_age_days
 
-    def update(self, symbol: str, new_data: pd.DataFrame):
-        existing = self.load(symbol)
+    def update_with_data(self, symbol: str, new_data: pd.DataFrame, existing: Optional[pd.DataFrame] = None, commit: bool = True):
+        """Like update() but accepts pre-loaded existing data to avoid double load."""
+        if existing is None:
+            existing = self.load(symbol)
         if existing is not None and not existing.empty:
             combined = pd.concat([existing, new_data])
             combined = combined[~combined.index.duplicated(keep="last")]
@@ -119,7 +124,7 @@ class CacheManager:
         else:
             combined = new_data
         combined["last_updated"] = pd.Timestamp.now()
-        self.save(symbol, combined)
+        self.save(symbol, combined, commit=commit)
 
     def get_date_range(self, symbol: str, start: Optional[date] = None, end: Optional[date] = None) -> pd.DataFrame:
         data = self.load(symbol)
