@@ -30,6 +30,7 @@ import {
 import { useAppState } from "@/lib/AppStateContext";
 import StockTables from "./live-trading/StockTables";
 import TerminalLogs from "./live-trading/TerminalLogs";
+import ToastNotification from "./ToastNotification";
 import {
   PY_API,
   POLL_INTERVAL,
@@ -79,6 +80,14 @@ export default function LiveTrading() {
     message: string;
   } | null>(null);
   const [showStaleDialog, setShowStaleDialog] = useState(false);
+
+  const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "warning"; position: number }[]>([]);
+  const removeToast = useCallback((id: string) => setToasts(prev => prev.filter(t => t.id !== id)), []);
+  const showToast = useCallback((message: string, type: "success" | "error" | "warning") => {
+    const id = `toast-${Date.now()}-${Math.random()}`;
+    setToasts(prev => [...prev, { id, message, type, position: prev.length }]);
+    setTimeout(() => removeToast(id), 4000);
+  }, [removeToast]);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -190,6 +199,13 @@ export default function LiveTrading() {
     setIsStarting(true);
     setError("");
     try {
+      const tokenCheckR = await fetch(`${PY_API}/api/token/check`);
+      const tokenCheckD = await tokenCheckR.json();
+      if (!tokenCheckD.valid) {
+        showToast("Token is not valid or expired. Please update your token in the Token Session tab.", "error");
+        setIsStarting(false);
+        return;
+      }
       const listR = await fetch(`${PY_API}/api/stock-list/${tradingMode}/resolved`);
       const listD = await listR.json();
       const rawStocks = listD.stocks || [];
@@ -1093,6 +1109,12 @@ export default function LiveTrading() {
             logContainerRef={logContainerRef}
             logEndRef={logEndRef}
           />
+
+      {toasts.map((toast) => (
+        <Box key={toast.id} sx={{ position: "fixed", bottom: 24 + toast.position * 60, right: 24, zIndex: 9999 }}>
+          <ToastNotification message={toast.message} type={toast.type} onClose={() => removeToast(toast.id)} />
+        </Box>
+      ))}
     </>
   );
 }
