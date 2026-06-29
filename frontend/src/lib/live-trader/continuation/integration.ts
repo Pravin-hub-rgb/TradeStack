@@ -1,0 +1,96 @@
+import { UpstoxStreamer } from "../streamer";
+import { StockMonitor, ContinuationStockState } from "./stock-monitor";
+import { ContinuationTickProcessor } from "./tick-processor";
+import { ContinuationSubscriptionManager } from "./subscription-mgr";
+import { PaperTrader } from "../paper-trader";
+import { StockStateEnum, OHLCData } from "../types";
+
+export class ContinuationIntegration {
+  private streamer: UpstoxStreamer;
+  private monitor: StockMonitor;
+  private paperTrader: PaperTrader | null;
+  private tickProcessors: Map<string, ContinuationTickProcessor> = new Map();
+  private lastTickTs: Map<string, number> = new Map();
+  subscriptionManager: ContinuationSubscriptionManager;
+
+  constructor(
+    streamer: UpstoxStreamer,
+    monitor: StockMonitor,
+    paperTrader: PaperTrader | null = null,
+    maxPositions = 2,
+  ) {
+    this.streamer = streamer;
+    this.monitor = monitor;
+    this.paperTrader = paperTrader;
+
+    for (const stock of monitor.stocks.values()) {
+      this.tickProcessors.set(
+        stock.instrumentKey,
+        new ContinuationTickProcessor(stock),
+      );
+    }
+
+    this.subscriptionManager = new ContinuationSubscriptionManager(streamer, monitor);
+  }
+
+  simplifiedTickHandler(
+    instrumentKey: string,
+    symbol: string,
+    price: number,
+    timestamp: Date,
+    ohlcList?: OHLCData[],
+  ): void {
+    const stock = this.monitor.stocks.get(instrumentKey);
+    if (!stock || !stock.isSubscribed) return;
+
+    const lastTs = this.lastTickTs.get(instrumentKey);
+    if (lastTs !== undefined && timestamp.getTime() <= lastTs) return;
+    this.lastTickTs.set(instrumentKey, timestamp.getTime());
+
+    if (ohlcList) {
+      this.monitor.processCandleData(instrumentKey, ohlcList);
+    }
+
+    const processor = this.tickProcessors.get(instrumentKey);
+    if (!processor) return;
+
+    processor.processTick(price, timestamp);
+    this.handlePaperTradingLogs(stock, price, timestamp);
+  }
+
+  private handlePaperTradingLogs(
+    stock: ContinuationStockState,
+    price: number,
+    timestamp: Date,
+  ): void {
+    if (
+      stock.entered &&
+      stock.entryTime &&
+      Math.abs(stock.entryTime.getTime() - timestamp.getTime()) < 1000
+    ) {
+      this.paperTrader?.logEntry(stock, price, timestamp, "continuation");
+    }
+
+    if (
+      stock.state === StockStateEnum.EXITED &&
+      stock.exitTime &&
+      Math.abs(stock.exitTime.getTime() - timestamp.getTime()) < 1000
+    ) {
+      this.paperTrader?.logExit(stock, price, timestamp, "Stop Loss Hit");
+      this.subscriptionManager.safeUnsubscribe([stock.instrumentKey], "exit");
+      this.subscriptionManager.markStocksUnsubscribed([stock.instrumentKey]);
+    }
+  }
+
+  cleanup(): void {
+    const subscribedKeys: string[] = [];
+    for (const [key, stock] of this.monitor.stocks) {
+      if (stock.isSubscribed) subscribedKeys.push(key);
+    }
+    if (subscribedKeys.length > 0) {
+      this.subscriptionManager.safeUnsubscribe(subscribedKeys, "end_of_day");
+      this.subscriptionManager.markStocksUnsubscribed(subscribedKeys);
+    }
+    this.subscriptionManager.logStatus();
+  }
+}

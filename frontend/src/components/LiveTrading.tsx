@@ -1100,6 +1100,7 @@ export default function LiveTrading() {
             active={activeStocks}
             rejected={rejectedStocks}
             running={running}
+            mode={selectedMode}
           />
           <TerminalLogs
             logs={logs}
