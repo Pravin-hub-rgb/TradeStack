@@ -11,8 +11,11 @@ export class ReversalIntegration {
   private monitor: ReversalStockMonitor;
   private paperTrader: PaperTrader | null;
   private tickProcessors: Map<string, ReversalTickProcessor> = new Map();
+  private enteredCount = 0;
   private lastTickTs: Map<string, number> = new Map();
   subscriptionManager: SubscriptionManager;
+
+  private maxPositions: number;
 
   constructor(
     streamer: UpstoxStreamer,
@@ -23,6 +26,7 @@ export class ReversalIntegration {
     this.streamer = streamer;
     this.monitor = monitor;
     this.paperTrader = paperTrader;
+    this.maxPositions = maxPositions;
 
     this.subscriptionManager = new SubscriptionManager(streamer, monitor);
 
@@ -53,6 +57,7 @@ export class ReversalIntegration {
 
     processor.processTick(price, timestamp);
     this.handlePaperTradingLogs(stock, price, timestamp);
+    this.checkAndUnsubscribeAfterPositionsFilled();
   }
 
   private handlePaperTradingLogs(
@@ -67,6 +72,7 @@ export class ReversalIntegration {
     ) {
       const tradeType = stock.situation === "reversal_s2" ? "reversal_oops" : "reversal_ss";
       this.paperTrader?.logEntry(stock, price, timestamp, tradeType);
+      this.checkAndUnsubscribeAfterPositionsFilled();
     }
 
     if (
@@ -78,6 +84,29 @@ export class ReversalIntegration {
       // Immediately unsubscribe the exited stock from WebSocket feed
       this.subscriptionManager.safeUnsubscribe([stock.instrumentKey], "exit");
       this.subscriptionManager.markStocksUnsubscribed([stock.instrumentKey]);
+    }
+  }
+
+  private checkAndUnsubscribeAfterPositionsFilled(): void {
+    this.enteredCount = 0;
+    const subscribed: string[] = [];
+
+    for (const stock of this.monitor.stocks.values()) {
+      if (stock.isSubscribed) {
+        subscribed.push(stock.instrumentKey);
+        if (stock.entered) this.enteredCount++;
+      }
+    }
+
+    if (this.enteredCount >= this.maxPositions && subscribed.length > this.maxPositions) {
+      const remaining = Array.from(this.monitor.stocks.values()).filter(
+        (s) => s.isSubscribed && !s.entered,
+      );
+      const remainingKeys = remaining.map((s) => s.instrumentKey);
+      if (remainingKeys.length > 0) {
+        this.subscriptionManager.safeUnsubscribe(remainingKeys, "positions_filled");
+        this.subscriptionManager.markStocksUnsubscribed(remainingKeys);
+      }
     }
   }
 
