@@ -21,7 +21,6 @@ import {
   Error as ErrorIcon,
   Info as InfoIcon,
   CloudDownload as CloudDownloadIcon,
-  CheckCircleOutlined as CheckCircleOutlinedIcon,
 } from "@mui/icons-material";
 
 const API = "http://127.0.0.1:8001";
@@ -53,17 +52,6 @@ const CacheData: React.FC = () => {
   const [isDownloadingHistorical, setIsDownloadingHistorical] = useState(false);
   const [checkingToken, setCheckingToken] = useState(false);
 
-  interface CacheFreshness {
-    is_fresh: boolean;
-    latest_cache_date: string | null;
-    latest_nse_date: string | null;
-    days_behind: number | null;
-    message: string;
-  }
-
-  const [cacheFreshness, setCacheFreshness] = useState<CacheFreshness | null>(null);
-  const [freshnessLoading, setFreshnessLoading] = useState(true);
-
   useEffect(() => {
     if (operationStatus?.logs) {
       setLogLines(operationStatus.logs);
@@ -80,23 +68,8 @@ const CacheData: React.FC = () => {
     Array<{ id: string; message: string; type: "success" | "error" | "warning"; position: number }>
   >([]);
 
-  const checkFreshness = async () => {
-    try {
-      const res = await fetch(`${API}/api/data/cache-freshness`);
-      const data = await res.json();
-      setCacheFreshness(data);
-    } catch {
-      // ignore
-    } finally {
-      setFreshnessLoading(false);
-    }
-  };
-
   useEffect(() => {
     loadCacheInfo();
-    checkFreshness();
-    const interval = setInterval(checkFreshness, 60000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -195,8 +168,6 @@ const CacheData: React.FC = () => {
       } else if (data.status === "up_to_date") {
         setIsUpdating(false);
         showToast(data.message || "Cache is already up to date", "success");
-        // Refresh freshness to reflect latest state
-        checkFreshness();
       }
     } catch (error) {
       console.error("Failed to start bhavcopy update:", error);
@@ -337,20 +308,14 @@ const CacheData: React.FC = () => {
               </Typography>
               <Button
                 variant="contained"
-                startIcon={cacheFreshness?.is_fresh ? <CheckCircleOutlinedIcon /> : <RefreshIcon />}
+                startIcon={<RefreshIcon />}
                 onClick={handleUpdateBhavcopy}
-                disabled={isUpdating || freshnessLoading || cacheFreshness?.is_fresh === true}
+                disabled={isUpdating}
                 fullWidth
                 sx={{ mb: 2 }}
-                title={cacheFreshness?.is_fresh ? cacheFreshness.message : "Check for new market data"}
               >
-                {isUpdating ? "Updating..." : cacheFreshness?.is_fresh ? "Up to Date" : "Update Bhavcopy Data"}
+                {isUpdating ? "Updating..." : "Update Bhavcopy Data"}
               </Button>
-              {cacheFreshness?.is_fresh && (
-                <Typography variant="caption" sx={{ display: "block", mb: 2, color: "#4ade80", textAlign: "center" }}>
-                  {cacheFreshness.message}
-                </Typography>
-              )}
               <Button
                 variant="outlined"
                 startIcon={isDownloadingHistorical ? <CloudDownloadIcon sx={{ animation: "spin 1s linear infinite" }} /> : <CloudDownloadIcon />}
