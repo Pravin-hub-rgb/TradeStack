@@ -10,7 +10,7 @@ from typing import Optional
 
 import pandas as pd
 
-from src.nse_fetcher import download_bhavcopy
+from src.nse_fetcher import download_bhavcopy, get_nse_holidays
 from src.cache_manager import cache_manager
 
 logger = logging.getLogger(__name__)
@@ -22,9 +22,9 @@ def _process_stock(
     symbol: str,
     target_date: date,
     row: pd.Series,
-) -> tuple[str, str]:
+) -> tuple[str, str, str]:
     """Process a single stock: load cache, check dupe, merge + save.
-    Returns (symbol, status) where status is 'updated', 'skipped', or 'failed'.
+    Returns (symbol, status, error_msg) where status is 'updated', 'skipped', or 'failed'.
     This runs in a thread pool worker.
     """
     try:
@@ -38,13 +38,14 @@ def _process_stock(
 
         existing = cache_manager.load(symbol)
         if existing is not None and pd.Timestamp(target_date) in existing.index:
-            return (symbol, "skipped")
+            return (symbol, "skipped", "")
 
         cache_manager.update_with_data(symbol, stock_df, existing=existing, commit=True)
-        return (symbol, "updated")
+        return (symbol, "updated", "")
     except Exception as e:
-        logger.warning("Failed to update %s: %s", symbol, e)
-        return (symbol, "failed")
+        err = str(e)
+        logger.warning("Failed to update %s: %s", symbol, err)
+        return (symbol, "failed", err)
 
 
 def update_cache_for_date(
@@ -113,8 +114,10 @@ def update_cache_for_date(
                 for symbol, row in batch
             }
             for future in as_completed(futures):
-                _, status = future.result()
+                sym, status, err = future.result()
                 batch_results[status] += 1
+                if status == "failed" and progress_callback:
+                    progress_callback(None, None, log_entry=f"Failed {sym}: {err}")
 
         stats["updated"] += batch_results["updated"]
         stats["skipped"] += batch_results["skipped"]
@@ -134,25 +137,31 @@ def update_cache_for_date(
         target_date, stats["updated"], stats["skipped"], stats["failed"],
     )
     if progress_callback:
-        progress_callback(100, f"Done — {stats['updated']} updated, {stats['success_rate']}% success")
+        summary = f"Done — {stats['updated']} updated, {stats['skipped']} skipped"
+        if stats["failed"]:
+            summary += f", {stats['failed']} failed"
+        progress_callback(100, summary)
     return stats
 
 
 def find_cache_gaps() -> list[date]:
     """
     Find trading days between latest cache date and today that are missing.
+    Skips weekends and NSE trading holidays.
     Returns sorted list of missing dates.
     """
     latest = cache_manager.get_latest_cache_date()
     if latest is None:
         return []
 
+    holidays = get_nse_holidays()
+
     gaps = []
     current = latest + timedelta(days=1)
     today = date.today()
 
     while current < today:
-        if current.weekday() < 5:
+        if current.weekday() < 5 and current not in holidays:
             gaps.append(current)
         current += timedelta(days=1)
 

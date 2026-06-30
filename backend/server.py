@@ -23,7 +23,7 @@ def _log(op: dict, message: str):
     """Add a log entry to an operation, capping at MAX_LOG_ENTRIES to prevent unbounded memory growth."""
     if len(op.get("logs", [])) < _MAX_LOG_ENTRIES:
         op.setdefault("logs", []).append(f"[{datetime.now().strftime('%H:%M:%S')}] {message}")
-from src.nse_fetcher import get_latest_trading_date
+from src.nse_fetcher import get_latest_trading_date, get_nse_holidays
 from src.db import (
     get_cache_stats,
     add_stock_to_list,
@@ -125,7 +125,24 @@ def trigger_update(background_tasks: BackgroundTasks, request: Optional[UpdateRe
         background_tasks.add_task(_run_fill_gaps, operation_id)
         return {"status": "started", "operation_id": operation_id, "mode": "fill_gaps"}
 
-    target = date.today()
+    # No gaps found — cache is up to date through yesterday.
+    # If today is not a trading day or today's data is cached already, we're done.
+    latest_cache = cache_manager.get_latest_cache_date()
+    today = date.today()
+    if latest_cache and latest_cache >= today:
+        return {"status": "up_to_date", "message": "Cache is already up to date"}
+    if today.weekday() >= 5 or today in get_nse_holidays():
+        return {"status": "up_to_date", "message": "Today is not a trading day. Cache is up to date."}
+
+    # Today is a trading day — try to download bhavcopy (may be available after ~7 PM)
+    target = today
+    # Make an upfront check so we can return instantly instead of starting a
+    # background task that will fail a minute later.
+    from src.nse_fetcher import download_bhavcopy
+    bc = download_bhavcopy(target)
+    if bc is None or bc.empty:
+        return {"status": "up_to_date", "message": "Today's market data not yet available (typically after 7 PM). Cache is up to date."}
+
     active_operations[operation_id] = {
         "operation_id": operation_id,
         "type": "bhavcopy_update",
@@ -855,13 +872,34 @@ def _run_fill_gaps(operation_id: str):
         results = fill_cache_gaps(batch_size=batch_size, progress_callback=progress)
 
         total_updated = sum(r.get("updated", 0) for r in results)
-        errors = [r.get("error") for r in results if r.get("error")]
-        if errors:
-            _log(op, f"Done with errors: {total_updated} updated, {len(errors)} failed")
-            op.update(status="completed", progress=100, result={"dates_filled": len(results), "total_updated": total_updated, "details": results})
+        total_failed_stocks = sum(r.get("failed", 0) for r in results)
+        total_skipped = sum(r.get("skipped", 0) for r in results)
+        failed_dates = [r for r in results if r.get("error")]
+        skipped_dates = [r for r in results if r.get("error")]
+
+        if total_failed_stocks:
+            _log(op, f"Done — {total_updated} updated, {total_skipped} skipped, {total_failed_stocks} stock(s) failed")
+            for r in results:
+                if r.get("failed", 0):
+                    _log(op, f"  {r['date']}: {r['failed']} stock(s) failed")
+        elif failed_dates:
+            for fd in failed_dates:
+                _log(op, f"  Skipped {fd['date']}: {fd['error']}")
+            _log(op, f"Filled {len(results) - len(failed_dates)} date(s), {total_updated} stocks updated")
         else:
             _log(op, f"Filled {len(results)} date(s), {total_updated} stocks updated")
-            op.update(status="completed", progress=100, result={"dates_filled": len(results), "total_updated": total_updated, "details": results})
+
+        op.update(
+            status="completed",
+            progress=100,
+            result={
+                "dates_filled": len(results),
+                "total_updated": total_updated,
+                "total_failed_stocks": total_failed_stocks,
+                "total_skipped": total_skipped,
+                "details": results,
+            },
+        )
     except Exception as e:
         logger.error(f"Gap fill failed: {e}")
         active_operations[operation_id].update(status="error", message=str(e), error=str(e))

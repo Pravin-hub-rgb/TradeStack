@@ -99,12 +99,15 @@ def _download_zip(url: str, session: requests.Session) -> Optional[pd.DataFrame]
 
 def download_bhavcopy(target_date: date) -> Optional[pd.DataFrame]:
     """
-    Download bhavcopy for a given date using fallback strategies.
+    Download bhavcopy for a given date using fallback strategies with retries.
     Returns standardized DataFrame or None.
 
     Fallback order:
       1. Direct NSE archives URL (UDiFF format, post-2024)
       2. Historical URL pattern (old format)
+
+    Each strategy is retried up to 3 times with 5-second delays (matching
+    the old legacy code's robust behavior).
     """
     yyyymmdd = target_date.strftime("%Y%m%d")
 
@@ -116,14 +119,17 @@ def download_bhavcopy(target_date: date) -> Optional[pd.DataFrame]:
     session = _get_session()
 
     for name, url in strategies:
-        try:
-            logger.info(f"Trying {name} for {target_date}")
-            df = _download_zip(url, session)
-            if df is not None and len(df) > 500:
-                return _standardize(df, target_date, name)
-        except Exception as e:
-            logger.warning(f"{name} failed: {e}")
-            continue
+        for attempt in range(3):
+            try:
+                logger.info(f"Trying {name} for {target_date} (attempt {attempt + 1})")
+                df = _download_zip(url, session)
+                if df is not None and len(df) > 500:
+                    return _standardize(df, target_date, name)
+            except Exception as e:
+                logger.warning(f"{name} attempt {attempt + 1} failed for {target_date}: {e}")
+                if attempt < 2:
+                    time.sleep(5)
+                continue
 
     logger.error(f"All download strategies failed for {target_date}")
     return None
