@@ -3,7 +3,7 @@
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 import { StockStatus, StateChip } from "./live-trading-utils";
 
-const REVERSAL_ACTIVE_COLS = ["Symbol", "State", "LTP", "Entry Price", "Exit Price", "Live Vol", "High", "Low", "Prev Close", "Gap%"];
+const REVERSAL_ACTIVE_COLS = ["Symbol", "State", "Type", "LTP", "Entry Price", "SL", "Live Vol", "High", "Low", "Prev Close", "Gap%"];
 const CONTINUATION_ACTIVE_COLS = ["Symbol", "State", "LTP", "Entry Price", "Exit Price", "Live Vol", "High", "Low", "VAH", "Prev Close", "Gap%", "Base Vol (R)"];
 const REVERSAL_REJECTED_COLS = ["Symbol", "Prev Close", "Gap%", "Reason"];
 const CONTINUATION_REJECTED_COLS = ["Symbol", "VAH", "Prev Close", "Gap%", "Base Vol (R)", "Reason"];
@@ -34,9 +34,10 @@ export default function StockTables({ active, rejected, running, mode }: { activ
                   <TableRow key={key} sx={{ "&:hover": { bgcolor: "rgba(255,255,255,0.02)" }, "& td": { borderBottom: "1px solid rgba(255,255,255,0.04)", py: "6px" } }}>
                     <TableCell sx={{ color: "#f1f5f9", fontWeight: 600, fontFamily: "monospace", fontSize: "0.8rem" }}>{s.symbol || key}</TableCell>
                     <TableCell><StateChip state={s.state} /></TableCell>
+                    {isReversal && <TableCell sx={{ color: "#a78bfa", fontFamily: "monospace", fontSize: "0.75rem", fontWeight: 600 }}>{s.situation === "reversal_s2" ? "OOPS" : s.situation === "reversal_s1" ? "SS" : "--"}</TableCell>}
                     <TableCell sx={{ color: "#e2e8f0", fontFamily: "monospace", fontSize: "0.8rem" }}>{s.currentPrice?.toFixed(2) ?? "--"}</TableCell>
                     <TableCell sx={{ color: "#34d399", fontFamily: "monospace", fontSize: "0.8rem" }}>{s.entryPrice?.toFixed(2) ?? "--"}</TableCell>
-                    <TableCell sx={{ color: "#f59e0b", fontFamily: "monospace", fontSize: "0.8rem" }}>{s.exitPrice?.toFixed(2) ?? "--"}</TableCell>
+                    <TableCell sx={{ color: "#f59e0b", fontFamily: "monospace", fontSize: "0.8rem" }}>{s.entered && s.entrySl ? s.entrySl.toFixed(2) : s.exitPrice?.toFixed(2) ?? "--"}</TableCell>
                     <TableCell sx={{ color: "#60a5fa", fontFamily: "monospace", fontSize: "0.75rem" }}>{s.cumulativeVolume > 0 ? s.cumulativeVolume.toLocaleString() : s.earlyVolume > 0 ? s.earlyVolume.toLocaleString() : "--"}</TableCell>
                     <TableCell sx={{ color: "#10b981", fontFamily: "monospace", fontSize: "0.8rem" }}>{s.dailyHigh != null && isFinite(s.dailyHigh) ? s.dailyHigh.toFixed(2) : "--"}</TableCell>
                     <TableCell sx={{ color: "#ef4444", fontFamily: "monospace", fontSize: "0.8rem" }}>{s.dailyLow != null && isFinite(s.dailyLow) ? s.dailyLow.toFixed(2) : "--"}</TableCell>

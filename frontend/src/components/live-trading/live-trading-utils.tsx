@@ -12,8 +12,9 @@ export interface StockStatus {
   dailyHigh: number; dailyLow: number; openPrice: number | null;
   previousClose: number; vahPrice: number | null;
   volumeBaseline: number; earlyVolume: number; cumulativeVolume: number; gapPct: number | null;
-  entryPrice: number | null; exitPrice: number | null;
+  entryPrice: number | null; exitPrice: number | null; entrySl: number | null;
   pnl: number | null; entered: boolean; rejectionReason: string | null;
+  situation: string | null;
 }
 
 export interface PaperStats {

@@ -83,7 +83,7 @@ export class PaperTrader {
     this.trades.push(trade);
     this.entryCount++;
 
-    const entryMsg = `ENTRY ${stock.symbol} @ ${price.toFixed(2)} (qty: ${qty}, riskAmt: ${this.riskPerTrade})`;
+    const entryMsg = `ENTRY ${stock.symbol} (${tradeType}) @ ${price.toFixed(2)} (qty: ${qty}, riskAmt: ${this.riskPerTrade})`;
     console.log(`[PAPER] ${entryMsg}`);
     (globalThis as any).__addLiveLog?.(`[Paper] ${entryMsg}`);
 

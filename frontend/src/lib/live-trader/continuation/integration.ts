@@ -105,6 +105,7 @@ export class ContinuationIntegration {
       );
       const remainingKeys = remaining.map((s) => s.instrumentKey);
       if (remainingKeys.length > 0) {
+        for (const stock of remaining) stock.rejectionReason = "Not selected (max positions filled)";
         this.subscriptionManager.safeUnsubscribe(remainingKeys, "positions_filled");
         this.subscriptionManager.markStocksUnsubscribed(remainingKeys);
       }
