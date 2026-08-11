@@ -122,14 +122,14 @@ TradeStack/
 - [x] `docs/steps/step7_technical_indicators_8June26.md` written
 
 ### Upstox Historical Data Downloader (+ Token Management)
-- [x] `backend/src/upstox_fetcher.py` — Downloads 180 calendar days (~120 trading days) of EOD data for all NSE stocks via Upstox API. Uses direct HTTP requests (no SDK dependency). Instrument mapping from `data/complete.csv.gz` (8635 NSE stocks).
+- [x] `backend/src/upstox_fetcher.py` — Downloads 180 calendar days (~120 trading days) of EOD data for all NSE stocks via Upstox API. Uses direct HTTP requests (no SDK dependency). Instrument mapping from `data/NSE.json.gz` (80k+ NSE instruments).
 - [x] `backend/src/upstox_config.py` — Token storage/validation using SQLite (`upstox_config` table in `settings.db`). `validate_token()` saves + tests against 3 stocks. `check_token()` is read-only. `get_status()` returns masked display.
 - [x] `backend/src/db.py` — Added `upstox_config` key-value table.
 - [x] `backend/server.py` — 3 new endpoints: `GET /api/token/status`, `POST /api/token/validate`, `POST /api/data/download-historical`.
 - [x] `frontend/src/components/TokenDialog.tsx` — MUI dialog for token input (password-masked, validate & update button, success/error feedback).
 - [x] `frontend/src/components/CacheData.tsx` — "Download Data" button that checks for token → prompts dialog if missing → starts background download → streams progress to terminal log. Disabled when cache has data.
 - [x] Flow: click Download Data → check token → if valid, POST /api/data/download-historical → background task iterates all stocks → saves to .pkl via cache_manager.update() → progress via terminal logs.
-- [x] `data/complete.csv.gz` — Copied from old project. Required for instrument key mapping.
+- [x] `data/NSE.json.gz` — NSE instrument mapping (80k+ instruments, JSON format). Required for instrument key resolution. Replaces deprecated `complete.csv.gz`.
 
 ---
 
@@ -248,7 +248,7 @@ The full curriculum map is in `docs/MA_STOCK_TRADER_LEARNING_CURRICULUM_V2_8June
 ## Live Trader — Data Streaming (Verified Jun 10, 11:23 AM IST)
 
 - **Streamer works**: WebSocket connects (`followRedirects: true`), subscribes, and receives live ticks for both indices and equities.
-- **Key discovery**: Equity instrument keys must use ISIN format (`NSE_EQ|INE002A01018`), NOT trading symbol format (`NSE_EQ|RELIANCE`). The `complete.csv.gz` file maps `tradingsymbol` → `instrument_key`.
+- **Key discovery**: Equity instrument keys must use ISIN format (`NSE_EQ|INE002A01018`), NOT trading symbol format (`NSE_EQ|RELIANCE`). The `NSE.json.gz` file maps `trading_symbol` → `instrument_key`.
 - **Python endpoint**: `POST /api/instrument-keys` resolves symbols → `NSE_EQ|ISIN` keys (8635 entries).
 - **API route fix**: `/api/live` route now resolves all scanner symbols via Python before passing to orchestrator. `ScannerStock` type gained optional `instrumentKey` field.
 - **Initial feed is always empty**: `initial_feed` contains structure-only placeholders (empty LTPC). Real data arrives in `live_feed` messages.

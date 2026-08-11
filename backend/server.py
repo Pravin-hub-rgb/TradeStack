@@ -323,7 +323,7 @@ def trigger_historical_download(background_tasks: BackgroundTasks):
     if not instrument_keys_loaded():
         return {
             "status": "error",
-            "message": "Instrument mapping file (complete.csv.gz) not found or empty. Please copy it to data/",
+            "message": "Instrument mapping file (NSE.json.gz) not found or empty. Please copy it to data/",
         }
 
     token = token_status()
@@ -353,15 +353,17 @@ def _load_instrument_map():
     global _INSTRUMENT_MAP
     if _INSTRUMENT_MAP is not None:
         return
+    import json
+    import gzip
     from pathlib import Path
-    import pandas as pd
-    csv = Path(__file__).resolve().parent.parent / "data" / "complete.csv.gz"
-    if not csv.exists():
+    nse_file = Path(__file__).resolve().parent.parent / "data" / "NSE.json.gz"
+    if not nse_file.exists():
         _INSTRUMENT_MAP = {}
         return
-    df = pd.read_csv(csv, compression="gzip")
-    eq = df[df["instrument_key"].str.startswith("NSE_EQ", na=False)]
-    _INSTRUMENT_MAP = dict(zip(eq["tradingsymbol"], eq["instrument_key"]))
+    with gzip.open(str(nse_file), "rt", encoding="utf-8") as f:
+        data = json.load(f)
+    eq = [d for d in data if d.get("segment") == "NSE_EQ" and d.get("instrument_type") == "EQ"]
+    _INSTRUMENT_MAP = {d["trading_symbol"]: d["instrument_key"] for d in eq}
 
 
 @app.post("/api/instrument-keys")

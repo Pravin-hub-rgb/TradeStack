@@ -6,13 +6,14 @@ Uses direct HTTP requests (no SDK dependency).
 Flow:
   upstox_fetcher.fetch_all_stocks(token, progress_callback)
     → for each symbol:
-        get_instrument_key(symbol) from complete.csv.gz
+        get_instrument_key(symbol) from NSE.json.gz
         fetch_historical_data(symbol, token, days=180)
         cache_manager.update(symbol, df)
     → progress_callback(pct, msg, log_entry)
 """
 
 import gzip
+import json
 import logging
 import time
 from datetime import datetime, timedelta, date
@@ -27,7 +28,7 @@ from . import db
 logger = logging.getLogger(__name__)
 
 # Path to instrument master file (from Upstox)
-MASTER_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "complete.csv.gz"
+MASTER_FILE = Path(__file__).resolve().parent.parent.parent / "data" / "NSE.json.gz"
 
 # Manual overrides for problem stocks (same as old project)
 MANUAL_MAPPINGS = {
@@ -39,7 +40,7 @@ _instrument_cache: dict[str, str] | None = None
 
 
 def _load_instruments() -> dict[str, str]:
-    """Load instrument key mapping from complete.csv.gz."""
+    """Load instrument key mapping from NSE.json.gz."""
     global _instrument_cache
     if _instrument_cache is not None:
         return _instrument_cache
@@ -51,9 +52,9 @@ def _load_instruments() -> dict[str, str]:
 
     try:
         with gzip.open(str(MASTER_FILE), "rt", encoding="utf-8") as f:
-            df = pd.read_csv(f)
-        nse_eq = df[df["exchange"] == "NSE_EQ"]
-        _instrument_cache = dict(zip(nse_eq["tradingsymbol"], nse_eq["instrument_key"]))
+            data = json.load(f)
+        nse_eq = [d for d in data if d.get("segment") == "NSE_EQ" and d.get("instrument_type") == "EQ"]
+        _instrument_cache = {d["trading_symbol"]: d["instrument_key"] for d in nse_eq}
         logger.info(f"Loaded {len(_instrument_cache)} instrument mappings")
     except Exception as e:
         logger.error(f"Failed to load instrument mapping: {e}")
