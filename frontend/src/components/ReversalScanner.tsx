@@ -18,6 +18,7 @@ import {
   TableChart as TableIcon,
 } from "@mui/icons-material";
 import { useAppState } from "@/lib/AppStateContext";
+import { saveSetting } from "@/lib/settingsSync";
 import CandleProgress from "./CandleProgress";
 import ScannerSplitPane from "./scanner/ScannerSplitPane";
 import ToastNotification from "./ToastNotification";
@@ -32,7 +33,7 @@ const loadFilter = (key: string, def: number) => {
 
 export default function ReversalScanner() {
   const [minPrice, setMinPrice] = useState(() => loadFilter("minPrice", 100));
-  const [maxPrice, setMaxPrice] = useState(() => loadFilter("maxPrice", 2000));
+  const [maxPrice, setMaxPrice] = useState(() => loadFilter("maxPrice", 10000));
   const [minDeclinePct, setMinDeclinePct] = useState(() => loadFilter("minDeclinePct", 10));
   const [scanDate, setScanDate] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -54,9 +55,9 @@ export default function ReversalScanner() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => { localStorage.setItem("rev_minPrice", String(minPrice)); }, [minPrice]);
-  useEffect(() => { localStorage.setItem("rev_maxPrice", String(maxPrice)); }, [maxPrice]);
-  useEffect(() => { localStorage.setItem("rev_minDeclinePct", String(minDeclinePct)); }, [minDeclinePct]);
+  useEffect(() => { localStorage.setItem("rev_minPrice", String(minPrice)); saveSetting("price_min", String(minPrice)); }, [minPrice]);
+  useEffect(() => { localStorage.setItem("rev_maxPrice", String(maxPrice)); saveSetting("price_max", String(maxPrice)); }, [maxPrice]);
+  useEffect(() => { localStorage.setItem("rev_minDeclinePct", String(minDeclinePct)); saveSetting("rev_min_decline_pct", String(minDeclinePct)); }, [minDeclinePct]);
   useEffect(() => { localStorage.setItem("rev_scanDate", scanDate); }, [scanDate]);
 
   useEffect(() => {
@@ -67,12 +68,10 @@ export default function ReversalScanner() {
         for (const item of data.settings || []) {
           if (item.key) s[item.key] = item.value;
         }
-        if (localStorage.getItem("rev_minPrice") === null && s.price_min)
-          setMinPrice(parseInt(s.price_min, 10));
-        if (localStorage.getItem("rev_maxPrice") === null && s.price_max)
-          setMaxPrice(parseInt(s.price_max, 10));
-        if (localStorage.getItem("rev_minDeclinePct") === null && s.rev_min_decline_pct)
-          setMinDeclinePct(Math.round(parseFloat(s.rev_min_decline_pct)));
+        if (s.price_min) setMinPrice(parseInt(s.price_min, 10));
+        if (s.price_max) setMaxPrice(parseInt(s.price_max, 10));
+        if (s.rev_min_decline_pct)
+          setMinDeclinePct(parseFloat(s.rev_min_decline_pct));
       })
       .catch(() => {});
   }, []);

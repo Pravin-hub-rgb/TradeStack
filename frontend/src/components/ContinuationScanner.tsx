@@ -16,6 +16,7 @@ import {
   TableChart as TableIcon,
 } from "@mui/icons-material";
 import { useAppState } from "@/lib/AppStateContext";
+import { saveSetting } from "@/lib/settingsSync";
 import ScannerSplitPane from "./scanner/ScannerSplitPane";
 import CandleProgress from "./CandleProgress";
 import ToastNotification from "./ToastNotification";
@@ -30,7 +31,7 @@ const loadFilter = (key: string, def: number) => {
 
 export default function ContinuationScanner() {
   const [minPrice, setMinPrice] = useState(() => loadFilter("minPrice", 100));
-  const [maxPrice, setMaxPrice] = useState(() => loadFilter("maxPrice", 2000));
+  const [maxPrice, setMaxPrice] = useState(() => loadFilter("maxPrice", 10000));
   const [nearMa, setNearMa] = useState(() => loadFilter("nearMa", 5));
   const [nearMaDirection, setNearMaDirection] = useState(() => { if (typeof window === "undefined") return "above"; return localStorage.getItem("cont_nearMaDirection") || "above"; });
   const [maxBody, setMaxBody] = useState(() => loadFilter("maxBody", 5));
@@ -55,13 +56,13 @@ export default function ContinuationScanner() {
   const chartCacheRef = useRef<Record<string, any>>({});
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => { localStorage.setItem("cont_minPrice", String(minPrice)); }, [minPrice]);
-  useEffect(() => { localStorage.setItem("cont_maxPrice", String(maxPrice)); }, [maxPrice]);
-  useEffect(() => { localStorage.setItem("cont_nearMa", String(nearMa)); }, [nearMa]);
-  useEffect(() => { localStorage.setItem("cont_nearMaDirection", nearMaDirection); }, [nearMaDirection]);
-  useEffect(() => { localStorage.setItem("cont_maxBody", String(maxBody)); }, [maxBody]);
+  useEffect(() => { localStorage.setItem("cont_minPrice", String(minPrice)); saveSetting("price_min", String(minPrice)); }, [minPrice]);
+  useEffect(() => { localStorage.setItem("cont_maxPrice", String(maxPrice)); saveSetting("price_max", String(maxPrice)); }, [maxPrice]);
+  useEffect(() => { localStorage.setItem("cont_nearMa", String(nearMa)); saveSetting("cont_near_ma_threshold_pct", String(nearMa)); }, [nearMa]);
+  useEffect(() => { localStorage.setItem("cont_nearMaDirection", nearMaDirection); saveSetting("cont_near_ma_direction", nearMaDirection); }, [nearMaDirection]);
+  useEffect(() => { localStorage.setItem("cont_maxBody", String(maxBody)); saveSetting("cont_max_body_pct", String(maxBody)); }, [maxBody]);
   useEffect(() => { localStorage.setItem("cont_scanDate", scanDate); }, [scanDate]);
-  useEffect(() => { localStorage.setItem("cont_risingMaTol", String(risingMaTol)); }, [risingMaTol]);
+  useEffect(() => { localStorage.setItem("cont_risingMaTol", String(risingMaTol)); saveSetting("cont_rising_ma_tolerance_pct", String(risingMaTol)); }, [risingMaTol]);
 
   useEffect(() => {
     fetch(`${API}/api/settings`)
@@ -71,16 +72,16 @@ export default function ContinuationScanner() {
         for (const item of data.settings || []) {
           if (item.key) s[item.key] = item.value;
         }
-        if (localStorage.getItem("cont_minPrice") === null && s.price_min)
-          setMinPrice(parseInt(s.price_min, 10));
-        if (localStorage.getItem("cont_maxPrice") === null && s.price_max)
-          setMaxPrice(parseInt(s.price_max, 10));
-        if (localStorage.getItem("cont_nearMa") === null && s.cont_near_ma_threshold_pct)
-          setNearMa(Math.round(parseFloat(s.cont_near_ma_threshold_pct)));
-        if (localStorage.getItem("cont_nearMaDirection") === null && s.cont_near_ma_direction)
+        if (s.price_min) setMinPrice(parseInt(s.price_min, 10));
+        if (s.price_max) setMaxPrice(parseInt(s.price_max, 10));
+        if (s.cont_near_ma_threshold_pct)
+          setNearMa(parseFloat(s.cont_near_ma_threshold_pct));
+        if (s.cont_near_ma_direction)
           setNearMaDirection(s.cont_near_ma_direction);
-        if (localStorage.getItem("cont_maxBody") === null && s.cont_max_body_pct)
-          setMaxBody(Math.round(parseFloat(s.cont_max_body_pct)));
+        if (s.cont_max_body_pct)
+          setMaxBody(parseFloat(s.cont_max_body_pct));
+        if (s.cont_rising_ma_tolerance_pct)
+          setRisingMaTol(parseFloat(s.cont_rising_ma_tolerance_pct));
       })
       .catch(() => {});
   }, []);
