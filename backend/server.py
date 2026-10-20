@@ -739,6 +739,17 @@ def trigger_breadth_update():
     return {"status": "started", "operation_id": operation_id}
 
 
+@app.get("/api/breadth/bias")
+def get_breadth_bias():
+    """Compute trading bias from latest breadth data."""
+    try:
+        from src.breadth_bias import compute_daily_bias
+        return compute_daily_bias()
+    except Exception as e:
+        logger.error(f"Failed to compute breadth bias: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # --- Pre-market Preparation API (IEP + VAH) ---
 
 

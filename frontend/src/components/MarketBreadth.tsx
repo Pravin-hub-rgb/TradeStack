@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import {
   Typography, Box, Paper, Button, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Card, CardContent,
+  Chip, Alert,
 } from "@mui/material";
 import { Refresh as RefreshIcon } from "@mui/icons-material";
 import CandleProgress from "./CandleProgress";
@@ -20,6 +21,31 @@ interface BreadthResult {
   below_20ma: number;
   above_50ma: number;
   below_50ma: number;
+}
+
+interface BreadthBias {
+  date: string | null;
+  bias: string;
+  setup_preference: string;
+  size_multiplier: number;
+  easy_day: boolean;
+  risk_level: string;
+  reasoning: string[];
+  warnings: string[];
+  action_plan: string;
+  readings: {
+    up_4_5: number;
+    down_4_5: number;
+    up_20_5d: number;
+    down_20_5d: number;
+    above_20ma: number;
+    below_20ma: number;
+    above_50ma: number;
+    below_50ma: number;
+  } | null;
+  phase: string;
+  cycle: string;
+  divergence: string;
 }
 
 const getUp45Color = (value: number): string => {
@@ -113,8 +139,69 @@ const cellSx = (bgColor: string) => ({
   py: "2px",
 });
 
+const biasColor: Record<string, string> = {
+  AVOID: "#ef4444",
+  REVERSALS: "#f59e0b",
+  CONTINUATIONS: "#10b981",
+  FLEXIBLE: "#94a3b8",
+};
+
+function BiasBox({ bias }: { bias: BreadthBias }) {
+  const sizePercent = Math.round(bias.size_multiplier * 100);
+  const color = biasColor[bias.bias] || "#94a3b8";
+
+  return (
+    <Card sx={{
+      background: "linear-gradient(135deg, #111111 0%, #1a1a1a 100%)",
+      border: "1px solid rgba(255,255,255,0.1)",
+      mb: 3,
+    }}>
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 0.5 }}>
+          <Typography variant="h6" sx={{ color, fontWeight: 700 }}>
+            {bias.bias}
+          </Typography>
+          {bias.easy_day && (
+            <Chip label="EASY DAY" size="small" sx={{ fontSize: "0.65rem", height: 20, bgcolor: "rgba(16,185,129,0.12)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }} />
+          )}
+          {!bias.easy_day && sizePercent > 0 && (
+            <Chip label="HARD DAY" size="small" sx={{ fontSize: "0.65rem", height: 20, bgcolor: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.3)" }} />
+          )}
+          <Chip label={`Risk: ${bias.risk_level}`} size="small" sx={{ fontSize: "0.65rem", height: 20, bgcolor: "rgba(255,255,255,0.06)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.1)" }} />
+          {bias.date && (
+            <Typography variant="body2" sx={{ color: "#64748b", ml: "auto" }}>{bias.date}</Typography>
+          )}
+        </Box>
+
+        <Box sx={{ display: "flex", gap: 4, mt: 2 }}>
+          <Box>
+            <Typography variant="caption" sx={{ color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", fontSize: "0.65rem" }}>Size</Typography>
+            <Typography variant="body2" sx={{ color: sizePercent === 0 ? "#ef4444" : "#f1f5f9", fontWeight: 600, fontFamily: "monospace" }}>{sizePercent}%</Typography>
+          </Box>
+        </Box>
+
+        {(bias.reasoning.length > 0 || bias.warnings.length > 0) && (
+          <Box sx={{ mt: 1.5, pt: 1.5, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+            {bias.reasoning.map((r, i) => (
+              <Typography key={`r-${i}`} variant="body2" sx={{ color: "#94a3b8", fontSize: "0.8rem", mb: 0.3 }}>
+                {r}
+              </Typography>
+            ))}
+            {bias.warnings.map((w, i) => (
+              <Typography key={`w-${i}`} variant="body2" sx={{ color: "#f59e0b", fontSize: "0.8rem", mb: 0.3 }}>
+                {w}
+              </Typography>
+            ))}
+          </Box>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function MarketBreadth() {
   const [results, setResults] = useState<BreadthResult[]>([]);
+  const [bias, setBias] = useState<BreadthBias | null>(null);
   const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -132,8 +219,19 @@ export default function MarketBreadth() {
     }
   };
 
+  const loadBias = async () => {
+    try {
+      const r = await fetch(`${API}/api/breadth/bias`);
+      const d = await r.json();
+      setBias(d);
+    } catch {
+      /* ignore */
+    }
+  };
+
   useEffect(() => {
     loadBreadthData();
+    loadBias();
   }, []);
 
   const handleUpdate = async () => {
@@ -168,6 +266,8 @@ export default function MarketBreadth() {
             setResults(res.data);
             setLastUpdated(res.last_updated || null);
           }
+          // Refresh bias after update
+          loadBias();
         } else if (d.status === "error") {
           clearInterval(iv);
           setIsUpdating(false);
@@ -186,6 +286,18 @@ export default function MarketBreadth() {
 
   return (
     <Box>
+      {/* BIAS BOX — at the top */}
+      {bias && bias.bias !== "NO_DATA" && (
+        <BiasBox bias={bias} />
+      )}
+
+      {bias && bias.bias === "NO_DATA" && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          No breadth data available. Click &quot;Update&quot; to calculate market breadth first.
+        </Alert>
+      )}
+
+      {/* Status card */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -210,12 +322,14 @@ export default function MarketBreadth() {
         </CardContent>
       </Card>
 
+      {/* Progress bar */}
       {isUpdating && (
         <Box sx={{ mb: 3 }}>
           <CandleProgress progress={progress} />
         </Box>
       )}
 
+      {/* Breadth data table */}
       {results.length > 0 && (
         <Card sx={darkCardSx}>
           <CardContent>
@@ -300,13 +414,14 @@ export default function MarketBreadth() {
         </Card>
       )}
 
+      {/* Empty state */}
       {results.length === 0 && !isUpdating && (
         <Card sx={{ p: 6, textAlign: "center", ...darkCardSx }}>
           <Typography variant="h6" gutterBottom sx={{ color: "text.secondary" }}>
             No Breadth Analysis Results
           </Typography>
           <Typography variant="body2" sx={{ color: "text.secondary", mb: 3 }}>
-            Click "Update" to calculate and cache the latest market breadth analysis
+            Click &quot;Update&quot; to calculate and cache the latest market breadth analysis
           </Typography>
         </Card>
       )}
