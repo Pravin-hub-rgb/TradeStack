@@ -343,6 +343,76 @@ def trigger_historical_download(background_tasks: BackgroundTasks):
     return {"status": "started", "operation_id": operation_id}
 
 
+@app.get("/api/data/scan-new-stocks")
+def scan_new_stocks():
+    """Download fresh NSE.json.gz, compare with cache_index, return list of new stocks."""
+    import json
+    import gzip
+    import urllib.request
+    from pathlib import Path
+
+    nse_file = Path(__file__).resolve().parent.parent / "data" / "NSE.json.gz"
+
+    # Download fresh NSE.json.gz
+    url = "https://assets.upstox.com/market-quote/instruments/exchange/NSE.json.gz"
+    _log_msg = f"Downloading fresh instrument list from Upstox..."
+    try:
+        urllib.request.urlretrieve(url, str(nse_file))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to download NSE.json.gz: {e}")
+
+    # Parse the downloaded file
+    with gzip.open(str(nse_file), "rt", encoding="utf-8") as f:
+        data = json.load(f)
+
+    # Filter to NSE_EQ EQ instruments
+    eq_instruments = [d for d in data if d.get("segment") == "NSE_EQ" and d.get("instrument_type") == "EQ"]
+    all_symbols = {d["trading_symbol"] for d in eq_instruments}
+
+    # Get cached symbols
+    cached_symbols = set(cache_manager.list_symbols())
+
+    # Find new stocks
+    new_symbols = sorted(all_symbols - cached_symbols)
+
+    return {
+        "total_nse": len(all_symbols),
+        "cached": len(cached_symbols),
+        "new_count": len(new_symbols),
+        "new_symbols": new_symbols,
+    }
+
+
+class SyncNewStocksRequest(BaseModel):
+    symbols: list[str]
+
+
+@app.post("/api/data/sync-new-stocks")
+def trigger_sync_new_stocks(background_tasks: BackgroundTasks, request: SyncNewStocksRequest):
+    """Download 180-day history for specific new stocks. Returns operation_id for progress polling."""
+    if not request.symbols:
+        raise HTTPException(status_code=400, detail="No symbols provided")
+
+    token = token_status()
+    if not token["exists"]:
+        return {"status": "error", "message": "No Upstox token configured. Please update your token first."}
+
+    operation_id = f"sync_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+
+    active_operations[operation_id] = {
+        "operation_id": operation_id,
+        "type": "sync_new_stocks",
+        "status": "starting",
+        "progress": 0,
+        "message": f"Downloading data for {len(request.symbols)} new stock(s)...",
+        "logs": [f"[{datetime.now().strftime('%H:%M:%S')}] Starting download for {len(request.symbols)} new stock(s)..."],
+        "symbols": request.symbols,
+    }
+
+    background_tasks.add_task(_run_sync_new_stocks, operation_id, request.symbols)
+    return {"status": "started", "operation_id": operation_id}
+
+
 # --- Instrument Key API ---
 
 
@@ -962,6 +1032,62 @@ def _run_historical_download(operation_id: str):
         )
     except Exception as e:
         logger.error(f"Historical download failed: {e}")
+        active_operations[operation_id].update(status="error", message=str(e), error=str(e))
+
+
+def _run_sync_new_stocks(operation_id: str, symbols: list[str]):
+    """Download 180-day history for a specific list of new stocks."""
+    try:
+        from src.upstox_config import get_token
+        from src.upstox_fetcher import fetch_historical_data, get_instrument_key
+
+        token = get_token()
+        if not token:
+            active_operations[operation_id].update(status="error", message="No token available")
+            return
+
+        op = active_operations[operation_id]
+        op["status"] = "running"
+
+        download_days = int(settings_get("historical_download_days") or 180)
+        total = len(symbols)
+        updated = 0
+        failed = 0
+
+        for i, sym in enumerate(symbols):
+            pct = round((i / total) * 100, 1)
+            op["progress"] = pct
+            op["message"] = f"Downloading {sym} ({i + 1}/{total})..."
+            _log(op, f"[{i + 1}/{total}] Downloading {sym}...")
+
+            try:
+                df = fetch_historical_data(sym, token, days=download_days)
+                if df is not None and not df.empty:
+                    cache_manager.update(sym, df)
+                    _log(op, f"  Updated cache for {sym}: {len(df)} rows")
+                    updated += 1
+                else:
+                    _log(op, f"  No data returned for {sym}")
+                    failed += 1
+            except Exception as e:
+                _log(op, f"  Failed {sym}: {e}")
+                failed += 1
+
+        _log(op, "Rebuilding SQLite cache index...")
+        op["message"] = "Rebuilding cache index..."
+        idx_count = cache_manager.rebuild_index()
+        _log(op, f"Cache index rebuilt: {idx_count} entries")
+
+        _log(op, f"Done — {updated} updated, {failed} failed out of {total}")
+        op.update(
+            status="completed",
+            progress=100,
+            message=f"Done — {updated} updated, {failed} failed out of {total}",
+            result={"updated": updated, "failed": failed, "total": total},
+            index_rebuilt=idx_count,
+        )
+    except Exception as e:
+        logger.error(f"Sync new stocks failed: {e}")
         active_operations[operation_id].update(status="error", message=str(e), error=str(e))
 
 
