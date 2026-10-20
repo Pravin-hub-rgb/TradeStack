@@ -22,6 +22,13 @@ export class ContinuationStateMachine {
   public previousClose = 0;
   public dailyLow = Infinity;
   public dailyHigh = -Infinity;
+  // ORB (5-min opening range) from I1 OHLC — simple tracker (Option B), not full aggregator
+  public orbHigh: number | null = null;
+  public orbLow: number | null = null;
+  public firstCandleOpen: number | null = null;
+  public orbFrozen = false;
+  private _firstTs: number = Infinity;
+  private _orbStartMinute: Date | null = null;
   public situation = "continuation";
   public gapValidated = false;
   public lowViolationChecked = false;
@@ -102,12 +109,27 @@ export class ContinuationStateMachine {
     return true;
   }
 
-  checkLowViolation(): boolean {
-    if (this.openPrice === null) return false;
-    const threshold = this.openPrice * (1 - this.params.lowViolationPct);
+  setOrbStartMinute(d: Date | null): void {
+    if (d) {
+      const n = new Date(d);
+      n.setSeconds(0, 0);
+      this._orbStartMinute = n;
+    } else {
+      this._orbStartMinute = null;
+    }
+  }
 
-    if (this.dailyLow < threshold) {
-      this.reject(`Low violation: ${this.dailyLow.toFixed(2)} < ${threshold.toFixed(2)}`);
+  checkLowViolation(): boolean {
+    // Prefer ORB values from I1 OHLC; fallback to dailyLow/openPrice if no candle yet
+    const hasOrb = this.orbLow !== null && this.firstCandleOpen !== null;
+    const src = hasOrb
+      ? { low: this.orbLow as number, open: this.firstCandleOpen as number, label: `orbLow ${this.orbLow?.toFixed(2)} < firstOpen ${this.firstCandleOpen?.toFixed(2)}*0.99` }
+      : { low: this.dailyLow, open: this.openPrice as number | null, label: `dailyLow ${this.dailyLow.toFixed(2)} < open ${this.openPrice?.toFixed(2)}*0.99` };
+    if (src.open === null) return false;
+    const threshold = src.open * (1 - this.params.lowViolationPct);
+
+    if (src.low < threshold) {
+      this.reject(`Low violation: ${src.low.toFixed(2)} < ${threshold.toFixed(2)} (1% below, src: ${src.label})`);
       return false;
     }
 
@@ -136,8 +158,13 @@ export class ContinuationStateMachine {
   prepareEntry(): void {
     if (!this.isActive) return;
 
-    this.entryHigh = this.dailyHigh;
+    // Freeze entryHigh from ORB high (5-min range from I1 candles) not ratcheting dailyHigh
+    const srcHigh = this.orbHigh !== null && this.orbHigh > 0 ? this.orbHigh : this.dailyHigh;
+    this.entryHigh = srcHigh;
     this.entrySl = this.entryHigh * (1 - this.params.entrySlPct);
+    if (this.orbHigh !== null) {
+      console.log(`[${this.symbol}] Entry frozen at ${this.entryHigh.toFixed(2)} via ${this.orbHigh !== null ? `orbHigh ${this.orbHigh.toFixed(2)}` : `dailyHigh ${this.dailyHigh.toFixed(2)}`}, firstOpen ${this.firstCandleOpen?.toFixed(2) ?? "N/A"}`);
+    }
 
     if (this.state === StockStateEnum.QUALIFIED) {
       this.transitionTo(StockStateEnum.SELECTED, "preparing entry");

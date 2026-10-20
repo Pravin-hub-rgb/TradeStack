@@ -13,7 +13,12 @@ export class ReversalTickProcessor {
     this.stock = stock;
   }
 
-  processTick(price: number, timestamp: Date): void {
+  processTick(price: number, timestamp: Date, ohlcList?: import("../types").OHLCData[]): void {
+    // First merge I1 OHLC candle highs/lows (completeness via ltt) before tick price
+    // This captures 359.40 even if ltp tick missed
+    if (ohlcList && ohlcList.length > 0) {
+      this.stock.processOHLC(ohlcList, timestamp);
+    }
     this.stock.updatePrice(price, timestamp);
 
     if (this.stock.isActive) {
@@ -28,29 +33,42 @@ export class ReversalTickProcessor {
   }
 
   private trackEntryLevels(price: number, timestamp: Date): void {
-    // Real-time low violation check (mirrors old project: tick_processor.py:80-103)
+    // Real-time low violation check using orbLow/firstOpen when available (OHLC truth)
     if (this.stock.openPrice !== null && !this.stock.lowViolationChecked) {
-      const lowViolationPct =
-        (this.stock.openPrice - this.stock.dailyLow) / this.stock.openPrice;
-      if (lowViolationPct >= this.stock.params.lowViolationPct) {
+      const effectiveLow = this.stock.orbLow ?? this.stock.dailyLow;
+      const effectiveOpen = this.stock.firstCandleOpen ?? this.stock.openPrice;
+      const altLow = this.stock.dailyLow;
+      const altOpen = this.stock.openPrice;
+      const lowViolationPct = (effectiveOpen - effectiveLow) / effectiveOpen;
+      const altViolationPct = (altOpen - altLow) / altOpen;
+      if (
+        lowViolationPct >= this.stock.params.lowViolationPct ||
+        altViolationPct >= this.stock.params.lowViolationPct
+      ) {
         this.stock.lowViolationChecked = true;
         if (this.stock.situation === "reversal_s1") {
+          const violLow = lowViolationPct >= this.stock.params.lowViolationPct ? effectiveLow : altLow;
+          const violThresh = lowViolationPct >= this.stock.params.lowViolationPct
+            ? effectiveOpen * (1 - this.stock.params.lowViolationPct)
+            : altOpen * (1 - this.stock.params.lowViolationPct);
+          const pct = lowViolationPct >= this.stock.params.lowViolationPct ? lowViolationPct : altViolationPct;
           this.stock.reject(
-            `Low violation: ${this.stock.dailyLow.toFixed(2)} < ${(this.stock.openPrice * (1 - this.stock.params.lowViolationPct)).toFixed(2)} (${(lowViolationPct * 100).toFixed(1)}% below open)`,
+            `Low violation: ${violLow.toFixed(2)} < ${violThresh.toFixed(2)} (${(pct * 100).toFixed(1)}% below)`,
           );
         }
       }
     }
 
+    // EntryHigh ratchet disabled once orbFrozen (5-min ORB frozen at ENTRY_TIME)
     if (this.stock.situation === "reversal_s1" && this.stock.openPrice !== null) {
-      const newHigh = this.stock.dailyHigh;
+      if ((this.stock as any).orbFrozen) return;
+      const newHigh = this.stock.orbHigh ?? this.stock.dailyHigh;
       const newSl = newHigh * (1 - this.stock.params.entrySlPct);
       if (this.stock.entryHigh === null || newHigh > this.stock.entryHigh) {
         this.stock.entryHigh = newHigh;
         this.stock.entrySl = newSl;
         // NOTE: entryReady is NOT set here — it must only be set by prepareEntry()
         // at ENTRY_TIME. This prevents premature entry before 09:20.
-        // See index.ts start() lines 170-174 where entryReady is set at ENTRY_TIME.
       }
     }
   }
@@ -88,8 +106,11 @@ export class ReversalTickProcessor {
     if (this.stock.strongStartTriggered || this.stock.entered) return;
     if (this.stock.openPrice === null || this.stock.previousClose === null) return;
 
-    if (this.stock.entryHigh !== null && price >= this.stock.entryHigh) {
+    // Strict > required: tick must go BEYOND 5-min orbHigh, not touch (fixes HAPPSTMNDS 359.20 >= 359.20 false trigger vs 359.40)
+    // entryHigh is frozen orbHigh at ENTRY_TIME when available
+    if (this.stock.entryHigh !== null && price > this.stock.entryHigh) {
       this.stock.strongStartTriggered = true;
+      console.log(`[${this.stock.symbol}] STRONG START BREAKOUT: price ${price.toFixed(2)} > entryHigh ${this.stock.entryHigh.toFixed(2)} (orbHigh ${this.stock.orbHigh?.toFixed(2) ?? "N/A"} dailyHigh ${this.stock.dailyHigh.toFixed(2)})`);
       this.stock.enterPosition(price, timestamp);
     }
   }

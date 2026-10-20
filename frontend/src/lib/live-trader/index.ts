@@ -86,6 +86,7 @@ export class LiveTraderOrchestrator {
         }
       }
       this.reversalIntegration = new ReversalIntegration(this.streamer, this.reversalMonitor, this.paperTrader, this.config?.maxPositions);
+      this.reversalMonitor.marketOpenTime = this.config.marketOpenTime;
     }
 
     if (this.mode === "continuation") {
@@ -179,15 +180,28 @@ export class LiveTraderOrchestrator {
       this.log("Making OOPS stocks ready for immediate trading...");
       for (const [, stock] of this.reversalMonitor?.stocks ?? new Map())
         if (stock.isActive && stock.gapValidated && stock.situation === "reversal_s2") { stock.entryReady = true; this.log(`${stock.symbol} (OOPS): Ready`); }
+      // Freeze 5-min ORB from I1 OHLC (auto via streamer like option-trading-bot)
+      // No manual timer — aggregator commits 09:19 bar at 09:20:00.150 via feedTime
+      // Give 300ms for final OHLC packet after ENTRY_TIME boundary
+      await new Promise((r) => setTimeout(r, 350));
+      this.reversalMonitor?.freezeOrb();
       this.reversalMonitor?.prepareEntries();
       for (const [, s] of this.reversalMonitor?.stocks ?? new Map()) {
         if (s.state === StockStateEnum.REJECTED && s.rejectionReason) {
           this.log(`${s.symbol}: Rejected during preparation - ${s.rejectionReason}`);
         }
       }
+      for (const [, s] of this.reversalMonitor?.stocks ?? new Map()) {
+        if (s.state === StockStateEnum.WAITING_FOR_ENTRY && s.situation === "reversal_s1") {
+          this.log(`${s.symbol}: ORB frozen orbHigh=${(s as any).orbHigh?.toFixed(2) ?? "N/A"} orbLow=${(s as any).orbLow?.toFixed(2) ?? "N/A"} firstOpen=${(s as any).firstCandleOpen?.toFixed(2) ?? "N/A"} dailyHigh=${s.dailyHigh.toFixed(2)} entryHigh=${s.entryHigh?.toFixed(2) ?? "N/A"}`);
+        }
+      }
     }
 
     if (this.mode === "continuation") {
+      // Freeze 5-min ORB from I1 OHLC (simple tracker, 350ms for final I1 packet)
+      await new Promise((r) => setTimeout(r, 350));
+      this.continuationMonitor?.freezeOrb();
       this.log("Phase 2: checking low violations, volume...");
       this.continuationMonitor?.checkViolations();
 

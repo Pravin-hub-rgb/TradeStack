@@ -1,4 +1,4 @@
-import { StockStateEnum } from "../types";
+import { OHLCData, StockStateEnum } from "../types";
 import { ContinuationStockState } from "./stock-monitor";
 
 function parseTime(t: string): number {
@@ -13,7 +13,11 @@ export class ContinuationTickProcessor {
     this.stock = stock;
   }
 
-  processTick(price: number, timestamp: Date): void {
+  processTick(price: number, timestamp: Date, ohlcList?: OHLCData[]): void {
+    // OHLC first — captures 5-min high/low even if LTP miss (like reversal fix)
+    if (ohlcList && ohlcList.length > 0) {
+      this.stock.processOHLC(ohlcList);
+    }
     this.stock.updatePrice(price, timestamp);
 
     if (this.stock.isActive) {
@@ -28,7 +32,9 @@ export class ContinuationTickProcessor {
   }
 
   private trackEntryLevels(price: number, timestamp: Date): void {
-    // Continuously ratchet entryHigh = dailyHigh (matches old tick_processor.py:59-96)
+    // If ORB frozen at ENTRY_TIME, don't ratchet — entryHigh locked to orbHigh
+    if ((this.stock as any).orbFrozen) return;
+    // Before freeze, track from dailyHigh (which now includes I1 candle highs)
     if (this.stock.dailyHigh > 0) {
       const newHigh = this.stock.dailyHigh;
       const newSl = newHigh * (1 - this.stock.params.entrySlPct);
@@ -61,8 +67,12 @@ export class ContinuationTickProcessor {
     const nowMinutes = timestamp.getHours() * 60 + timestamp.getMinutes();
     if (nowMinutes < entryMinutes) return;
 
-    if (price >= this.stock.entryHigh) {
+    // Strict > required: must break above ORB high, not touch (like reversal HAPPSTMNDS fix)
+    if (price > this.stock.entryHigh) {
+      console.log(`[${this.stock.symbol}] BREAKOUT: price ${price.toFixed(2)} > entryHigh ${this.stock.entryHigh.toFixed(2)} (orbHigh ${(this.stock as any).orbHigh?.toFixed(2) ?? "N/A"} dailyHigh ${this.stock.dailyHigh.toFixed(2)})`);
       this.stock.enterPosition(price, timestamp);
+    } else {
+      console.log(`[${this.stock.symbol}] HOLD: price ${price.toFixed(2)} <= entryHigh ${this.stock.entryHigh.toFixed(2)} (need >)`);
     }
   }
 

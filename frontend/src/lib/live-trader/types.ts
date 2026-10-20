@@ -64,6 +64,9 @@ export interface StockInfo {
   earlyVolume: number;
   cumulativeVolume: number;
   gapPct: number | null;
+  orbHigh?: number | null;
+  orbLow?: number | null;
+  firstCandleOpen?: number | null;
 }
 
 export interface Position {

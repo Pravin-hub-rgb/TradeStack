@@ -27,14 +27,13 @@ import {
   Stop as StopIcon,
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
-import { useAppState } from "@/lib/AppStateContext";
+import { useAppState, TradingMode } from "@/lib/AppStateContext";
 import StockTables from "./live-trading/StockTables";
 import TerminalLogs from "./live-trading/TerminalLogs";
 import ToastNotification from "./ToastNotification";
 import {
   PY_API,
   POLL_INTERVAL,
-  TradingMode,
   LiveStatus,
   BotSummary,
   StatusDot,
@@ -47,9 +46,9 @@ import {
 
 
 export default function LiveTrading() {
-  const {} = useAppState();
+  const { state, setTradingMode } = useAppState();
 
-  const [tradingMode, setTradingMode] = useState<TradingMode>("continuation");
+  const tradingMode = state.tradingMode;
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
   const [error, setError] = useState("");

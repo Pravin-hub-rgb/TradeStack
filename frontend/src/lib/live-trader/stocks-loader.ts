@@ -27,6 +27,7 @@ export function loadStocksFromScanner(
 
   if (mode === "reversal" && scannerResult.reversal) {
     reversalMonitor.stocks.clear();
+    reversalMonitor.marketOpenTime = config.marketOpenTime;
 
     const params = {
       flatGapThreshold: config.flatGapThreshold ?? 0.003,
@@ -34,6 +35,7 @@ export function loadStocksFromScanner(
       lowViolationPct: config.lowViolationPct ?? 0.01,
       trailingSlThreshold: config.trailingSlThreshold ?? 0.05,
       gapUpMaxPct: config.gapUpMaxPct ?? 0.05,
+      entryTime: config.entryTime,
     };
 
     for (const stock of scannerResult.reversal.stocks) {
@@ -48,6 +50,7 @@ export function loadStocksFromScanner(
 
   if (mode === "continuation" && scannerResult.continuation) {
     continuationMonitor.stocks.clear();
+    continuationMonitor.marketOpenTime = config.marketOpenTime;
 
     const params = {
       flatGapThreshold: config.flatGapThreshold ?? 0.003,

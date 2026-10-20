@@ -97,10 +97,20 @@ export class StateMachineMixin {
       return true;
     }
 
-    const threshold = this.openPrice * (1 - this.params.lowViolationPct);
+    // Use orbLow if available (OHLC-based), else dailyLow fallback
+    // For 5-min ORB window, low is min of I1 lows + ticks
+    const effectiveLow = (this as any).orbLow ?? this.dailyLow;
+    const effectiveOpen = (this as any).firstCandleOpen ?? this.openPrice;
+    // Primary check uses firstCandleOpen when available (exchange truth), else openPrice (IEP fallback)
+    const threshold = effectiveOpen * (1 - this.params.lowViolationPct);
+    // Also check dailyLow vs openPrice as secondary (covers gap where OHLC not yet finalized)
+    const altThreshold = this.openPrice * (1 - this.params.lowViolationPct);
 
-    if (this.dailyLow < threshold) {
-      this.reject(`Low violation: ${this.dailyLow.toFixed(2)} < ${threshold.toFixed(2)} (1% below open ${this.openPrice.toFixed(2)})`);
+    if (effectiveLow < threshold || this.dailyLow < altThreshold) {
+      const violLow = effectiveLow < threshold ? effectiveLow : this.dailyLow;
+      const violThresh = effectiveLow < threshold ? threshold : altThreshold;
+      const src = effectiveLow < threshold ? `orbLow ${effectiveLow.toFixed(2)} < firstOpen ${effectiveOpen.toFixed(2)}*0.99` : `dailyLow ${this.dailyLow.toFixed(2)} < open ${this.openPrice.toFixed(2)}*0.99`;
+      this.reject(`Low violation: ${violLow.toFixed(2)} < ${violThresh.toFixed(2)} (1% below, src: ${src})`);
       return false;
     }
 
@@ -125,17 +135,32 @@ export class StateMachineMixin {
   }
 
   private prepareStrongStart(): void {
-    const threshold = this.openPrice! * (1 - this.params.lowViolationPct);
-    if (this.dailyLow < threshold) {
-      this.reject(`Low violation at entry time: ${this.dailyLow.toFixed(2)} < ${threshold.toFixed(2)}`);
+    // Use orbLow/firstOpen if available (OHLC truth), fallback to dailyLow/openPrice
+    const effectiveLow = (this as any).orbLow ?? this.dailyLow;
+    const effectiveOpen = (this as any).firstCandleOpen ?? this.openPrice!;
+    const threshold = effectiveOpen * (1 - this.params.lowViolationPct);
+    const altThreshold = this.openPrice! * (1 - this.params.lowViolationPct);
+    if (effectiveLow < threshold || this.dailyLow < altThreshold) {
+      const violLow = effectiveLow < threshold ? effectiveLow : this.dailyLow;
+      const violThresh = effectiveLow < threshold ? threshold : altThreshold;
+      this.reject(`Low violation at entry time: ${violLow.toFixed(2)} < ${violThresh.toFixed(2)}`);
       return;
     }
 
     this.entryReady = true;
     this.transitionTo(StockStateEnum.WAITING_FOR_ENTRY, "Strong Start ready");
-    // Old behavior: update_entry_levels() only sets entry_high if daily_high > open_price
-    // This means s1 cannot trigger if stock never made a new high above open
-    this.updateEntryLevels();
+    // Prefer orbHigh (OHLC-based ORB) for breakout level, fallback to dailyHigh
+    const stateExt = this as any;
+    if (stateExt.orbHigh !== null && stateExt.orbHigh !== undefined && stateExt.orbHigh > 0) {
+      // Freeze ORB: entryHigh is orbHigh, not ratcheting dailyHigh
+      this.entryHigh = stateExt.orbHigh;
+      this.entrySl = (this.entryHigh as number) * (1 - this.params.entrySlPct);
+      this.entryPrice = this.entryHigh;
+      const src = stateExt.orbHigh !== this.dailyHigh ? `orbHigh ${stateExt.orbHigh.toFixed(2)} (dailyHigh ${this.dailyHigh.toFixed(2)})` : `dailyHigh ${this.dailyHigh.toFixed(2)}`;
+      console.log(`[${this.symbol}] Strong Start entry frozen at ${(this.entryHigh as number).toFixed(2)} via ${src}, firstOpen ${effectiveOpen.toFixed(2)}`);
+    } else {
+      this.updateEntryLevels();
+    }
   }
 
   private prepareOops(): void {
@@ -148,7 +173,11 @@ export class StateMachineMixin {
   updateEntryLevels(): void {
     if (!this.isActive || this.situation !== "reversal_s1" || this.openPrice === null) return;
 
-    const newHigh = this.dailyHigh;
+    // If ORB is frozen, never ratchet — breakout level is fixed 5-min high
+    const stateExt = this as any;
+    if (stateExt.orbFrozen) return;
+
+    const newHigh = stateExt.orbHigh ?? this.dailyHigh;
     const newSl = newHigh * (1 - this.params.entrySlPct);
 
     if (this.entryHigh === null || newHigh > this.entryHigh) {

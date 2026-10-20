@@ -147,23 +147,27 @@ export class UpstoxStreamer {
         const mff = feed.fullFeed.marketFF;
         const ltpc = mff.ltpc;
         if (ltpc && ltpc.ltp !== undefined) {
+          const lttNum = Number(ltpc.ltt) || 0;
+          const ts = lttNum > 0 ? new Date(lttNum > 1e12 ? lttNum : lttNum * 1000) : new Date();
           this.onTick?.({
             instrumentKey, symbol,
-            ltp: ltpc.ltp, ltt: Number(ltpc.ltt) || 0,
+            ltp: ltpc.ltp, ltt: lttNum,
             ltq: ltpc.ltq || 0, cp: ltpc.cp || 0,
             atp: mff.atp, vtt: mff.vtt,
             ohlcList: mff.marketOHLC?.ohlc as OHLCData[],
-            timestamp: new Date(),
+            timestamp: ts,
           });
         }
       } else if (feed.ltpc) {
         const ltpc = feed.ltpc;
         if (ltpc.ltp !== undefined) {
+          const lttNum = Number(ltpc.ltt) || 0;
+          const ts = lttNum > 0 ? new Date(lttNum > 1e12 ? lttNum : lttNum * 1000) : new Date();
           this.onTick?.({
             instrumentKey, symbol,
-            ltp: ltpc.ltp, ltt: Number(ltpc.ltt) || 0,
+            ltp: ltpc.ltp, ltt: lttNum,
             ltq: ltpc.ltq || 0, cp: ltpc.cp || 0,
-            timestamp: new Date(),
+            timestamp: ts,
           });
         }
       }
