@@ -207,10 +207,13 @@ This keeps each commit self-consistent and buildable.
 - [ ] IST utils tests (`secondsUntilIST`, `sleepUntilIST`)
 - [ ] `api.ts` helper error-handling tests
 
-### Phase 5 — Python logging + error handling
-- [ ] Central logging config (console + `data/logs/`)
-- [ ] Request middleware for access logs; consistent error response shape
-- [ ] Background operations never stuck in `status: "running"` on exception
+### Phase 5 — Python logging + error handling — DONE (21 Oct 2026)
+- [x] `backend/src/logging_config.py` — `setup_logging()` (console INFO + rotating `data/logs/backend.log` 2MB×3, level from settings `log_level`, urllib3 quietened, idempotent with `force=True` rebuild for tests, `TRADESTACK_LOGS_DIR` env override)
+- [x] `server.py` calls it on import (falls back INFO); lifespan logs start/stop; removed the old `logging.basicConfig` in `__main__`
+- [x] `AccessLogMiddleware` — one `access METHOD path -> STATUS (X ms)` line per request + `X-Process-Time` response header
+- [x] Consistent error shape — `@app.exception_handler(Exception)` returns JSON `{"detail": "Internal server error: <Type>"}` (frontend `api.ts extractDetail` contract), tracebacks logged server-side
+- [x] `_fail_operation(operation_id, label, e)` — created-if-missing op dict, `pop("result")`, status/progress/message/error/logs set, never raises (belt-and-braces except) — all 7 background handlers (`_run_bhavcopy_update`, `_run_fill_gaps`, `_run_historical_download`, `_run_sync_new_stocks`, `_run_continuation_scan`, `_run_reversal_scan`, `_run_breadth_update`) now use it, so operations can no longer get stuck at `status: "running"` after an exception (including exceptions inside the old except-blocks, e.g. `KeyError` on a vanished op)
+- Tests: `tests/test_logging.py` (5) + `tests/test_server.py` +6 (timing header, 404/422 shape, injected 500 route with `raise_server_exceptions=False`, `_fail_operation` ×3 incl. sabotaged-dict guard)
 
 ### Phase 6 — Frontend robustness
 - [ ] React `ErrorBoundary` wrapping pages
@@ -254,6 +257,7 @@ This keeps each commit self-consistent and buildable.
 | 21 Oct 2026 | Phase 2 | Typed base class `OrbFields` (`orb-base.ts`), both state machines extend it, ~12 `as any` casts removed, `_firstTs` fixed in `OrbFields`, `lib/types.ts` created, `loadConfigFromPython` + `load` action fully typed (explicit `ScanRowLike`→`ScannerStock` mapping, `ScannerResult` optional fields), UI `any` kills in 6 components, `globals.d.ts` for `__addLiveLog`, 6 catch blocks typed. Gates: tsc ✅, eslint **51** (vs 126 baseline), vitest 25/25 ✅ post-refactor, build ✅ 4.2s, backend import ✅. Commit `cbd2121`. |
 | 21 Oct 2026 | Phase 3 | ScannerBase engine + 4 shared hooks; scanners went ~505/~484 → ~103/105 lines; scanner variant of the 1s poll hook; CacheData toast migrated with no-auto-dismiss + free-slot positions. Gates: tsc ✅, eslint **48** (30 err, 18 warn), vitest 25/25 ✅, build ✅ 4.0s. Commit `fef80ea`. |
 | 21 Oct 2026 | Phase 4 | Full pytest suite: conftest (TRADESTACK_DB_PATH + tmp cache), indicators/scanner/cache/db/server/settings-engine/breadth-bias tests — synthetic, date-independent. Killed the stale date-dependent breadth scripts. Suite caught **2 latent production bugs** (options-key crash on fresh DB seeding; total_size_mb 0.0 rounding) which were fixed. Gates: **pytest 111/111 ✅** (~2.6s), backend `import server` ✅. |
+| 21 Oct 2026 | Phase 5 | Central logging (`logging_config.py` + server wiring), access-log middleware with `X-Process-Time`, JSON `detail` shape for unhandled 500s, `_fail_operation` refactor of all 7 background handlers (no stuck `running` states). Gates: **pytest 123/123 ✅** (2.4s), backend `import server` ✅ (console + RotatingFileHandler registered). |
 
 - [ ] Remove `test_write.txt` (stray scratch file at repo root)
 - [ ] Wire or remove unused config `trailingSlThreshold`

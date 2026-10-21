@@ -9,6 +9,8 @@ background work/ProcessPool/network against the real cache).
 
 import httpx  # noqa: F401 — required by fastapi TestClient's ASGI transport
 
+import logging
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -136,3 +138,90 @@ def test_cache_info_endpoint_shapes_ok():
     # shape contract (tmp DB empty → falls back to filesystem stats/cache is real dir)
     assert "stock_count" in body
     assert "total_size_mb" in body
+
+
+# ---------------- Phase 5: logging + error handling ----------------
+
+def test_access_log_middleware_adds_timing_header():
+    r = client.get("/health")
+    assert r.status_code == 200
+    assert "X-Process-Time" in r.headers
+    assert r.headers["X-Process-Time"].endswith("ms")
+    assert float(r.headers["X-Process-Time"].rstrip("ms").strip()) >= 0
+
+
+def test_404_still_fastapi_shape():
+    r = client.get("/api/nonexistent")
+    assert r.status_code == 404
+    assert r.json()["detail"] == "Not Found"
+
+
+def test_validation_error_shape():
+    r = client.post("/api/trades/log-entry", json={"symbol": "x"})  # missing required fields
+    assert r.status_code == 422
+    assert "detail" in r.json()      # frontend extractDetail() contract
+
+
+def test_unhandled_exception_returns_json_detail():
+    from fastapi.routing import APIRoute
+
+    def boom():
+        raise RuntimeError("boom")
+
+    # inject a route that always raises, out of the production route table after the test
+    app = server.app
+    before = len(app.router.routes)
+    route = APIRoute("/_test-boom", boom, methods=["GET"])
+    app.router.routes.append(route)
+    try:
+        c = TestClient(app, raise_server_exceptions=False)
+        r = c.get("/_test-boom")
+        assert r.status_code == 500
+        body = r.json()
+        assert body["detail"].startswith("Internal server error: RuntimeError")
+    finally:
+        app.router.routes.remove(route)
+        assert len(app.router.routes) == before
+
+
+def test_fail_operation_marks_error_even_when_op_missing():
+    # op dict never registered → helper must CREATE it rather than raise
+    server._fail_operation("never-registered-op", "unit-label", RuntimeError("kaboom"))
+    op = server.active_operations["never-registered-op"]
+    assert op["status"] == "error"
+    assert op["progress"] == 100
+    assert "unit-label: RuntimeError: kaboom" in op["message"]
+    assert op["error"] == op["message"]
+    assert len(op["logs"]) > 0                      # failure logged for the terminal UI
+    del server.active_operations["never-registered-op"]
+
+
+def test_fail_operation_on_existing_running_op():
+    op_id = "existing-op"
+    server.active_operations[op_id] = {
+        "operation_id": op_id, "status": "running", "progress": 40, "message": "working",
+        "logs": [], "result": {"x": 1},
+    }
+    server._fail_operation(op_id, "band gap", ValueError("disk full"))
+    op = server.active_operations[op_id]
+    assert op["status"] == "error"
+    assert op["progress"] == 100
+    assert "band gap: ValueError: disk full" in op["message"]
+    assert "result" not in op            # stale partial result must not look like success
+    del server.active_operations[op_id]
+
+
+def test_fail_operation_swallow_internal_errors(caplog):
+    # force an internal error (active_operations sabotaged) → helper must NOT raise
+    class BadDict(dict):
+        def setdefault(self, *a, **k):
+            raise OSError("broken dict")
+
+    original = server.active_operations
+    server.active_operations = BadDict()
+    try:
+        with caplog.at_level(logging.DEBUG):
+            server._fail_operation("sabo", "label", RuntimeError("x"))   # must not raise
+        assert any("FAILED to record failure" in str(m) for m in caplog.messages)
+    finally:
+        server.active_operations = original
