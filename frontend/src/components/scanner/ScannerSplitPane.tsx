@@ -17,15 +17,15 @@ type Stock = ScanResult | ReversalResult;
 type ContStats = ScanResult;
 type RevStats = ReversalResult;
 
-interface Props {
-  stocks: Stock[];
+interface Props<R extends Stock> {
+  stocks: R[];
   mode: "continuation" | "reversal";
   savedSymbols: string[];
-  onToggle: (row: Stock) => void;
+  onToggle: (row: R) => void;
   chartCacheRef?: { current: Record<string, CandleData> };
 }
 
-export default function ScannerSplitPane({ stocks, mode, savedSymbols, onToggle, chartCacheRef }: Props) {
+export default function ScannerSplitPane<R extends Stock>({ stocks, mode, savedSymbols, onToggle, chartCacheRef }: Props<R>) {
   const [selectedIdx, setSelectedIdx] = useState(0);
   const [chartData, setChartData] = useState<Record<string, CandleData>>({});
   const [loaded, setLoaded] = useState(false);

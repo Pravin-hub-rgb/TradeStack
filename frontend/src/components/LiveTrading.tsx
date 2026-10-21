@@ -30,6 +30,7 @@ import {
 import { useAppState, TradingMode } from "@/lib/AppStateContext";
 import type { StockListResponse } from "@/lib/types";
 import type { ScannerStock } from "@/lib/live-trader/types";
+import { useToastStack } from "@/lib/hooks/useToastStack";
 import StockTables from "./live-trading/StockTables";
 import TerminalLogs from "./live-trading/TerminalLogs";
 import ToastNotification from "./ToastNotification";
@@ -82,13 +83,7 @@ export default function LiveTrading() {
   } | null>(null);
   const [showStaleDialog, setShowStaleDialog] = useState(false);
 
-  const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "warning"; position: number }[]>([]);
-  const removeToast = useCallback((id: string) => setToasts(prev => prev.filter(t => t.id !== id)), []);
-  const showToast = useCallback((message: string, type: "success" | "error" | "warning") => {
-    const id = `toast-${Date.now()}-${Math.random()}`;
-    setToasts(prev => [...prev, { id, message, type, position: prev.length }]);
-    setTimeout(() => removeToast(id), 4000);
-  }, [removeToast]);
+  const { toasts, showToast, removeToast } = useToastStack();
 
   const fetchStatus = useCallback(async () => {
     try {

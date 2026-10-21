@@ -23,6 +23,7 @@ import {
   CloudDownload as CloudDownloadIcon,
 } from "@mui/icons-material";
 import { PY_API } from "@/lib/api";
+import { useToastStack } from "@/lib/hooks/useToastStack";
 import type { CacheInfo, OperationStatus } from "@/lib/types";
 
 const API = PY_API;
@@ -53,9 +54,25 @@ const CacheData: React.FC = () => {
     }
   }, [logLines]);
 
-  const [toasts, setToasts] = useState<
-    Array<{ id: string; message: string; type: "success" | "error" | "warning"; position: number }>
-  >([]);
+  // Keeps toasts on screen until manually closed; reuses free position slots.
+  const { toasts, showToast, removeToast } = useToastStack({
+    durationMs: Infinity,
+    defaultType: "success",
+    pickPosition: (prev) => {
+      const occupied = prev.map((t) => t.position).sort((a, b) => a - b);
+      let position = 0;
+      for (let i = 0; i < occupied.length; i++) {
+        if (occupied[i] !== i) {
+          position = i;
+          break;
+        }
+      }
+      if (position === 0 && occupied.length > 0) {
+        position = occupied.length;
+      }
+      return position;
+    },
+  });
 
   useEffect(() => {
     loadCacheInfo();
@@ -288,26 +305,6 @@ const CacheData: React.FC = () => {
       case "error": return <ErrorIcon />;
       default: return <InfoIcon />;
     }
-  };
-
-  const showToast = (message: string, type: "success" | "error" | "warning" = "success") => {
-    const toastId = `toast-${Date.now()}-${Math.random()}`;
-    const occupiedPositions = toasts.map((t) => t.position).sort((a, b) => a - b);
-    let position = 0;
-    for (let i = 0; i < occupiedPositions.length; i++) {
-      if (occupiedPositions[i] !== i) {
-        position = i;
-        break;
-      }
-    }
-    if (position === 0 && occupiedPositions.length > 0) {
-      position = occupiedPositions.length;
-    }
-    setToasts((prev) => [...prev, { id: toastId, message, type, position }]);
-  };
-
-  const removeToast = (toastId: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== toastId));
   };
 
   return (

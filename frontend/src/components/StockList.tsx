@@ -13,6 +13,7 @@ import {
 import StockChart from "./scanner/StockChart";
 import ToastNotification from "./ToastNotification";
 import { PY_API } from "@/lib/api";
+import { useToastStack } from "@/lib/hooks/useToastStack";
 import type { StockListItem as StockItem, CandleData } from "@/lib/types";
 
 const API = PY_API;
@@ -27,13 +28,7 @@ export default function StockList() {
   const [chartData, setChartData] = useState<Record<string, CandleData>>({});
   const [loaded, setLoaded] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
-  const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "warning"; position: number }[]>([]);
-  const removeToast = useCallback((id: string) => setToasts(prev => prev.filter(t => t.id !== id)), []);
-  const showToast = useCallback((message: string, type: "success" | "error" | "warning") => {
-    const id = `t-${Date.now()}-${Math.random()}`;
-    setToasts(prev => [...prev, { id, message, type, position: prev.length }]);
-    setTimeout(() => removeToast(id), 4000);
-  }, [removeToast]);
+  const { toasts, showToast, removeToast } = useToastStack();
 
   const stocks = activeTab === "continuation" ? contStocks : revStocks;
   const selected = stocks[selectedIdx];
