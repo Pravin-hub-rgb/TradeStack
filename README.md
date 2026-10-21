@@ -110,6 +110,17 @@ flowchart LR
 
 ## Getting Started
 
+**One-shot (recommended):**
+
+```powershell
+./setup.ps1      # Windows
+./setup.sh       # Linux / macOS
+```
+
+The script checks bun + Python, runs both `bun install`s, creates the backend venv, pip-installs requirements, seeds the SQLite schema + settings and rebuilds the cache index (`backend/seed_db.py`), and warns if `data/NSE.json.gz` (instrument map, tracked in git) is somehow missing.
+
+**Manual equivalent:**
+
 ```powershell
 git clone <repo-url>
 cd TradeStack
@@ -126,10 +137,11 @@ python -m venv venv
 .\venv\Scripts\pip install -r requirements.txt
 cd ..
 
+# Seed database + cache index (idempotent)
+backend\venv\Scripts\python.exe backend\seed_db.py
+
 # Configure the frontend backend URL (optional; defaults to localhost:8001)
 copy frontend\.env.example frontend\.env.local
-
-# Set up your Upstox token later from the UI (Live Trading → Token tab)
 
 # Start both servers
 bun run dev

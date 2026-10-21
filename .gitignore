@@ -52,7 +52,8 @@ coverage.xml
 .hypothesis/
 
 # Data and cache files
-data/
+data/*
+!data/NSE.json.gz
 *.pkl
 *.csv.gz
 
@@ -95,7 +96,6 @@ docs/prompts.md
 debug_*.py
 *_debug.py
 option-trading-bot
-data
 
 # API credentials
 upstox_config.json
