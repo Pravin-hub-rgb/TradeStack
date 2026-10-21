@@ -33,7 +33,6 @@ export function loadStocksFromScanner(
       flatGapThreshold: config.flatGapThreshold ?? 0.003,
       entrySlPct: config.entrySlPct ?? 0.04,
       lowViolationPct: config.lowViolationPct ?? 0.01,
-      trailingSlThreshold: config.trailingSlThreshold ?? 0.05,
       gapUpMaxPct: config.gapUpMaxPct ?? 0.05,
       entryTime: config.entryTime,
     };
@@ -56,7 +55,6 @@ export function loadStocksFromScanner(
       flatGapThreshold: config.flatGapThreshold ?? 0.003,
       entrySlPct: config.entrySlPct ?? 0.04,
       lowViolationPct: config.lowViolationPct ?? 0.01,
-      trailingSlThreshold: config.trailingSlThreshold ?? 0.05,
       gapUpMaxPct: config.gapUpMaxPct ?? 0.05,
       entryTime: config.entryTime,
     };

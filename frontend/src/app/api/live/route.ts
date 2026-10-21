@@ -133,7 +133,6 @@ async function loadConfigFromPython(): Promise<LiveTraderConfig> {
     entrySlPct: (Number(s["entry_sl_pct"]) || 4) / 100,
     lowViolationPct: (Number(s["low_violation_pct"]) || 1) / 100,
     flatGapThreshold: (Number(s["flat_gap_threshold"]) || 0.3) / 100,
-    trailingSlThreshold: (Number(s["trailing_sl_threshold"]) || 5) / 100,
     svroMinVolumeRatio: (Number(s["svro_min_volume_ratio"]) || 7.5) / 100,
     gapUpMaxPct: (Number(s["gap_up_max_pct"]) || 5) / 100,
     paperTrading: s["paper_trading"] !== "false",

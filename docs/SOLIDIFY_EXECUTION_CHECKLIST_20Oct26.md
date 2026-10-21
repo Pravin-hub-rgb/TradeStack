@@ -233,8 +233,11 @@ This keeps each commit self-consistent and buildable.
 - [x] `data/NSE.json.gz` now TRACKED via `.gitignore` `data/*` + `!data/NSE.json.gz` negations (git can't re-include under an excluded dir — both `data/` rules converted to `data/*`), so fresh clones get the instrument map for free
 - [x] Root `.env.example` documenting backend env overrides + frontend URL vars; README Getting Started leads with the one-shot script and keeps the manual equivalent
 
-### Phase 9 — Housekeeping sweep
-- [ ] Remove dead code: `StarBorder.tsx`
+### Phase 9 — Housekeeping sweep — DONE (21 Oct 2026)
+- [x] Removed `StarBorder.tsx` (zero importers — eslint errors 30 → 28, new baseline **46**)
+- [x] Removed root `test_write.txt` + all 42 `_tmp_*` scratch files from root `tests/` (step scripts + pytest suite kept; `tests/` tracking already coherent): conftest + 8 test modules + 2 step scripts tracked; old stepN/debug scripts remain local-only per gitignore
+- [x] `trailingSlThreshold` — removed the dead TS plumbing (config field, route mapping, orchestrator/loader threading, both state-machine param interfaces, both test fixtures). The `trailing_sl_threshold` Settings row + UI stay (user-editable, reserved) — no behavior change, nothing ever read it
+- Gates: tsc clean ✅, vitest 37/37 ✅, eslint 46 (below previous 48) ✅, build ✅
 ## 4. Known risks & open questions
 
 | # | Risk | Mitigation |
@@ -265,9 +268,9 @@ This keeps each commit self-consistent and buildable.
 | 21 Oct 2026 | Phase 7 | README rewritten (ASCII + Mermaid architecture diagram, "why" tech-stack table, command/env tables, E2E data flow, testing table); AGENTS.md Testing Approach now lists the real verification commands. Commit `e1b8afa`. Docs-only — no code gates. |
 | 21 Oct 2026 | Phase 8 | `setup.ps1` (verified end-to-end: bun installs, venv, pip, seed) + `setup.sh` (bash -n clean) + `backend/seed_db.py` (init_db + ensure_settings + rebuild_index → 2658 entries) + root `.env.example`; `data/NSE.json.gz` tracked via `data/*`/`!data/NSE.json.gz` negations. pytest 123/123 re-verified after seed script. Commit `8855c91`. |
 
-- [ ] Remove `test_write.txt` (stray scratch file at repo root)
-- [ ] Wire or remove unused config `trailingSlThreshold`
-- [ ] Normalize `docs/` + `tests/` tracking (force-add the intended tracked files)
+- [x] Remove `test_write.txt` (stray scratch file at repo root) — Phase 9
+- [x] Wire or remove unused config `trailingSlThreshold` — removed the dead TS plumbing; Settings row stays, reserved — Phase 9
+- [x] Normalize `docs/` + `tests/` tracking (force-add the intended tracked files) — pytest suite tracked in Phase 4; Phase 9 swept the 42 `_tmp_*` scratch files — Phase 9
 
 ### Phase 10 — Bug fix: reversal "max positions filled" (DONE 06 Aug 2026)
 - [x] Already fixed upstream in `index.ts` — backups stay subscribed as standby

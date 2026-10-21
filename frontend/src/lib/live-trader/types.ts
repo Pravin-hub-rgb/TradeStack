@@ -164,7 +164,6 @@ export interface LiveTraderConfig {
   entrySlPct: number;
   lowViolationPct: number;
   flatGapThreshold: number;
-  trailingSlThreshold: number;
   svroMinVolumeRatio: number;
   gapUpMaxPct: number;
   paperTrading: boolean;

@@ -5,7 +5,6 @@ export interface ContinuationStateMachineParams {
   flatGapThreshold: number;
   entrySlPct: number;
   lowViolationPct: number;
-  trailingSlThreshold: number;
   gapUpMaxPct: number;
   entryTime?: string;
 }

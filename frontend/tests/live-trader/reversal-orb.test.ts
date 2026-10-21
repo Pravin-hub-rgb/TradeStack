@@ -23,7 +23,6 @@ const PARAMS = {
   flatGapThreshold: 0.003,
   entrySlPct: 0.04,
   lowViolationPct: 0.01,
-  trailingSlThreshold: 0.05,
   gapUpMaxPct: 0.05,
   entryTime: "09:20",
 };
