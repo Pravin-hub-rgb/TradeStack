@@ -227,10 +227,11 @@ This keeps each commit self-consistent and buildable.
 - [x] Root `README.md` rewritten: ASCII architecture diagram + `<details>` Mermaid version, tech-stack table **with why**, consolidated Commands table (pytest/vitest/tsc/lint/build/smoke), env overrides, 6-step end-to-end data flow (cache → scan → load → live loop → SQLite → review), testing-suite table
 - [x] `AGENTS.md` Testing Approach replaced with runnable verification commands (pytest 123, vitest 37, tsc, lint baseline 48, build) + test/CI env overrides
 
-### Phase 8 — Deployment readiness (setup script)
-- [ ] `setup.ps1` + `setup.sh` — bun install (root + frontend), Python venv + pip install, seed DB/cache index
-- [ ] Copy `data/NSE.json.gz` (current instrument source) if present
-- [ ] `.env.example` + clean setup instructions in README
+### Phase 8 — Deployment readiness (setup script) — DONE (21 Oct 2026)
+- [x] `setup.ps1` (PS 5.1-safe, ASCII-only — em-dashes without a BOM corrupted parsing) + `setup.sh`: prerequisites check (bun, python/py), both `bun install`s, backend venv + pip, `seed_db.py` bootstrap, data checks, next-steps output. Verified end-to-end on this machine
+- [x] `backend/seed_db.py` — one-shot idempotent bootstrap: `init_db()` + `ensure_settings()` + `cache.rebuild_index()` (2658 entries on this machine); also usable manually
+- [x] `data/NSE.json.gz` now TRACKED via `.gitignore` `data/*` + `!data/NSE.json.gz` negations (git can't re-include under an excluded dir — both `data/` rules converted to `data/*`), so fresh clones get the instrument map for free
+- [x] Root `.env.example` documenting backend env overrides + frontend URL vars; README Getting Started leads with the one-shot script and keeps the manual equivalent
 
 ### Phase 9 — Housekeeping sweep
 - [ ] Remove dead code: `StarBorder.tsx`
@@ -262,6 +263,7 @@ This keeps each commit self-consistent and buildable.
 | 21 Oct 2026 | Phase 5 | Central logging (`logging_config.py` + server wiring), access-log middleware with `X-Process-Time`, JSON `detail` shape for unhandled 500s, `_fail_operation` refactor of all 7 background handlers (no stuck `running` states). Gates: **pytest 123/123 ✅** (2.4s), backend `import server` ✅ (console + RotatingFileHandler registered). |
 | 21 Oct 2026 | Phase 6 | ErrorBoundary wrapped around page children; `lib/logger.ts` (severity + sinks) + `lib/errors.ts` (`errorMessage`) with vitest coverage and `api.ts` adoption; live-trader logs now structured with severity end-to-end (`LogLine` through `__addLiveLog` → route buffer/SSE → TerminalLogs level colors). Gates: vitest **37/37 ✅**, tsc ✅, eslint baseline 48 restored, build ✅. |
 | 21 Oct 2026 | Phase 7 | README rewritten (ASCII + Mermaid architecture diagram, "why" tech-stack table, command/env tables, E2E data flow, testing table); AGENTS.md Testing Approach now lists the real verification commands. Commit `e1b8afa`. Docs-only — no code gates. |
+| 21 Oct 2026 | Phase 8 | `setup.ps1` (verified end-to-end: bun installs, venv, pip, seed) + `setup.sh` (bash -n clean) + `backend/seed_db.py` (init_db + ensure_settings + rebuild_index → 2658 entries) + root `.env.example`; `data/NSE.json.gz` tracked via `data/*`/`!data/NSE.json.gz` negations. pytest 123/123 re-verified after seed script. Commit `8855c91`. |
 
 - [ ] Remove `test_write.txt` (stray scratch file at repo root)
 - [ ] Wire or remove unused config `trailingSlThreshold`
