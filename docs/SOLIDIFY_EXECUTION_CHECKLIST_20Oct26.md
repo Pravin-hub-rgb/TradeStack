@@ -223,9 +223,9 @@ This keeps each commit self-consistent and buildable.
 - [x] `LiveStatus.logs` type updated to `LogLine[]`
 - Tests: `tests/lib/logger.test.ts` (5 — sink delivery/unsubscribe/console mapping/Error suffix/throwing-sink isolation) + `tests/lib/errors.test.ts` (8 shapes) — vitest **37/37 ✅** (was 25), tsc ✅, eslint baseline 48 (30e/18w) restored after fixing a new unused-import warning, `bun run build` ✅
 
-### Phase 7 — Architecture docs + README
-- [ ] Rewrite root `README.md` — architecture summary, Mermaid diagram + ASCII fallback, tech-stack table with "why", run/test commands, end-to-end data flow
-- [ ] Update `AGENTS.md` with new lint/test commands
+### Phase 7 — Architecture docs + README — DONE (21 Oct 2026)
+- [x] Root `README.md` rewritten: ASCII architecture diagram + `<details>` Mermaid version, tech-stack table **with why**, consolidated Commands table (pytest/vitest/tsc/lint/build/smoke), env overrides, 6-step end-to-end data flow (cache → scan → load → live loop → SQLite → review), testing-suite table
+- [x] `AGENTS.md` Testing Approach replaced with runnable verification commands (pytest 123, vitest 37, tsc, lint baseline 48, build) + test/CI env overrides
 
 ### Phase 8 — Deployment readiness (setup script)
 - [ ] `setup.ps1` + `setup.sh` — bun install (root + frontend), Python venv + pip install, seed DB/cache index
@@ -261,6 +261,7 @@ This keeps each commit self-consistent and buildable.
 | 21 Oct 2026 | Phase 4 | Full pytest suite: conftest (TRADESTACK_DB_PATH + tmp cache), indicators/scanner/cache/db/server/settings-engine/breadth-bias tests — synthetic, date-independent. Killed the stale date-dependent breadth scripts. Suite caught **2 latent production bugs** (options-key crash on fresh DB seeding; total_size_mb 0.0 rounding) which were fixed. Gates: **pytest 111/111 ✅** (~2.6s), backend `import server` ✅. |
 | 21 Oct 2026 | Phase 5 | Central logging (`logging_config.py` + server wiring), access-log middleware with `X-Process-Time`, JSON `detail` shape for unhandled 500s, `_fail_operation` refactor of all 7 background handlers (no stuck `running` states). Gates: **pytest 123/123 ✅** (2.4s), backend `import server` ✅ (console + RotatingFileHandler registered). |
 | 21 Oct 2026 | Phase 6 | ErrorBoundary wrapped around page children; `lib/logger.ts` (severity + sinks) + `lib/errors.ts` (`errorMessage`) with vitest coverage and `api.ts` adoption; live-trader logs now structured with severity end-to-end (`LogLine` through `__addLiveLog` → route buffer/SSE → TerminalLogs level colors). Gates: vitest **37/37 ✅**, tsc ✅, eslint baseline 48 restored, build ✅. |
+| 21 Oct 2026 | Phase 7 | README rewritten (ASCII + Mermaid architecture diagram, "why" tech-stack table, command/env tables, E2E data flow, testing table); AGENTS.md Testing Approach now lists the real verification commands. Commit `e1b8afa`. Docs-only — no code gates. |
 
 - [ ] Remove `test_write.txt` (stray scratch file at repo root)
 - [ ] Wire or remove unused config `trailingSlThreshold`
