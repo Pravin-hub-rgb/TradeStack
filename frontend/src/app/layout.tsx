@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { Box, Container } from "@mui/material";
 
 const geistSans = Geist({
@@ -32,7 +33,7 @@ export default function RootLayout({
           <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
             <Navbar />
             <Container maxWidth="xl" sx={{ mt: 4, mb: 4, flex: 1, display: "flex", flexDirection: "column" }}>
-              {children}
+              <ErrorBoundary>{children}</ErrorBoundary>
             </Container>
           </Box>
         </Providers>

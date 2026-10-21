@@ -30,6 +30,7 @@ import {
 import { useAppState, TradingMode } from "@/lib/AppStateContext";
 import type { StockListResponse } from "@/lib/types";
 import type { ScannerStock } from "@/lib/live-trader/types";
+import type { LogLine } from "@/lib/logger";
 import { useToastStack } from "@/lib/hooks/useToastStack";
 import StockTables from "./live-trading/StockTables";
 import TerminalLogs from "./live-trading/TerminalLogs";
@@ -57,7 +58,7 @@ export default function LiveTrading() {
   const [error, setError] = useState("");
   const [status, setStatus] = useState<LiveStatus | null>(null);
   const [countdown, setCountdown] = useState(0);
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<LogLine[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
   const logContainerRef = useRef<HTMLDivElement>(null);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
@@ -136,7 +137,7 @@ export default function LiveTrading() {
           const data = JSON.parse(e.data);
           if (data.type === "log")
             setLogs((prev) => {
-              const next = [...prev, `[${data.timestamp}] ${data.message}`];
+              const next = [...prev, { timestamp: data.timestamp, message: data.message, level: data.level ?? "INFO" }];
               return next.length > 200 ? next.slice(-200) : next;
             });
         } catch {

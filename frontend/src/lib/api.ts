@@ -14,6 +14,8 @@
 export const PY_API: string =
   process.env.NEXT_PUBLIC_PY_API ?? "http://127.0.0.1:8001";
 
+import { errorMessage } from "@/lib/errors";
+
 /**
  * Server-side base URL.
  *
@@ -124,7 +126,7 @@ async function request<T>(
     if (err instanceof Error && err.name === "AbortError") {
       throw new ApiError(`${method} ${path} timed out after ${timeoutMs}ms`, 408, url, null);
     }
-    const message = err instanceof Error ? err.message : String(err);
+    const message = errorMessage(err);
     throw new ApiError(`${method} ${path} failed: ${message}`, 0, url, null);
   } finally {
     clearTimeout(timer);

@@ -61,7 +61,7 @@ export class UpstoxStreamer {
       this.log("Protobuf loaded");
     } catch (err) {
       const e = err as Error;
-      this.log(`Protobuf load failed: ${e.message}`);
+      this.log(`Protobuf load failed: ${e.message}`, "ERROR");
     }
   }
 
@@ -76,7 +76,7 @@ export class UpstoxStreamer {
   async connect(): Promise<boolean> {
     // Acquire per-bot-type lock (reversal_bot.lock / continuation_bot.lock)
     if (!this.lockManager.acquire()) {
-      this.log("Singleton lock acquisition failed - another instance is running");
+      this.log("Singleton lock acquisition failed - another instance is running", "ERROR");
       this.onStatus?.("lock_denied");
       return false;
     }
@@ -110,12 +110,12 @@ export class UpstoxStreamer {
         this.sdkStreamer.on("error", (error: any) => {
           const msg = error?.message || String(error);
           const is403 = msg.includes("403") || msg.includes("401");
-          this.log(is403 ? `Auth failed (${msg})` : `SDK error: ${msg}`);
+          this.log(is403 ? `Auth failed (${msg})` : `SDK error: ${msg}`, "ERROR");
         });
 
         this.sdkStreamer.on("close", () => {
           this.connected = false;
-          this.log("WebSocket closed");
+          this.log("WebSocket closed", "WARN");
           this.onStatus?.("disconnected");
           this.onClose?.();
           if (!this.reconnecting && !this.intentionalDisconnect) {
@@ -127,7 +127,7 @@ export class UpstoxStreamer {
         this.sdkStreamer.autoReconnect(false);
       } catch (err) {
         const e = err as Error;
-        this.log(`Connection failed: ${e.message}`);
+        this.log(`Connection failed: ${e.message}`, "ERROR");
         resolve(false);
       }
     });
@@ -213,7 +213,7 @@ export class UpstoxStreamer {
 
     const attempt = () => {
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        this.log("Max reconnection attempts reached");
+        this.log("Max reconnection attempts reached", "ERROR");
         this.reconnecting = false;
         return;
       }
@@ -237,7 +237,7 @@ export class UpstoxStreamer {
             }
           } catch (e) {
             const err = e as Error;
-            this.log(`Reconnection error: ${err.message}`);
+            this.log(`Reconnection error: ${err.message}`, "ERROR");
             this.reconnecting = false;
           }
         })();
@@ -259,9 +259,9 @@ export class UpstoxStreamer {
     this.lockManager.release();
   }
 
-  private log(msg: string): void {
+  private log(msg: string, level: import("@/lib/logger").LogLevel = "INFO"): void {
     const time = new Date().toLocaleTimeString("en-IN", { hour12: false });
     console.log(`[${time}] [Streamer] ${msg}`);
-    globalThis.__addLiveLog?.(`[Streamer] ${msg}`);
+    globalThis.__addLiveLog?.(`[Streamer] ${msg}`, level);
   }
 }

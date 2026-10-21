@@ -11,6 +11,7 @@ import { PaperTrader } from "./paper-trader";
 import { sleepUntilIST, PY_API } from "./task-utils";
 import { runPreMarketFlow, PreMarketParams } from "./pre-market-flow";
 import { loadStocksFromScanner } from "./stocks-loader";
+import type { LogLevel } from "@/lib/logger";
 
 export type BotMode = "reversal" | "continuation";
 
@@ -35,9 +36,9 @@ export class LiveTraderOrchestrator {
 
   constructor(mode: BotMode) { this.mode = mode; }
 
-  private log(msg: string) {
+  private log(msg: string, level: LogLevel = "INFO") {
     console.log(`[ORCHESTRATOR] ${msg}`);
-    globalThis.__addLiveLog?.(msg);
+    globalThis.__addLiveLog?.(msg, level);
   }
 
   async initialize(
@@ -146,7 +147,7 @@ export class LiveTraderOrchestrator {
           this.preMarketComplete = true;
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
-          this.log(`Pre-market flow failed: ${msg}`);
+          this.log(`Pre-market flow failed: ${msg}`, "WARN");
           this.running = false;
           return;
         }
@@ -172,7 +173,7 @@ export class LiveTraderOrchestrator {
 
     this.streamer.updateActiveInstruments(activeSubKeys);
     const connected = await this.streamer.connect();
-    if (!connected) { this.log("FAILED to connect data stream"); this.running = false; return; }
+    if (!connected) { this.log("FAILED to connect data stream", "ERROR"); this.running = false; return; }
     this.streamer.subscribe();
 
     const minRatio = this.config.svroMinVolumeRatio ?? 0.075;

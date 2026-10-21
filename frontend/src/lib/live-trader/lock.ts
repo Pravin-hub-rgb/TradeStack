@@ -46,7 +46,7 @@ export class LockManager {
       if (e.code === "EEXIST") {
         console.log(`ERROR: Another ${label} bot instance is already running - refusing to connect`);
         console.log(`[LOCK] Lock file exists: ${this.lockFile}`);
-        globalThis.__addLiveLog?.(`[LOCK] ERROR: Another ${label} bot instance is already running`);
+        globalThis.__addLiveLog?.(`[LOCK] ERROR: Another ${label} bot instance is already running`, "ERROR");
       } else {
         console.log(`WARNING: Could not acquire ${label} bot lock: ${e.message}`);
       }

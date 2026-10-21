@@ -4,18 +4,18 @@ import type { LiveTraderConfig, ScannerResult, ScannerStock } from "@/lib/live-t
 import type { SettingsListResponse } from "@/lib/types";
 import { broadcast } from "./events/route";
 import { SERVER_PY_API as PY_API } from "@/lib/api";
+import type { LogLevel, LogLine } from "@/lib/logger";
 
 let reversalOrchestrator: LiveTraderOrchestrator | null = null;
 let continuationOrchestrator: LiveTraderOrchestrator | null = null;
 let _instMap: Record<string, string> | null = null;
-let logsBuffer: string[] = [];
+let logsBuffer: LogLine[] = [];
 
-function addLog(msg: string) {
+function addLog(msg: string, level: LogLevel = "INFO"): void {
   const t = new Date().toLocaleTimeString("en-IN", { hour12: false });
-  const entry = `[${t}] ${msg}`;
-  logsBuffer.push(entry);
+  logsBuffer.push({ timestamp: t, message: msg, level });
   if (logsBuffer.length > 200) logsBuffer = logsBuffer.slice(-200);
-  broadcast(JSON.stringify({ type: "log", timestamp: t, message: msg }));
+  broadcast(JSON.stringify({ type: "log", timestamp: t, message: msg, level }));
 }
 globalThis.__addLiveLog = addLog;
 
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
       const stocksCount = body.stocks?.length || 0;
       addLog(`Starting ${mode} bot with ${stocksCount} stocks`);
       await o.initialize(config, body.instruments || [], body.stocks);
-      o.start().catch((err) => { addLog(`Start error: ${err.message}`); console.error("[API] start error:", err); });
+      o.start().catch((err) => { addLog(`Start error: ${err.message}`, "ERROR"); console.error("[API] start error:", err); });
       return NextResponse.json({ status: "starting", mode, tokenExists: !!config.accessToken });
     }
 

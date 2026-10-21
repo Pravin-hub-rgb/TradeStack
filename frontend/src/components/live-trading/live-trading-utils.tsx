@@ -1,6 +1,7 @@
 "use client";
 
 import { Chip, Box, Typography } from "@mui/material";
+import type { LogLine } from "@/lib/logger";
 
 export { PY_API } from "@/lib/api";
 export const POLL_INTERVAL = 2000;
@@ -34,7 +35,7 @@ export interface LiveStatus {
   config: { marketOpen: string; prepStart: string; entryTime: string; } | null;
   reversal: BotSummary; continuation: BotSummary;
   paperTrader: PaperStats | null;
-  logs?: string[];
+  logs?: LogLine[];
 }
 
 export const stateColor: Record<string, string> = {

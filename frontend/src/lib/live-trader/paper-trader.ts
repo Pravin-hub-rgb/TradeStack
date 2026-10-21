@@ -58,7 +58,7 @@ export class PaperTrader {
     if (cost > this.capital) {
       const msg = `INSUFFICIENT CAPITAL ${stock.symbol}: need ₹${cost.toFixed(0)}, have ₹${this.capital.toFixed(0)}`;
       console.log(`[PAPER] ${msg}`);
-      globalThis.__addLiveLog?.(`[Paper] ${msg}`);
+      globalThis.__addLiveLog?.(`[Paper] ${msg}`, "WARN");
       return;
     }
 

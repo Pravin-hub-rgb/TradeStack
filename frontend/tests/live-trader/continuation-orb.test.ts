@@ -15,7 +15,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { StockStateEnum } from "../../src/lib/live-trader/types";
 import {
   ContinuationStockState,
-  StockMonitor,
 } from "../../src/lib/live-trader/continuation/stock-monitor";
 import { ContinuationTickProcessor } from "../../src/lib/live-trader/continuation/tick-processor";
 import { OHLCData } from "../../src/lib/live-trader/types";
