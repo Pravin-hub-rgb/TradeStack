@@ -1,6 +1,5 @@
 import { StockInfo, Trade, SessionStats } from "./types";
-
-const PY_API = "http://127.0.0.1:8001";
+import { PY_API } from "@/lib/api";
 
 export interface TradableStock {
   instrumentKey: string;
@@ -59,7 +58,7 @@ export class PaperTrader {
     if (cost > this.capital) {
       const msg = `INSUFFICIENT CAPITAL ${stock.symbol}: need ₹${cost.toFixed(0)}, have ₹${this.capital.toFixed(0)}`;
       console.log(`[PAPER] ${msg}`);
-      (globalThis as any).__addLiveLog?.(`[Paper] ${msg}`);
+      globalThis.__addLiveLog?.(`[Paper] ${msg}`, "WARN");
       return;
     }
 
@@ -85,7 +84,7 @@ export class PaperTrader {
 
     const entryMsg = `ENTRY ${stock.symbol} (${tradeType}) @ ${price.toFixed(2)} (qty: ${qty}, riskAmt: ${this.riskPerTrade})`;
     console.log(`[PAPER] ${entryMsg}`);
-    (globalThis as any).__addLiveLog?.(`[Paper] ${entryMsg}`);
+    globalThis.__addLiveLog?.(`[Paper] ${entryMsg}`);
 
     fetch(`${PY_API}/api/trades/log-entry`, {
       method: "POST",
@@ -127,15 +126,15 @@ export class PaperTrader {
 
     const exitMsg = `EXIT ${stock.symbol} @ ${price.toFixed(2)} (${reason}) PnL: ₹${trade.pnl.toFixed(2)}, capital: ₹${this.capital.toFixed(2)}`;
     console.log(`[PAPER] ${exitMsg}`);
-    (globalThis as any).__addLiveLog?.(`[Paper] ${exitMsg}`);
+    globalThis.__addLiveLog?.(`[Paper] ${exitMsg}`);
 
     // Find existing open DB trade and set exit (no duplicate POST)
     fetch(`${PY_API}/api/trades/list`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     }).then(r => r.json()).then(data => {
-      const trades = data.trades || [];
-      const existing = trades.find((t: any) => t.symbol === stock.symbol && !t.exit_price);
+      const dbTrades: { id: string | number; symbol: string; exit_price: number | string | null; [key: string]: unknown }[] = data.trades || [];
+      const existing = dbTrades.find((t) => t.symbol === stock.symbol && !t.exit_price);
       if (existing) {
         fetch(`${PY_API}/api/trades/${existing.id}`, {
           method: "PUT",

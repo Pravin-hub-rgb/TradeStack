@@ -22,24 +22,11 @@ import {
   Info as InfoIcon,
   CloudDownload as CloudDownloadIcon,
 } from "@mui/icons-material";
+import { PY_API } from "@/lib/api";
+import { useToastStack } from "@/lib/hooks/useToastStack";
+import type { CacheInfo, OperationStatus } from "@/lib/types";
 
-const API = "http://127.0.0.1:8001";
-
-interface CacheInfo {
-  stock_count: number;
-  total_size_mb: number;
-  latest_date: string | null;
-}
-
-interface OperationStatus {
-  type: string;
-  status: "running" | "completed" | "error";
-  progress: number;
-  message: string;
-  error?: string;
-  result?: any;
-  logs?: string[];
-}
+const API = PY_API;
 
 const CacheData: React.FC = () => {
   const [cacheInfo, setCacheInfo] = useState<CacheInfo | null>(null);
@@ -51,6 +38,9 @@ const CacheData: React.FC = () => {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
   const [isDownloadingHistorical, setIsDownloadingHistorical] = useState(false);
   const [checkingToken, setCheckingToken] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<{ new_count: number; new_symbols: string[] } | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     if (operationStatus?.logs) {
@@ -64,9 +54,25 @@ const CacheData: React.FC = () => {
     }
   }, [logLines]);
 
-  const [toasts, setToasts] = useState<
-    Array<{ id: string; message: string; type: "success" | "error" | "warning"; position: number }>
-  >([]);
+  // Keeps toasts on screen until manually closed; reuses free position slots.
+  const { toasts, showToast, removeToast } = useToastStack({
+    durationMs: Infinity,
+    defaultType: "success",
+    pickPosition: (prev) => {
+      const occupied = prev.map((t) => t.position).sort((a, b) => a - b);
+      let position = 0;
+      for (let i = 0; i < occupied.length; i++) {
+        if (occupied[i] !== i) {
+          position = i;
+          break;
+        }
+      }
+      if (position === 0 && occupied.length > 0) {
+        position = occupied.length;
+      }
+      return position;
+    },
+  });
 
   useEffect(() => {
     loadCacheInfo();
@@ -149,6 +155,71 @@ const CacheData: React.FC = () => {
     }
   };
 
+  const handleScanNewStocks = async () => {
+    setIsScanning(true);
+    setScanResult(null);
+    try {
+      const resp = await fetch(`${API}/api/data/scan-new-stocks`);
+      const data = await resp.json();
+      if (data.detail) {
+        showToast(data.detail, "error");
+        return;
+      }
+      setScanResult({ new_count: data.new_count, new_symbols: data.new_symbols });
+      if (data.new_count === 0) {
+        showToast("No new stocks found — cache is up to date", "success");
+      } else {
+        showToast(`Found ${data.new_count} new stock(s)`, "success");
+      }
+    } catch {
+      showToast("Failed to scan for new stocks", "error");
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  const handleSyncNewStocks = async () => {
+    if (!scanResult || scanResult.new_count === 0) return;
+    setCheckingToken(true);
+    try {
+      const tokenResp = await fetch(`${API}/api/token/status`);
+      const tokenData = await tokenResp.json();
+      if (!tokenData.exists) {
+        setShowTokenDialog(true);
+        return;
+      }
+      setIsSyncing(true);
+      const resp = await fetch(`${API}/api/data/sync-new-stocks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbols: scanResult.new_symbols }),
+      });
+      const data = await resp.json();
+      if (data.status === "error") {
+        if (data.message?.includes("token")) {
+          setShowTokenDialog(true);
+        } else {
+          showToast(data.message || "Failed to start sync", "error");
+        }
+        setIsSyncing(false);
+        return;
+      }
+      if (data.status === "started") {
+        setOperationId(data.operation_id);
+        setOperationStatus({
+          type: "sync_new_stocks",
+          status: "running",
+          progress: 0,
+          message: `Downloading data for ${scanResult.new_count} new stock(s)...`,
+        });
+      }
+    } catch {
+      showToast("Failed to connect to server", "error");
+    } finally {
+      setCheckingToken(false);
+    }
+  };
+
   const handleUpdateBhavcopy = async () => {
     setIsUpdating(true);
     try {
@@ -184,11 +255,17 @@ const CacheData: React.FC = () => {
       if (data.status === "completed") {
         setIsUpdating(false);
         setIsDownloadingHistorical(false);
+        setIsSyncing(false);
         setOperationId(null);
+        if (data.type === "sync_new_stocks") {
+          setScanResult(null);
+        }
         const label = data.type === "fill_gaps"
           ? `Cache updated: ${data.result?.dates_filled} date(s), ${data.result?.total_updated} stocks`
           : data.type === "historical_download"
           ? "Historical data"
+          : data.type === "sync_new_stocks"
+          ? `New stocks synced`
           : `Cache updated for ${data.result?.date}`;
         showToast(data.result?.updated
           ? `${label}: ${data.result.updated} stocks updated`
@@ -199,6 +276,7 @@ const CacheData: React.FC = () => {
       } else if (data.status === "error") {
         setIsUpdating(false);
         setIsDownloadingHistorical(false);
+        setIsSyncing(false);
         setOperationId(null);
         showToast(data.error || "Operation failed", "error");
       }
@@ -227,26 +305,6 @@ const CacheData: React.FC = () => {
       case "error": return <ErrorIcon />;
       default: return <InfoIcon />;
     }
-  };
-
-  const showToast = (message: string, type: "success" | "error" | "warning" = "success") => {
-    const toastId = `toast-${Date.now()}-${Math.random()}`;
-    const occupiedPositions = toasts.map((t) => t.position).sort((a, b) => a - b);
-    let position = 0;
-    for (let i = 0; i < occupiedPositions.length; i++) {
-      if (occupiedPositions[i] !== i) {
-        position = i;
-        break;
-      }
-    }
-    if (position === 0 && occupiedPositions.length > 0) {
-      position = occupiedPositions.length;
-    }
-    setToasts((prev) => [...prev, { id: toastId, message, type, position }]);
-  };
-
-  const removeToast = (toastId: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== toastId));
   };
 
   return (
@@ -332,6 +390,55 @@ const CacheData: React.FC = () => {
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
                 Recommended: Run once on a fresh install. Requires a valid Upstox access token.
               </Typography>
+
+              {/* New Stock Sync Section */}
+              <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid", borderColor: "divider" }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                  New Stock Sync
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+                  Scan for newly listed NSE stocks and download their historical data. Run once a month to pick up any newly listed stocks.
+                </Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<RefreshIcon />}
+                  onClick={handleScanNewStocks}
+                  disabled={isScanning || isSyncing}
+                  fullWidth
+                  sx={{ mb: 1, borderColor: "rgba(16, 185, 129, 0.4)", color: "#10b981" }}
+                >
+                  {isScanning ? "Scanning..." : "Scan New Stocks"}
+                </Button>
+                {scanResult && (
+                  <Box sx={{ mb: 1 }}>
+                    {scanResult.new_count === 0 ? (
+                      <Typography variant="body2" color="success.main">
+                        No new stocks found — cache is up to date
+                      </Typography>
+                    ) : (
+                      <>
+                        <Typography variant="body2" color="text.secondary">
+                          Found <strong>{scanResult.new_count}</strong> new stock(s):
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5, maxHeight: 60, overflow: "auto" }}>
+                          {scanResult.new_symbols.slice(0, 20).join(", ")}
+                          {scanResult.new_count > 20 && ` ... and ${scanResult.new_count - 20} more`}
+                        </Typography>
+                      </>
+                    )}
+                  </Box>
+                )}
+                <Button
+                  variant="contained"
+                  startIcon={isSyncing ? <CloudDownloadIcon sx={{ animation: "spin 1s linear infinite" }} /> : <CloudDownloadIcon />}
+                  onClick={handleSyncNewStocks}
+                  disabled={!scanResult || scanResult.new_count === 0 || isSyncing || isScanning}
+                  fullWidth
+                  sx={{ borderColor: "rgba(99, 102, 241, 0.4)", color: "#fff" }}
+                >
+                  {isSyncing ? "Downloading..." : "Download New Stocks"}
+                </Button>
+              </Box>
             </CardContent>
           </Card>
         </Grid>

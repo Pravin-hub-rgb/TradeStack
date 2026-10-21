@@ -40,7 +40,7 @@ SEED: list[dict] = [
     {"key": "strong_start_gap_pct", "value": "2.0", "type": "number", "category": "entry_conditions", "label": "Strong Start Gap (%)", "description": "Gap % indicating strong start", "min": "0.0", "max": "10.0", "step": "0.1"},
     # ---- Scanner: Base Filters ----
     {"key": "price_min", "value": "100", "type": "number", "category": "scanner_base", "label": "Min Price", "description": "Minimum stock price for scan", "min": "10", "max": "10000", "step": "10"},
-    {"key": "price_max", "value": "2000", "type": "number", "category": "scanner_base", "label": "Max Price", "description": "Maximum stock price for scan", "min": "10", "max": "50000", "step": "10"},
+    {"key": "price_max", "value": "10000", "type": "number", "category": "scanner_base", "label": "Max Price", "description": "Maximum stock price for scan", "min": "10", "max": "50000", "step": "10"},
     {"key": "min_adr_pct", "value": "3.0", "type": "number", "category": "scanner_base", "label": "Min ADR (%)", "description": "Minimum average daily range", "min": "0.0", "max": "20.0", "step": "0.5"},
     {"key": "volume_min", "value": "1000000", "type": "number", "category": "scanner_base", "label": "Min Volume", "description": "Minimum daily volume (shares)", "min": "100000", "max": "100000000", "step": "100000"},
     {"key": "min_volume_days", "value": "2", "type": "number", "category": "scanner_base", "label": "Min Volume Days", "description": "Consecutive days volume must exceed threshold", "min": "1", "max": "10", "step": "1"},
@@ -144,10 +144,16 @@ def reset_category(category: str):
     _seed_category(category)
 
 
+def _upsert_seed(seed_row: dict):
+    """Insert one SEED row, stripping UI-only fields the settings table doesn't store."""
+    safe = {k: v for k, v in seed_row.items() if k != "options"}
+    db.settings_upsert(**safe)
+
+
 def reset_all():
     """Reset ALL settings to seed defaults."""
     for r in SEED:
-        db.settings_upsert(**r)
+        _upsert_seed(r)
 
 
 def _cast_value(value: str, type_: str) -> Any:
@@ -167,20 +173,33 @@ def _seed_category(category: str):
     """Insert seed defaults for one category."""
     for r in SEED:
         if r["category"] == category:
-            db.settings_upsert(**r)
+            _upsert_seed(r)
 
 
 def ensure_settings():
     """Seed the settings table if empty or version mismatch."""
     version = db.settings_get_meta("settings_version")
     if version == SETTINGS_VERSION and db.settings_get_all():
-        return
+        pass
+    else:
+        logger.info(f"Settings: seeding (version={SETTINGS_VERSION}, previous={version})")
+        for r in SEED:
+            _upsert_seed(r)
+        db.settings_set_meta("settings_version", SETTINGS_VERSION)
+        logger.info(f"Settings: seeded {len(SEED)} defaults")
 
-    logger.info(f"Settings: seeding (version={SETTINGS_VERSION}, previous={version})")
+    # --- Add any missing seed keys (idempotent, preserves existing values) ---
+    existing_keys = {r["key"] for r in db.settings_get_all()}
     for r in SEED:
-        db.settings_upsert(**r)
-    db.settings_set_meta("settings_version", SETTINGS_VERSION)
-    logger.info(f"Settings: seeded {len(SEED)} defaults")
+        if r["key"] not in existing_keys:
+            _upsert_seed(r)
+            logger.info(f"Settings: added missing key '{r['key']}' with default '{r['value']}'")
+
+    # --- Targeted one-time migration: price_max 2000 → 10000 ---
+    row = db.settings_get("price_max")
+    if row and row.get("value") == "2000":
+        db.settings_set_value("price_max", "10000")
+        logger.info("Settings: migrated price_max 2000 -> 10000")
 
 
 # Auto-seed on import

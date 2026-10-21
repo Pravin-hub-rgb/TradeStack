@@ -12,19 +12,11 @@ import {
 } from "@mui/icons-material";
 import StockChart from "./scanner/StockChart";
 import ToastNotification from "./ToastNotification";
+import { PY_API } from "@/lib/api";
+import { useToastStack } from "@/lib/hooks/useToastStack";
+import type { StockListItem as StockItem, CandleData } from "@/lib/types";
 
-const API = "http://127.0.0.1:8001";
-
-interface StockItem {
-  id: number; list_type: string; symbol: string; close: number | null;
-  trend_context: string | null; period: number | null;
-  depth_pct: number | null; added_at: string;
-}
-
-interface CandleData {
-  candles: { date: string; open: number; high: number; low: number; close: number; volume: number }[];
-  sma: { date: string; value: number }[];
-}
+const API = PY_API;
 
 type ListType = "continuation" | "reversal";
 
@@ -36,13 +28,7 @@ export default function StockList() {
   const [chartData, setChartData] = useState<Record<string, CandleData>>({});
   const [loaded, setLoaded] = useState(false);
   const listRef = useRef<HTMLDivElement>(null);
-  const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "warning"; position: number }[]>([]);
-  const removeToast = useCallback((id: string) => setToasts(prev => prev.filter(t => t.id !== id)), []);
-  const showToast = useCallback((message: string, type: "success" | "error" | "warning") => {
-    const id = `t-${Date.now()}-${Math.random()}`;
-    setToasts(prev => [...prev, { id, message, type, position: prev.length }]);
-    setTimeout(() => removeToast(id), 4000);
-  }, [removeToast]);
+  const { toasts, showToast, removeToast } = useToastStack();
 
   const stocks = activeTab === "continuation" ? contStocks : revStocks;
   const selected = stocks[selectedIdx];

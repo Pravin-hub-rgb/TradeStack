@@ -12,6 +12,7 @@ No PostgreSQL, no server process. Zero configuration.
 """
 
 import logging
+import os
 import sqlite3
 import threading
 from datetime import date, datetime
@@ -20,7 +21,9 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-DB_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "settings.db"
+# DB path can be overridden via env var (used by tests to isolate from prod data)
+_DEFAULT_DB = Path(__file__).resolve().parent.parent.parent / "data" / "settings.db"
+DB_PATH = Path(os.environ.get("TRADESTACK_DB_PATH") or _DEFAULT_DB)
 
 # --- Schema ---
 
@@ -214,7 +217,9 @@ def get_cache_stats() -> dict:
         return {"stock_count": 0, "total_size_mb": 0.0, "latest_date": None}
     return {
         "stock_count": row["stock_count"],
-        "total_size_mb": round(row["total_bytes"] / (1024 * 1024), 2),
+        # un-rounded — 2-KB caches round to 0.0 with 2 dp, which reads as "empty";
+        # the UI formats to 2 decimals itself (CacheData.tsx)
+        "total_size_mb": row["total_bytes"] / (1024 * 1024),
         "latest_date": row["latest_date"],
     }
 

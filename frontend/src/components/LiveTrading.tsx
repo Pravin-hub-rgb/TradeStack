@@ -27,14 +27,17 @@ import {
   Stop as StopIcon,
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
-import { useAppState } from "@/lib/AppStateContext";
+import { useAppState, TradingMode } from "@/lib/AppStateContext";
+import type { StockListResponse } from "@/lib/types";
+import type { ScannerStock } from "@/lib/live-trader/types";
+import type { LogLine } from "@/lib/logger";
+import { useToastStack } from "@/lib/hooks/useToastStack";
 import StockTables from "./live-trading/StockTables";
 import TerminalLogs from "./live-trading/TerminalLogs";
 import ToastNotification from "./ToastNotification";
 import {
   PY_API,
   POLL_INTERVAL,
-  TradingMode,
   LiveStatus,
   BotSummary,
   StatusDot,
@@ -47,15 +50,15 @@ import {
 
 
 export default function LiveTrading() {
-  const {} = useAppState();
+  const { state, setTradingMode } = useAppState();
 
-  const [tradingMode, setTradingMode] = useState<TradingMode>("continuation");
+  const tradingMode = state.tradingMode;
   const [isStarting, setIsStarting] = useState(false);
   const [isStopping, setIsStopping] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState<LiveStatus | null>(null);
   const [countdown, setCountdown] = useState(0);
-  const [logs, setLogs] = useState<string[]>([]);
+  const [logs, setLogs] = useState<LogLine[]>([]);
   const logEndRef = useRef<HTMLDivElement>(null);
   const logContainerRef = useRef<HTMLDivElement>(null);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
@@ -81,13 +84,7 @@ export default function LiveTrading() {
   } | null>(null);
   const [showStaleDialog, setShowStaleDialog] = useState(false);
 
-  const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "warning"; position: number }[]>([]);
-  const removeToast = useCallback((id: string) => setToasts(prev => prev.filter(t => t.id !== id)), []);
-  const showToast = useCallback((message: string, type: "success" | "error" | "warning") => {
-    const id = `toast-${Date.now()}-${Math.random()}`;
-    setToasts(prev => [...prev, { id, message, type, position: prev.length }]);
-    setTimeout(() => removeToast(id), 4000);
-  }, [removeToast]);
+  const { toasts, showToast, removeToast } = useToastStack();
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -140,7 +137,7 @@ export default function LiveTrading() {
           const data = JSON.parse(e.data);
           if (data.type === "log")
             setLogs((prev) => {
-              const next = [...prev, `[${data.timestamp}] ${data.message}`];
+              const next = [...prev, { timestamp: data.timestamp, message: data.message, level: data.level ?? "INFO" }];
               return next.length > 200 ? next.slice(-200) : next;
             });
         } catch {
@@ -200,14 +197,14 @@ export default function LiveTrading() {
     setError("");
     try {
       const tokenCheckR = await fetch(`${PY_API}/api/token/check`);
-      const tokenCheckD = await tokenCheckR.json();
+      const tokenCheckD = (await tokenCheckR.json()) as { valid?: boolean };
       if (!tokenCheckD.valid) {
         showToast("Token is not valid or expired. Please update your token in the Token Session tab.", "error");
         setIsStarting(false);
         return;
       }
       const listR = await fetch(`${PY_API}/api/stock-list/${tradingMode}/resolved`);
-      const listD = await listR.json();
+      const listD = (await listR.json()) as StockListResponse;
       const rawStocks = listD.stocks || [];
       if (rawStocks.length === 0) {
         setError(`No ${tradingMode} stocks saved.`);
@@ -215,21 +212,21 @@ export default function LiveTrading() {
         return;
       }
 
-      const symbols = rawStocks.map((s: any) => s.symbol);
+      const symbols = rawStocks.map((s) => s.symbol);
       const keyR = await fetch(`${PY_API}/api/instrument-keys`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ symbols }),
       });
-      const keyD = await keyR.json();
-      const keyMap = keyD.keys || {};
+      const keyD = (await keyR.json()) as { keys?: Record<string, string> };
+      const keyMap: Record<string, string> = keyD.keys || {};
       if (Object.keys(keyMap).length === 0) {
         setError("Could not resolve instrument keys.");
         setIsStarting(false);
         return;
       }
 
-      const stocks = rawStocks.map((s: any) => ({
+      const stocks: ScannerStock[] = rawStocks.map((s) => ({
         symbol: s.symbol,
         instrumentKey: keyMap[s.symbol],
         previousClose: s.close ?? 0,
@@ -248,11 +245,11 @@ export default function LiveTrading() {
         body: JSON.stringify({
           action: "start",
           mode: tradingMode,
-          instruments: stocks.map((s: any) => s.instrumentKey),
+          instruments: stocks.map((s) => s.instrumentKey ?? `NSE_EQ|${s.symbol}`),
           stocks,
         }),
       });
-      const d = await r.json();
+      const d = (await r.json()) as { error?: string };
       if (!r.ok) {
         setError(d.error || "Failed to start");
         return;

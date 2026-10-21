@@ -1,23 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
 import { LiveTraderOrchestrator, BotMode } from "@/lib/live-trader/index";
-import type { LiveTraderConfig } from "@/lib/live-trader/types";
+import type { LiveTraderConfig, ScannerResult, ScannerStock } from "@/lib/live-trader/types";
+import type { SettingsListResponse } from "@/lib/types";
 import { broadcast } from "./events/route";
-
-const PY_API = "http://127.0.0.1:8001";
+import { SERVER_PY_API as PY_API } from "@/lib/api";
+import type { LogLevel, LogLine } from "@/lib/logger";
 
 let reversalOrchestrator: LiveTraderOrchestrator | null = null;
 let continuationOrchestrator: LiveTraderOrchestrator | null = null;
 let _instMap: Record<string, string> | null = null;
-let logsBuffer: string[] = [];
+let logsBuffer: LogLine[] = [];
 
-function addLog(msg: string) {
+function addLog(msg: string, level: LogLevel = "INFO"): void {
   const t = new Date().toLocaleTimeString("en-IN", { hour12: false });
-  const entry = `[${t}] ${msg}`;
-  logsBuffer.push(entry);
+  logsBuffer.push({ timestamp: t, message: msg, level });
   if (logsBuffer.length > 200) logsBuffer = logsBuffer.slice(-200);
-  broadcast(JSON.stringify({ type: "log", timestamp: t, message: msg }));
+  broadcast(JSON.stringify({ type: "log", timestamp: t, message: msg, level }));
 }
-(globalThis as any).__addLiveLog = addLog;
+globalThis.__addLiveLog = addLog;
+
+interface StartBody {
+  action?: string;
+  mode?: string;
+  instruments?: string[];
+  stocks?: ScannerStock[];
+  scannerResult?: ScannerResult;
+}
+
+/** Raw scanner row as delivered by the client/API — unknown types, coerce in mapping. */
+interface ScanRowLike {
+  symbol: unknown;
+  instrumentKey?: unknown;
+  previousClose?: unknown;
+  situation?: unknown;
+  declinePercent?: unknown;
+  declineDays?: unknown;
+  gapPct?: unknown;
+  lowViolationPct?: unknown;
+  adrPct?: unknown;
+}
 
 async function resolveInstrumentKeys(symbols: string[]): Promise<Record<string, string>> {
   if (_instMap) return _instMap;
@@ -81,8 +102,8 @@ async function loadConfigFromPython(): Promise<LiveTraderConfig> {
     fetch(`${PY_API}/api/token/raw`).catch(() => null),
   ]);
 
-  const arr: any[] = settingsR?.ok
-    ? (await settingsR.json()).settings || []
+  const arr: { key: string; value: string }[] = settingsR?.ok
+    ? ((await settingsR.json()) as SettingsListResponse).settings || []
     : [];
   const s: Record<string, string> = {};
   for (const item of arr) {
@@ -112,7 +133,6 @@ async function loadConfigFromPython(): Promise<LiveTraderConfig> {
     entrySlPct: (Number(s["entry_sl_pct"]) || 4) / 100,
     lowViolationPct: (Number(s["low_violation_pct"]) || 1) / 100,
     flatGapThreshold: (Number(s["flat_gap_threshold"]) || 0.3) / 100,
-    trailingSlThreshold: (Number(s["trailing_sl_threshold"]) || 5) / 100,
     svroMinVolumeRatio: (Number(s["svro_min_volume_ratio"]) || 7.5) / 100,
     gapUpMaxPct: (Number(s["gap_up_max_pct"]) || 5) / 100,
     paperTrading: s["paper_trading"] !== "false",
@@ -143,7 +163,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json().catch(() => ({}));
+    const body: StartBody = await req.json().catch(() => ({}));
     const { action, mode: rawMode } = body;
     const mode: BotMode = rawMode === "reversal" ? "reversal" : "continuation";
     const o = getOrCreate(mode);
@@ -156,7 +176,7 @@ export async function POST(req: NextRequest) {
       const stocksCount = body.stocks?.length || 0;
       addLog(`Starting ${mode} bot with ${stocksCount} stocks`);
       await o.initialize(config, body.instruments || [], body.stocks);
-      o.start().catch((err) => { addLog(`Start error: ${err.message}`); console.error("[API] start error:", err); });
+      o.start().catch((err) => { addLog(`Start error: ${err.message}`, "ERROR"); console.error("[API] start error:", err); });
       return NextResponse.json({ status: "starting", mode, tokenExists: !!config.accessToken });
     }
 
@@ -168,7 +188,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "load") {
-      const { scannerResult } = body;
+      const scannerResult = body.scannerResult;
       if (!scannerResult) {
         return NextResponse.json({ error: "scannerResult required" }, { status: 400 });
       }
@@ -178,21 +198,34 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `No ${mode} stocks in scanner result` }, { status: 400 });
       }
 
-      const allSymbols = source.stocks?.map((s: any) => s.symbol) || [];
+      const rawStocks: ScanRowLike[] = source.stocks ?? [];
+      const allSymbols = rawStocks.map((s) => String(s.symbol));
       addLog(`Loading ${allSymbols.length} ${mode} stocks`);
       const keyMap = await resolveInstrumentKeys(allSymbols);
 
-      const fixed = JSON.parse(JSON.stringify(source));
-      for (const stock of fixed.stocks || []) {
-        const correctKey = keyMap[stock.symbol];
-        if (correctKey) stock.instrumentKey = correctKey;
-      }
+      // API returns numeric fields as strings/nullable — map to typed ScannerStock
+      const fixedStocks: ScannerStock[] = rawStocks.map((s) => {
+        const symbol = String(s.symbol);
+        const num = (v: unknown) => (v !== null && v !== undefined && v !== "" ? Number(v) : undefined);
+        return {
+          symbol,
+          instrumentKey: keyMap[symbol] ?? num(s.instrumentKey),
+          previousClose: Number(s.previousClose ?? 0),
+          situation: String(s.situation ?? (mode === "reversal" ? "OOPS" : "continuation")),
+          declinePercent: num(s.declinePercent),
+          declineDays: num(s.declineDays),
+          gapPct: num(s.gapPct),
+          lowViolationPct: num(s.lowViolationPct),
+          adrPct: num(s.adrPct),
+        };
+      });
 
-      const scannerResultFixed = mode === "reversal"
+      const fixed = { stocks: fixedStocks };
+      const scannerResultFixed: ScannerResult = mode === "reversal"
         ? { reversal: fixed, continuation: null }
         : { reversal: null, continuation: fixed };
 
-      await o.loadStocksFromScanner(scannerResultFixed as any);
+      await o.loadStocksFromScanner(scannerResultFixed);
       addLog(`Loaded ${Object.keys(keyMap).length} ${mode} stocks`);
       return NextResponse.json({ status: "loaded", mode, count: Object.keys(keyMap).length, missing: allSymbols.length - Object.keys(keyMap).length });
     }

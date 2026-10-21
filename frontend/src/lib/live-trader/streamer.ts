@@ -59,8 +59,9 @@ export class UpstoxStreamer {
       this.protoRoot = await protobuf.load(SDK_PROTO_PATH);
       _sharedProtoRoot = this.protoRoot; // Make it available to SDK's initProtobuf patch
       this.log("Protobuf loaded");
-    } catch (err: any) {
-      this.log(`Protobuf load failed: ${err.message}`);
+    } catch (err) {
+      const e = err as Error;
+      this.log(`Protobuf load failed: ${e.message}`, "ERROR");
     }
   }
 
@@ -75,7 +76,7 @@ export class UpstoxStreamer {
   async connect(): Promise<boolean> {
     // Acquire per-bot-type lock (reversal_bot.lock / continuation_bot.lock)
     if (!this.lockManager.acquire()) {
-      this.log("Singleton lock acquisition failed - another instance is running");
+      this.log("Singleton lock acquisition failed - another instance is running", "ERROR");
       this.onStatus?.("lock_denied");
       return false;
     }
@@ -109,12 +110,12 @@ export class UpstoxStreamer {
         this.sdkStreamer.on("error", (error: any) => {
           const msg = error?.message || String(error);
           const is403 = msg.includes("403") || msg.includes("401");
-          this.log(is403 ? `Auth failed (${msg})` : `SDK error: ${msg}`);
+          this.log(is403 ? `Auth failed (${msg})` : `SDK error: ${msg}`, "ERROR");
         });
 
         this.sdkStreamer.on("close", () => {
           this.connected = false;
-          this.log("WebSocket closed");
+          this.log("WebSocket closed", "WARN");
           this.onStatus?.("disconnected");
           this.onClose?.();
           if (!this.reconnecting && !this.intentionalDisconnect) {
@@ -124,8 +125,9 @@ export class UpstoxStreamer {
 
         this.sdkStreamer.connect();
         this.sdkStreamer.autoReconnect(false);
-      } catch (err: any) {
-        this.log(`Connection failed: ${err.message}`);
+      } catch (err) {
+        const e = err as Error;
+        this.log(`Connection failed: ${e.message}`, "ERROR");
         resolve(false);
       }
     });
@@ -147,23 +149,27 @@ export class UpstoxStreamer {
         const mff = feed.fullFeed.marketFF;
         const ltpc = mff.ltpc;
         if (ltpc && ltpc.ltp !== undefined) {
+          const lttNum = Number(ltpc.ltt) || 0;
+          const ts = lttNum > 0 ? new Date(lttNum > 1e12 ? lttNum : lttNum * 1000) : new Date();
           this.onTick?.({
             instrumentKey, symbol,
-            ltp: ltpc.ltp, ltt: Number(ltpc.ltt) || 0,
+            ltp: ltpc.ltp, ltt: lttNum,
             ltq: ltpc.ltq || 0, cp: ltpc.cp || 0,
             atp: mff.atp, vtt: mff.vtt,
             ohlcList: mff.marketOHLC?.ohlc as OHLCData[],
-            timestamp: new Date(),
+            timestamp: ts,
           });
         }
       } else if (feed.ltpc) {
         const ltpc = feed.ltpc;
         if (ltpc.ltp !== undefined) {
+          const lttNum = Number(ltpc.ltt) || 0;
+          const ts = lttNum > 0 ? new Date(lttNum > 1e12 ? lttNum : lttNum * 1000) : new Date();
           this.onTick?.({
             instrumentKey, symbol,
-            ltp: ltpc.ltp, ltt: Number(ltpc.ltt) || 0,
+            ltp: ltpc.ltp, ltt: lttNum,
             ltq: ltpc.ltq || 0, cp: ltpc.cp || 0,
-            timestamp: new Date(),
+            timestamp: ts,
           });
         }
       }
@@ -207,7 +213,7 @@ export class UpstoxStreamer {
 
     const attempt = () => {
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-        this.log("Max reconnection attempts reached");
+        this.log("Max reconnection attempts reached", "ERROR");
         this.reconnecting = false;
         return;
       }
@@ -229,8 +235,9 @@ export class UpstoxStreamer {
             } else {
               attempt();
             }
-          } catch (e: any) {
-            this.log(`Reconnection error: ${e.message}`);
+          } catch (e) {
+            const err = e as Error;
+            this.log(`Reconnection error: ${err.message}`, "ERROR");
             this.reconnecting = false;
           }
         })();
@@ -252,9 +259,9 @@ export class UpstoxStreamer {
     this.lockManager.release();
   }
 
-  private log(msg: string): void {
+  private log(msg: string, level: import("@/lib/logger").LogLevel = "INFO"): void {
     const time = new Date().toLocaleTimeString("en-IN", { hour12: false });
     console.log(`[${time}] [Streamer] ${msg}`);
-    (globalThis as any).__addLiveLog?.(`[Streamer] ${msg}`);
+    globalThis.__addLiveLog?.(`[Streamer] ${msg}`, level);
   }
 }

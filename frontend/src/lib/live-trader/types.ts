@@ -64,6 +64,9 @@ export interface StockInfo {
   earlyVolume: number;
   cumulativeVolume: number;
   gapPct: number | null;
+  orbHigh?: number | null;
+  orbLow?: number | null;
+  firstCandleOpen?: number | null;
 }
 
 export interface Position {
@@ -161,7 +164,6 @@ export interface LiveTraderConfig {
   entrySlPct: number;
   lowViolationPct: number;
   flatGapThreshold: number;
-  trailingSlThreshold: number;
   svroMinVolumeRatio: number;
   gapUpMaxPct: number;
   paperTrading: boolean;
@@ -183,10 +185,12 @@ export interface ScannerStock {
 export interface ScannerResult {
   reversal: {
     stocks: ScannerStock[];
-    declinePercent: number;
-    declineDaysMax: number;
+    declinePercent?: number;
+    declineDaysMax?: number;
   } | null;
   continuation: {
     stocks: ScannerStock[];
+    declinePercent?: number;
+    declineDaysMax?: number;
   } | null;
 }

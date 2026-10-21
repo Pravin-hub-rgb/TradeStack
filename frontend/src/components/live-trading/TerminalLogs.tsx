@@ -2,9 +2,24 @@
 
 import { useEffect } from "react";
 import { Box, Typography } from "@mui/material";
+import type { LogLevel, LogLine } from "@/lib/logger";
+
+const LEVEL_COLOR: Record<LogLevel, string> = {
+  DEBUG: "#64748b",
+  INFO: "#94a3b8",
+  WARN: "#f59e0b",
+  ERROR: "#ef4444",
+};
+
+function infoAccent(line: LogLine): string {
+  if (line.message.includes("Starting") || line.message.includes("started")) return "#10b981";
+  if (line.message.includes("Stopping") || line.message.includes("stopped")) return "#f59e0b";
+  if (line.message.includes("Loaded") || line.message.includes("Loading")) return "#60a5fa";
+  return LEVEL_COLOR.INFO;
+}
 
 export default function TerminalLogs({ logs, running, userScrolledUp, setUserScrolledUp, logContainerRef, logEndRef }:
-  { logs: string[]; running: boolean; userScrolledUp: boolean; setUserScrolledUp: (v: boolean) => void; logContainerRef: React.RefObject<HTMLDivElement | null>; logEndRef: React.RefObject<HTMLDivElement | null> }) {
+  { logs: LogLine[]; running: boolean; userScrolledUp: boolean; setUserScrolledUp: (v: boolean) => void; logContainerRef: React.RefObject<HTMLDivElement | null>; logEndRef: React.RefObject<HTMLDivElement | null> }) {
 
   useEffect(() => {
     if (userScrolledUp) return;
@@ -32,8 +47,8 @@ export default function TerminalLogs({ logs, running, userScrolledUp, setUserScr
             }}
             sx={{ background: "#0d0d0d", borderRadius: 2, p: 2, border: "1px solid rgba(255,255,255,0.06)", height: 300, overflowY: "auto", resize: "vertical", fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace', fontSize: "0.75rem", lineHeight: 1.6, minHeight: 100, maxHeight: 800 }}>
             {logs.map((line, i) => (
-              <Box key={i} sx={{ color: line.includes("error") ? "#ef4444" : line.includes("Starting") || line.includes("started") ? "#10b981" : line.includes("Stopping") || line.includes("stopped") ? "#f59e0b" : line.includes("Loaded") || line.includes("Loading") ? "#60a5fa" : "#94a3b8", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
-                {line}
+              <Box key={i} sx={{ color: line.level === "INFO" ? infoAccent(line) : LEVEL_COLOR[line.level] ?? LEVEL_COLOR.INFO, whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                {`[${line.timestamp}] ${line.message}`}
               </Box>
             ))}
             <div ref={logEndRef} />

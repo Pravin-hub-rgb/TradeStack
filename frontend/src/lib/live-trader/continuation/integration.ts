@@ -51,14 +51,10 @@ export class ContinuationIntegration {
     if (lastTs !== undefined && timestamp.getTime() <= lastTs) return;
     this.lastTickTs.set(instrumentKey, timestamp.getTime());
 
-    if (ohlcList) {
-      this.monitor.processCandleData(instrumentKey, ohlcList);
-    }
-
     const processor = this.tickProcessors.get(instrumentKey);
     if (!processor) return;
 
-    processor.processTick(price, timestamp);
+    processor.processTick(price, timestamp, ohlcList);
     this.handlePaperTradingLogs(stock, price, timestamp);
     this.checkAndUnsubscribeAfterPositionsFilled();
   }

@@ -4,14 +4,17 @@ Entry point for the Python data microservice.
 """
 import logging
 import threading
+import time
 import uuid
 from contextlib import asynccontextmanager
 from datetime import date, datetime
 from typing import Optional
 
-from fastapi import FastAPI, BackgroundTasks, HTTPException
+from fastapi import FastAPI, BackgroundTasks, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from src.cache_manager import cache_manager
 from src.bhavcopy_updater import update_cache_for_date, fill_cache_gaps, find_cache_gaps, get_cache_dates
@@ -20,9 +23,33 @@ _MAX_LOG_ENTRIES = 500
 
 
 def _log(op: dict, message: str):
-    """Add a log entry to an operation, capping at MAX_LOG_ENTRIES to prevent unbounded memory growth."""
+    """Add a log entry to an operation, capping at _MAX_LOG_ENTRIES to prevent unbounded memory growth."""
     if len(op.get("logs", [])) < _MAX_LOG_ENTRIES:
         op.setdefault("logs", []).append(f"[{datetime.now().strftime('%H:%M:%S')}] {message}")
+
+
+def _fail_operation(operation_id: str, label: str, e: BaseException):
+    """Mark an operation as permanently failed from within a background task.
+
+    Must never itself raise: poll responses (`status: error`) are the only
+    visibility the frontend gets, so a crash inside the crash handler would
+    leave the operation stuck at "running" forever.
+    """
+    try:
+        op = active_operations.setdefault(
+            operation_id,
+            {"operation_id": operation_id, "progress": 0, "logs": []},
+        )
+        msg = f"{label}: {e.__class__.__name__}: {e}"
+        _log(op, f"Failed — {msg}")
+        op.pop("result", None)          # stale partial results must not look like success
+        op["status"] = "error"
+        op["progress"] = 100
+        op["message"] = msg
+        op["error"] = msg
+        logger.error(f"Operation {operation_id} failed ({label}): {e.__class__.__name__}: {e}")
+    except Exception:  # noqa: S110 — last-resort guard; nothing left to do but log
+        logger.exception(f"FAILED to record failure for operation {operation_id}")
 from src.nse_fetcher import get_latest_trading_date, get_nse_holidays
 from src.db import (
     get_cache_stats,
@@ -47,6 +74,35 @@ from src.volume_fetcher import volume_fetcher
 
 logger = logging.getLogger(__name__)
 
+# --- Central logging (console + data/logs/backend.log) ---
+# Level comes from settings ("log_level"); fall back to INFO if settings
+# aren't ready yet (first boot seeds settings after logging is set up).
+from src.logging_config import setup_logging
+
+try:
+    setup_logging(level=settings_get("log_level") or "INFO")
+except Exception:
+    setup_logging(level="INFO")
+
+
+class AccessLogMiddleware(BaseHTTPMiddleware):
+    """One access-log line per request + X-Process-Time response header."""
+
+    async def dispatch(self, request: Request, call_next):
+        start = time.perf_counter()
+        try:
+            response = await call_next(request)
+        except Exception:
+            logger.exception(f"Unhandled error on {request.method} {request.url.path}")
+            raise
+        duration_ms = (time.perf_counter() - start) * 1000
+        response.headers["X-Process-Time"] = f"{duration_ms:.1f}ms"
+        logger.info(
+            "access %s %s -> %d (%.1f ms)",
+            request.method, request.url.path, response.status_code, duration_ms,
+        )
+        return response
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -58,7 +114,9 @@ async def lifespan(app: FastAPI):
         logger.info(f"Cache index rebuilt: {count} entries")
     else:
         logger.info(f"Cache index has {stats['stock_count']} entries — no rebuild needed")
+    logger.info("Startup complete")
     yield
+    logger.info("Shutdown complete")
 
 
 app = FastAPI(title="TradeStack", version="0.1.0", lifespan=lifespan)
@@ -70,6 +128,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- Access logs + consistent error shape ---
+app.add_middleware(AccessLogMiddleware)
+
+
+@app.exception_handler(Exception)
+def unhandled_exception_handler(request: Request, exc: Exception):
+    """Consistent JSON error body for unhandled exceptions (frontends read `detail`)."""
+    logger.exception(f"Unhandled exception on {request.method} {request.url.path}")
+    detail = f"Internal server error: {exc.__class__.__name__}"
+    return JSONResponse(status_code=500, content={"detail": detail})
+
 
 # --- In-memory operation tracking ---
 active_operations: dict = {}
@@ -340,6 +410,76 @@ def trigger_historical_download(background_tasks: BackgroundTasks):
     }
 
     background_tasks.add_task(_run_historical_download, operation_id)
+    return {"status": "started", "operation_id": operation_id}
+
+
+@app.get("/api/data/scan-new-stocks")
+def scan_new_stocks():
+    """Download fresh NSE.json.gz, compare with cache_index, return list of new stocks."""
+    import json
+    import gzip
+    import urllib.request
+    from pathlib import Path
+
+    nse_file = Path(__file__).resolve().parent.parent / "data" / "NSE.json.gz"
+
+    # Download fresh NSE.json.gz
+    url = "https://assets.upstox.com/market-quote/instruments/exchange/NSE.json.gz"
+    _log_msg = f"Downloading fresh instrument list from Upstox..."
+    try:
+        urllib.request.urlretrieve(url, str(nse_file))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to download NSE.json.gz: {e}")
+
+    # Parse the downloaded file
+    with gzip.open(str(nse_file), "rt", encoding="utf-8") as f:
+        data = json.load(f)
+
+    # Filter to NSE_EQ EQ instruments
+    eq_instruments = [d for d in data if d.get("segment") == "NSE_EQ" and d.get("instrument_type") == "EQ"]
+    all_symbols = {d["trading_symbol"] for d in eq_instruments}
+
+    # Get cached symbols
+    cached_symbols = set(cache_manager.list_symbols())
+
+    # Find new stocks
+    new_symbols = sorted(all_symbols - cached_symbols)
+
+    return {
+        "total_nse": len(all_symbols),
+        "cached": len(cached_symbols),
+        "new_count": len(new_symbols),
+        "new_symbols": new_symbols,
+    }
+
+
+class SyncNewStocksRequest(BaseModel):
+    symbols: list[str]
+
+
+@app.post("/api/data/sync-new-stocks")
+def trigger_sync_new_stocks(background_tasks: BackgroundTasks, request: SyncNewStocksRequest):
+    """Download 180-day history for specific new stocks. Returns operation_id for progress polling."""
+    if not request.symbols:
+        raise HTTPException(status_code=400, detail="No symbols provided")
+
+    token = token_status()
+    if not token["exists"]:
+        return {"status": "error", "message": "No Upstox token configured. Please update your token first."}
+
+    operation_id = f"sync_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+
+    active_operations[operation_id] = {
+        "operation_id": operation_id,
+        "type": "sync_new_stocks",
+        "status": "starting",
+        "progress": 0,
+        "message": f"Downloading data for {len(request.symbols)} new stock(s)...",
+        "logs": [f"[{datetime.now().strftime('%H:%M:%S')}] Starting download for {len(request.symbols)} new stock(s)..."],
+        "symbols": request.symbols,
+    }
+
+    background_tasks.add_task(_run_sync_new_stocks, operation_id, request.symbols)
     return {"status": "started", "operation_id": operation_id}
 
 
@@ -669,6 +809,17 @@ def trigger_breadth_update():
     return {"status": "started", "operation_id": operation_id}
 
 
+@app.get("/api/breadth/bias")
+def get_breadth_bias():
+    """Compute trading bias from latest breadth data."""
+    try:
+        from src.breadth_bias import compute_daily_bias
+        return compute_daily_bias()
+    except Exception as e:
+        logger.error(f"Failed to compute breadth bias: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # --- Pre-market Preparation API (IEP + VAH) ---
 
 
@@ -869,8 +1020,7 @@ def _run_bhavcopy_update(operation_id: str, target_date: date):
                 result=result,
             )
     except Exception as e:
-        logger.error(f"Bhavcopy update failed: {e}")
-        active_operations[operation_id].update(status="error", message=str(e), error=str(e))
+        _fail_operation(operation_id, "bhavcopy update", e)
 
 
 def _run_fill_gaps(operation_id: str):
@@ -921,8 +1071,7 @@ def _run_fill_gaps(operation_id: str):
             },
         )
     except Exception as e:
-        logger.error(f"Gap fill failed: {e}")
-        active_operations[operation_id].update(status="error", message=str(e), error=str(e))
+        _fail_operation(operation_id, "gap fill", e)
 
 
 def _run_historical_download(operation_id: str):
@@ -961,8 +1110,62 @@ def _run_historical_download(operation_id: str):
             index_rebuilt=idx_count,
         )
     except Exception as e:
-        logger.error(f"Historical download failed: {e}")
-        active_operations[operation_id].update(status="error", message=str(e), error=str(e))
+        _fail_operation(operation_id, "historical download", e)
+
+
+def _run_sync_new_stocks(operation_id: str, symbols: list[str]):
+    """Download 180-day history for a specific list of new stocks."""
+    try:
+        from src.upstox_config import get_token
+        from src.upstox_fetcher import fetch_historical_data, get_instrument_key
+
+        token = get_token()
+        if not token:
+            active_operations[operation_id].update(status="error", message="No token available")
+            return
+
+        op = active_operations[operation_id]
+        op["status"] = "running"
+
+        download_days = int(settings_get("historical_download_days") or 180)
+        total = len(symbols)
+        updated = 0
+        failed = 0
+
+        for i, sym in enumerate(symbols):
+            pct = round((i / total) * 100, 1)
+            op["progress"] = pct
+            op["message"] = f"Downloading {sym} ({i + 1}/{total})..."
+            _log(op, f"[{i + 1}/{total}] Downloading {sym}...")
+
+            try:
+                df = fetch_historical_data(sym, token, days=download_days)
+                if df is not None and not df.empty:
+                    cache_manager.update(sym, df)
+                    _log(op, f"  Updated cache for {sym}: {len(df)} rows")
+                    updated += 1
+                else:
+                    _log(op, f"  No data returned for {sym}")
+                    failed += 1
+            except Exception as e:
+                _log(op, f"  Failed {sym}: {e}")
+                failed += 1
+
+        _log(op, "Rebuilding SQLite cache index...")
+        op["message"] = "Rebuilding cache index..."
+        idx_count = cache_manager.rebuild_index()
+        _log(op, f"Cache index rebuilt: {idx_count} entries")
+
+        _log(op, f"Done — {updated} updated, {failed} failed out of {total}")
+        op.update(
+            status="completed",
+            progress=100,
+            message=f"Done — {updated} updated, {failed} failed out of {total}",
+            result={"updated": updated, "failed": failed, "total": total},
+            index_rebuilt=idx_count,
+        )
+    except Exception as e:
+        _fail_operation(operation_id, "sync new stocks", e)
 
 
 def _run_continuation_scan(operation_id: str, params: dict, scan_date=None):
@@ -984,8 +1187,7 @@ def _run_continuation_scan(operation_id: str, params: dict, scan_date=None):
             result={"count": len(results), "results": results},
         )
     except Exception as e:
-        logger.error(f"Continuation scan failed: {e}")
-        active_operations[operation_id].update(status="error", message=str(e), error=str(e))
+        _fail_operation(operation_id, "continuation scan", e)
 
 
 def _run_reversal_scan(operation_id: str, params: dict, scan_date=None):
@@ -1007,8 +1209,7 @@ def _run_reversal_scan(operation_id: str, params: dict, scan_date=None):
             result={"count": len(results), "results": results},
         )
     except Exception as e:
-        logger.error(f"Reversal scan failed: {e}")
-        active_operations[operation_id].update(status="error", message=str(e), error=str(e))
+        _fail_operation(operation_id, "reversal scan", e)
 
 
 def _run_breadth_update(operation_id: str):
@@ -1029,13 +1230,11 @@ def _run_breadth_update(operation_id: str):
             result={"data": results, "total_dates": len(results), "last_updated": datetime.now().isoformat()},
         )
     except Exception as e:
-        logger.error(f"Breadth update failed: {e}")
-        active_operations[operation_id].update(status="error", message=str(e), error=str(e))
+        _fail_operation(operation_id, "breadth update", e)
 
 
 # --- Entry point ---
 
 if __name__ == "__main__":
     import uvicorn
-    logging.basicConfig(level=logging.INFO)
     uvicorn.run("server:app", host="127.0.0.1", port=8001, reload=False)

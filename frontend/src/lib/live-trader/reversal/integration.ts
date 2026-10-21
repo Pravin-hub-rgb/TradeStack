@@ -55,7 +55,7 @@ export class ReversalIntegration {
     const processor = this.tickProcessors.get(instrumentKey);
     if (!processor) return;
 
-    processor.processTick(price, timestamp);
+    processor.processTick(price, timestamp, ohlcList);
     this.handlePaperTradingLogs(stock, price, timestamp);
     this.checkAndUnsubscribeAfterPositionsFilled();
   }

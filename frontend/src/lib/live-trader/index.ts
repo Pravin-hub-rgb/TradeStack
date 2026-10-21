@@ -1,16 +1,17 @@
 import { UpstoxStreamer } from "./streamer";
 import { LiveTraderConfig, ScannerResult, ScannerStock, ReversalSituation, StockStateEnum } from "./types";
 
-import { ReversalStockMonitor } from "./reversal/stock-monitor";
+import { ReversalStockMonitor, ReversalStockState } from "./reversal/stock-monitor";
 import { ReversalIntegration } from "./reversal/integration";
 
-import { StockMonitor as ContinuationStockMonitor } from "./continuation/stock-monitor";
+import { StockMonitor as ContinuationStockMonitor, ContinuationStockState } from "./continuation/stock-monitor";
 import { ContinuationIntegration } from "./continuation/integration";
 
 import { PaperTrader } from "./paper-trader";
 import { sleepUntilIST, PY_API } from "./task-utils";
 import { runPreMarketFlow, PreMarketParams } from "./pre-market-flow";
 import { loadStocksFromScanner } from "./stocks-loader";
+import type { LogLevel } from "@/lib/logger";
 
 export type BotMode = "reversal" | "continuation";
 
@@ -35,9 +36,9 @@ export class LiveTraderOrchestrator {
 
   constructor(mode: BotMode) { this.mode = mode; }
 
-  private log(msg: string) {
+  private log(msg: string, level: LogLevel = "INFO") {
     console.log(`[ORCHESTRATOR] ${msg}`);
-    (globalThis as any).__addLiveLog?.(msg);
+    globalThis.__addLiveLog?.(msg, level);
   }
 
   async initialize(
@@ -76,7 +77,7 @@ export class LiveTraderOrchestrator {
         const params = {
           flatGapThreshold: this.config.flatGapThreshold ?? 0.003,
           entrySlPct: this.config.entrySlPct ?? 0.04, lowViolationPct: this.config.lowViolationPct ?? 0.01,
-          trailingSlThreshold: this.config.trailingSlThreshold ?? 0.05, gapUpMaxPct: this.config.gapUpMaxPct ?? 0.05,
+          gapUpMaxPct: this.config.gapUpMaxPct ?? 0.05,
           entryTime: this.config.entryTime,
         };
         for (const s of stocks) {
@@ -86,6 +87,7 @@ export class LiveTraderOrchestrator {
         }
       }
       this.reversalIntegration = new ReversalIntegration(this.streamer, this.reversalMonitor, this.paperTrader, this.config?.maxPositions);
+      this.reversalMonitor.marketOpenTime = this.config.marketOpenTime;
     }
 
     if (this.mode === "continuation") {
@@ -93,7 +95,7 @@ export class LiveTraderOrchestrator {
       if (stocks) {
         const params = {
           flatGapThreshold: this.config.flatGapThreshold ?? 0.003, entrySlPct: this.config.entrySlPct ?? 0.04,
-          lowViolationPct: this.config.lowViolationPct ?? 0.01, trailingSlThreshold: this.config.trailingSlThreshold ?? 0.05,
+          lowViolationPct: this.config.lowViolationPct ?? 0.01,
           gapUpMaxPct: this.config.gapUpMaxPct ?? 0.05, entryTime: this.config.entryTime,
         };
         for (const s of stocks) {
@@ -133,7 +135,7 @@ export class LiveTraderOrchestrator {
     this.streamer.onClose = () => this.log("Streamer disconnected");
 
     if (!this.preMarketComplete) {
-      const stocks: any[] = [];
+      const stocks: (ReversalStockState | ContinuationStockState)[] = [];
       if (this.mode === "continuation") for (const [, s] of this.continuationMonitor?.stocks ?? new Map()) stocks.push(s);
       if (this.mode === "reversal") for (const [, s] of this.reversalMonitor?.stocks ?? new Map()) stocks.push(s);
       if (stocks.length > 0) {
@@ -143,7 +145,12 @@ export class LiveTraderOrchestrator {
           const result = await runPreMarketFlow(pmParams, stocks, (msg) => this.log(msg));
           this.validatedInstrumentKeys = result.validatedKeys;
           this.preMarketComplete = true;
-        } catch (e: any) { this.log(`Pre-market flow failed: ${e.message}`); this.running = false; return; }
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          this.log(`Pre-market flow failed: ${msg}`, "WARN");
+          this.running = false;
+          return;
+        }
       }
     }
 
@@ -166,7 +173,7 @@ export class LiveTraderOrchestrator {
 
     this.streamer.updateActiveInstruments(activeSubKeys);
     const connected = await this.streamer.connect();
-    if (!connected) { this.log("FAILED to connect data stream"); this.running = false; return; }
+    if (!connected) { this.log("FAILED to connect data stream", "ERROR"); this.running = false; return; }
     this.streamer.subscribe();
 
     const minRatio = this.config.svroMinVolumeRatio ?? 0.075;
@@ -179,15 +186,28 @@ export class LiveTraderOrchestrator {
       this.log("Making OOPS stocks ready for immediate trading...");
       for (const [, stock] of this.reversalMonitor?.stocks ?? new Map())
         if (stock.isActive && stock.gapValidated && stock.situation === "reversal_s2") { stock.entryReady = true; this.log(`${stock.symbol} (OOPS): Ready`); }
+      // Freeze 5-min ORB from I1 OHLC (auto via streamer like option-trading-bot)
+      // No manual timer — aggregator commits 09:19 bar at 09:20:00.150 via feedTime
+      // Give 300ms for final OHLC packet after ENTRY_TIME boundary
+      await new Promise((r) => setTimeout(r, 350));
+      this.reversalMonitor?.freezeOrb();
       this.reversalMonitor?.prepareEntries();
       for (const [, s] of this.reversalMonitor?.stocks ?? new Map()) {
         if (s.state === StockStateEnum.REJECTED && s.rejectionReason) {
           this.log(`${s.symbol}: Rejected during preparation - ${s.rejectionReason}`);
         }
       }
+      for (const [, s] of this.reversalMonitor?.stocks ?? new Map()) {
+        if (s.state === StockStateEnum.WAITING_FOR_ENTRY && s.situation === "reversal_s1") {
+          this.log(`${s.symbol}: ORB frozen orbHigh=${s.orbHigh?.toFixed(2) ?? "N/A"} orbLow=${s.orbLow?.toFixed(2) ?? "N/A"} firstOpen=${s.firstCandleOpen?.toFixed(2) ?? "N/A"} dailyHigh=${s.dailyHigh.toFixed(2)} entryHigh=${s.entryHigh?.toFixed(2) ?? "N/A"}`);
+        }
+      }
     }
 
     if (this.mode === "continuation") {
+      // Freeze 5-min ORB from I1 OHLC (simple tracker, 350ms for final I1 packet)
+      await new Promise((r) => setTimeout(r, 350));
+      this.continuationMonitor?.freezeOrb();
       this.log("Phase 2: checking low violations, volume...");
       this.continuationMonitor?.checkViolations();
 

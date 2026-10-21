@@ -1,17 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import type { ScanResult, ReversalResult } from "@/lib/types";
 
-interface ScanResult {
-  symbol: string; close: number; sma20?: number; dist_to_ma_pct?: number;
-  phase1_high?: number; phase2_low?: number; depth_pct?: number; adr_pct: number;
-}
-
-interface ReversalResult {
-  symbol: string; close: number; period: number; green_days: number;
-  first_red_date: string; decline_percent: number;
-  trend_context: string; adr_pct: number;
-}
+// Re-exported for existing consumers (import defs from "@/lib/types" in new code)
+export type { ScanResult, ReversalResult } from "@/lib/types";
 
 export interface ScanProgress {
   scanning: boolean;
@@ -20,9 +13,12 @@ export interface ScanProgress {
   operationId: string | null;
 }
 
+export type TradingMode = "continuation" | "reversal";
+
 interface AppState {
   activeScannerTab: string;
   activeLiveTradingTab: string;
+  tradingMode: TradingMode;
   continuationResults: ScanResult[];
   reversalResults: ReversalResult[];
   contScanProgress: ScanProgress;
@@ -35,6 +31,7 @@ interface AppState {
 }
 
 const NAV_KEY = "tradestack-navigation";
+const TRADING_MODE_KEY = "tradestack-trading-mode";
 const RESULT_KEY = "tradestack-scan-results";
 const REV_RESULT_KEY = "tradestack-rev-results";
 const CONT_PROGRESS_KEY = "tradestack-cont-progress";
@@ -66,6 +63,7 @@ interface AppStateContextValue {
   state: AppState;
   setActiveScannerTab: (tab: string) => void;
   setActiveLiveTradingTab: (tab: string) => void;
+  setTradingMode: (mode: TradingMode) => void;
   setContinuationResults: (results: ScanResult[]) => void;
   setReversalResults: (results: ReversalResult[]) => void;
   setContScanProgress: (p: ScanProgress) => void;
@@ -83,6 +81,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>({
     activeScannerTab: "cache",
     activeLiveTradingTab: "token",
+    tradingMode: "continuation",
     continuationResults: [],
     reversalResults: [],
     contScanProgress: { ...defaultScanProgress },
@@ -96,6 +95,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const nav = loadFromStorage<{ activeScannerTab?: string; activeLiveTradingTab?: string }>(NAV_KEY, {});
+    const tm = loadFromStorage<TradingMode>(TRADING_MODE_KEY, "continuation");
     const cr = loadFromStorage<ScanResult[]>(RESULT_KEY, []);
     const rr = loadFromStorage<ReversalResult[]>(REV_RESULT_KEY, []);
     const cp = loadFromStorage<ScanProgress>(CONT_PROGRESS_KEY, { ...defaultScanProgress });
@@ -106,6 +106,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
     setState({
       activeScannerTab: nav.activeScannerTab || "cache",
       activeLiveTradingTab: nav.activeLiveTradingTab || "token",
+      tradingMode: tm,
       continuationResults: cr,
       reversalResults: rr,
       contScanProgress: cp.scanning ? cp : { ...defaultScanProgress },
@@ -124,6 +125,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
       activeLiveTradingTab: state.activeLiveTradingTab,
     });
   }, [state.activeScannerTab, state.activeLiveTradingTab]);
+
+  useEffect(() => {
+    saveToStorage(TRADING_MODE_KEY, state.tradingMode);
+  }, [state.tradingMode]);
 
   useEffect(() => {
     saveToStorage(RESULT_KEY, state.continuationResults);
@@ -159,6 +164,10 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
 
   const setActiveLiveTradingTab = useCallback((tab: string) => {
     setState(prev => ({ ...prev, activeLiveTradingTab: tab }));
+  }, []);
+
+  const setTradingMode = useCallback((mode: TradingMode) => {
+    setState(prev => ({ ...prev, tradingMode: mode }));
   }, []);
 
   const setContinuationResults = useCallback((results: ScanResult[]) => {
@@ -198,7 +207,7 @@ export function AppStateProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AppStateContext.Provider value={{ state, setActiveScannerTab, setActiveLiveTradingTab, setContinuationResults, setReversalResults, setContScanProgress, setRevScanProgress, setContinuationViewMode, setReversalViewMode, setValidationResult, setIsValidating, setValidationStatus }}>
+    <AppStateContext.Provider value={{ state, setActiveScannerTab, setActiveLiveTradingTab, setTradingMode, setContinuationResults, setReversalResults, setContScanProgress, setRevScanProgress, setContinuationViewMode, setReversalViewMode, setValidationResult, setIsValidating, setValidationStatus }}>
       {children}
     </AppStateContext.Provider>
   );

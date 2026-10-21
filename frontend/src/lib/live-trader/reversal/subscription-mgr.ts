@@ -17,8 +17,9 @@ export class SubscriptionManager {
     console.log(`[${reason}] Unsubscribing: ${names}`);
     try {
       this.streamer.unsubscribe(keys);
-    } catch (e: any) {
-      console.warn(`[UNSUBSCRIBE] Failed: ${names} (${reason}): ${e.message}`);
+    } catch (e) {
+      const err = e as Error;
+      console.warn(`[UNSUBSCRIBE] Failed: ${names} (${reason}): ${err.message}`);
     }
   }
 

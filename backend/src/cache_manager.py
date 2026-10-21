@@ -113,6 +113,10 @@ class CacheManager:
             return True
         return (date.today() - last_date).days >= max_age_days
 
+    def update(self, symbol: str, new_data: pd.DataFrame, commit: bool = True):
+        """Merge new_data into existing cache for symbol. Simple wrapper around update_with_data."""
+        self.update_with_data(symbol, new_data, commit=commit)
+
     def update_with_data(self, symbol: str, new_data: pd.DataFrame, existing: Optional[pd.DataFrame] = None, commit: bool = True):
         """Like update() but accepts pre-loaded existing data to avoid double load."""
         if existing is None:
@@ -147,7 +151,7 @@ class CacheManager:
         latest_date = self.get_latest_cache_date()
         return {
             "stock_count": len(files),
-            "total_size_mb": round(total_size / (1024 * 1024), 2),
+            "total_size_mb": total_size / (1024 * 1024),
             "latest_date": latest_date.isoformat() if latest_date else None,
         }
 
