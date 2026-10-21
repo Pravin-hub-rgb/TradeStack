@@ -135,13 +135,36 @@ This keeps each commit self-consistent and buildable.
 | `bun run build` | ✅ compiled in 3.5s, 11 static pages generated |
 | backend `import server` | ✅ 52 routes, bias + scan-new endpoints present |
 
-### Phase 2 — Tight TypeScript types
-- [ ] Create `frontend/src/lib/types.ts` (single source of truth for Python payloads)
-- [ ] Move `ScanResult` / `ReversalResult` out of `AppStateContext.tsx` into `types.ts`
-- [ ] Type `loadConfigFromPython` in `app/api/live/route.ts`
-- [ ] Kill `any` in scanners, `StockList`, `CacheData`, `ScannerSplitPane`, `LiveTrading`, `paper-trader.ts`
-- [ ] **ORB fields promoted to typed base classes** — `orbHigh` / `orbLow` / `firstCandleOpen` / `orbFrozen` move into a shared base; remove the ~12 `as any` casts
-- [ ] Fix `_firstTs` undeclared in reversal state (early-update branch currently dead)
+### Phase 2 — Tight TypeScript types (DONE 21 Oct 2026)
+- [x] Create `frontend/src/lib/types.ts` (single source of truth for Python payloads) — `ScanResult`, `ReversalResult`, `ScanRowPayload` (raw/nullable), `ScanStatusPayload`, `StockListItem`, `StockListResponse`, `CandleData`, `CacheInfo`, `OperationStatus` (+`logs?`), `OperationStatusResult`, `SettingsListResponse`
+- [x] Move `ScanResult` / `ReversalResult` out of `AppStateContext.tsx` into `types.ts` — AppStateContext imports + re-exports for existing consumers
+- [x] Type `loadConfigFromPython` in `app/api/live/route.ts` — settings array typed via `SettingsListResponse`; `StartBody` interface; the `load` action's `JSON.parse(JSON.stringify(...))` + `as any` replaced by an explicit `ScanRowLike`→`ScannerStock` mapping (`Number()`/`String()` coercions); `ScannerResult.declinePercent`/`declineDaysMax` made optional (loader never reads them)
+- [x] Kill `any` in scanners, `StockList`, `CacheData`, `ScannerSplitPane`, `LiveTrading`, `paper-trader.ts` — scanner rows built explicitly from `ScanRowPayload` (no more `...r` spread of unknown), `catch` blocks typed, `chartCacheRef`/sort keys typed (`keyof ScanResult`), `rawStocks` as `StockListItem[]`, `stocks` as typed `ScannerStock[]`
+- [x] **ORB fields promoted to typed base classes** — new `frontend/src/lib/live-trader/orb-base.ts` (`OrbFields`: `orbHigh` / `orbLow` / `firstCandleOpen` / `orbFrozen` / `protected _firstTs`); reversal `StateMachineMixin` and continuation `ContinuationStateMachine` both `extends OrbFields` (with `super()`); all ~12 `as any` casts removed; subclass duplicate field declarations deleted (reversal `StockMonitor` kept inheritance-clean, continuation monitor accesses `this._orbStartMinute` via `protected`)
+- [x] Fix `_firstTs` undeclared in reversal state (early-update branch currently dead) — now declared in `OrbFields` and updated on both branches: `this._firstTs = Math.min(this._firstTs, earliestTs)` (reversal) + guarded update (continuation)
+- Extra: `CandleAggregator.getStartMinute()` public getter replaces `(aggregator as any).startMinute`; `globals.d.ts` declares `__addLiveLog` (used by `index.ts`, `route.ts`, `paper-trader.ts`, `lock.ts`, `streamer.ts`); `pre-market-flow.ts` input loosened to a structural `{ symbol; instrumentKey?; previousClose }` param instead of `ScannerStock`; `lock.ts`/`streamer.ts`/`subscription-mgr.ts` `catch (err: any)` → typed casts
+- Remaining (approved SDK seams, Phase 4a follow-up): `streamer.ts` `sdkStreamer: any` / `feeder: any` / `(error: any)` callback, `upstox-sdk.d.ts` internals
+
+**Phase 2 evidence (21 Oct 2026):**
+
+| Check | Result |
+|-------|--------|
+| ORB regression tests (written BEFORE refactor) | ✅ **25/25 pass** (`frontend/tests/live-trader/{continuation,reversal}-orb.test.ts`, commit `5bc5162`) |
+| Same tests AFTER the refactor | ✅ 25/25 pass (no behaviour change) |
+| `tsc --noEmit` | ✅ clean |
+| `eslint src` | ✅ **51 problems (30 errors, 21 warnings)** vs baseline 126 (105, 21) — delta −75 |
+| `bun run build` | ✅ compiled in 4.2s |
+| backend `import server` | ✅ OK (52 routes) |
+| `as any` / `: any` left in touched zones | ✅ only approved SDK seams listed above |
+| Commits | `5bc5162` (tests first), `cbd2121` (refactor, 27 files +411/−214) |
+
+### Phase 4b — Frontend tests (Vitest) — partial (21 Oct 2026)
+- [x] Add `vitest` + config to `frontend/` — vitest 5.0.5 (`bun add -d vitest`), `vitest.config.ts` (include `tests/**/*.test.ts`, node env), `"test": "vitest run"` script, run: `node node_modules\vitest\vitest.mjs run` from `frontend/`
+- [x] ORB regression tests **written before** the Phase 2/3 refactors — commit `5bc5162` preceded `cbd2121`
+- [x] Continuation + reversal state-machine tests (entry gates, SL exits, transitions) — 12 continuation + 13 reversal tests: gap gates + direction override, ORB tracking via aggregator (out-of-order OK), low-violation gate, `freezeOrb()` freezing entryHigh, post-freeze no-ratchet, strict `>` breakout, feed-time/ENTRY_TIME gating, SL exit pnl, OOPS `>=` previousClose entry, priority selection
+- [ ] Paper-trader P&L / risk-based sizing tests
+- [ ] IST utils tests (`secondsUntilIST`, `sleepUntilIST`)
+- [ ] `api.ts` helper error-handling tests
 
 ### Phase 3 — De-duplicate scanners + shared UI
 - [ ] Extract `useToastStack` (duplicated 5×)
@@ -211,6 +234,8 @@ This keeps each commit self-consistent and buildable.
 | 20 Oct 2026 | Audit | Repo, history, working tree, deps audited. 21 modified + 4 untracked files mapped to 4 commits. |
 | 20 Oct 2026 | Baseline | `tsc` clean (after stale `.next` cleanup). `eslint` = 126 problems. Backend imports, 52 routes. 14 hardcoded URLs (not 47). |
 | 21 Oct 2026 | Phase 1 | Finished central API client + migrated all 13 remaining files, `.env.example` added. Deleted 25 bot scratch temp files from root; user notes moved to `docs/stock-vs-nifty/` + `docs/NSE_instrument_pipeline_notes_20Oct26.md`. Gates: grep-only-api.ts, tsc clean, eslint 126 = baseline, bun build ✅, backend import ✅. |
+| 21 Oct 2026 | Phase 4b (partial) | vitest 5.0.5 installed; `frontend/vitest.config.ts` + `test` script; **25 ORB regression tests across 2 suites written and green BEFORE any refactor** (fixture lesson: pre-entry `checkLowViolation()` must run in the test sequence like production ENTRY_TIME does, or post-entry ticks trip the rejection path). Commit `5bc5162`. |
+| 21 Oct 2026 | Phase 2 | Typed base class `OrbFields` (`orb-base.ts`), both state machines extend it, ~12 `as any` casts removed, `_firstTs` fixed in `OrbFields`, `lib/types.ts` created, `loadConfigFromPython` + `load` action fully typed (explicit `ScanRowLike`→`ScannerStock` mapping, `ScannerResult` optional fields), UI `any` kills in 6 components, `globals.d.ts` for `__addLiveLog`, 6 catch blocks typed. Gates: tsc ✅, eslint **51** (vs 126 baseline), vitest 25/25 ✅ post-refactor, build ✅ 4.2s, backend import ✅. Commit `cbd2121`. |
 
 - [ ] Remove `test_write.txt` (stray scratch file at repo root)
 - [ ] Wire or remove unused config `trailingSlThreshold`
