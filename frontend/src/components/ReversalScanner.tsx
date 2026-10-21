@@ -22,8 +22,9 @@ import { saveSetting } from "@/lib/settingsSync";
 import CandleProgress from "./CandleProgress";
 import ScannerSplitPane from "./scanner/ScannerSplitPane";
 import ToastNotification from "./ToastNotification";
+import { PY_API } from "@/lib/api";
 
-const API = "http://127.0.0.1:8001";
+const API = PY_API;
 
 const loadFilter = (key: string, def: number) => {
   if (typeof window === "undefined") return def;

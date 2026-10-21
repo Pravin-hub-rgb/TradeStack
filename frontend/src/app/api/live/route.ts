@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { LiveTraderOrchestrator, BotMode } from "@/lib/live-trader/index";
 import type { LiveTraderConfig } from "@/lib/live-trader/types";
 import { broadcast } from "./events/route";
-
-const PY_API = "http://127.0.0.1:8001";
+import { SERVER_PY_API as PY_API } from "@/lib/api";
 
 let reversalOrchestrator: LiveTraderOrchestrator | null = null;
 let continuationOrchestrator: LiveTraderOrchestrator | null = null;

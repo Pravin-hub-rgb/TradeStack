@@ -12,7 +12,9 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
-const API = "http://127.0.0.1:8001";
+import { PY_API } from "@/lib/api";
+
+const API = PY_API;
 
 const CATEGORIES: Record<string, string> = {
   trading_schedule: "Trading Schedule",

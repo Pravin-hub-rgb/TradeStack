@@ -8,8 +8,9 @@ import {
 } from "@mui/material";
 import { Refresh as RefreshIcon } from "@mui/icons-material";
 import CandleProgress from "./CandleProgress";
+import { PY_API } from "@/lib/api";
 
-const API = "http://127.0.0.1:8001";
+const API = PY_API;
 
 interface BreadthResult {
   date: string;

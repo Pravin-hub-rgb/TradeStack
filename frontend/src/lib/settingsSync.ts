@@ -1,4 +1,4 @@
-const API = "http://127.0.0.1:8001";
+import { PY_API } from "@/lib/api";
 
 const _timers: Record<string, ReturnType<typeof setTimeout>> = {};
 
@@ -10,7 +10,7 @@ const _timers: Record<string, ReturnType<typeof setTimeout>> = {};
 export function saveSetting(key: string, value: string): void {
   if (_timers[key]) clearTimeout(_timers[key]);
   _timers[key] = setTimeout(() => {
-    fetch(`${API}/api/settings/${key}`, {
+    fetch(`${PY_API}/api/settings/${key}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ value }),

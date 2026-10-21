@@ -6,8 +6,9 @@ import {
 } from "@mui/material";
 import { Add as AddIcon, Close as CloseIcon } from "@mui/icons-material";
 import StockChart from "./StockChart";
+import { PY_API } from "@/lib/api";
 
-const API = "http://127.0.0.1:8001";
+const API = PY_API;
 
 interface ContStats {
   symbol: string; close: number; sma20?: number; dist_to_ma_pct?: number;

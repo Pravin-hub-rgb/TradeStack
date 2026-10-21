@@ -8,6 +8,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import SettingsIcon from "@mui/icons-material/Settings";
 import HomeIcon from "@mui/icons-material/Home";
+import { PY_API } from "@/lib/api";
 
 const navItems = [
   { path: "/", label: "Home", icon: <HomeIcon sx={{ fontSize: 18 }} /> },
@@ -25,7 +26,7 @@ const Navbar: React.FC = () => {
   useEffect(() => {
     const check = async () => {
       try {
-        const res = await fetch("http://127.0.0.1:8001/health");
+        const res = await fetch(`${PY_API}/health`);
         const data = await res.json();
         setServerHealthy(data.status === "healthy");
       } catch {

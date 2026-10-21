@@ -12,8 +12,9 @@ import {
 } from "@mui/icons-material";
 import StockChart from "./scanner/StockChart";
 import ToastNotification from "./ToastNotification";
+import { PY_API } from "@/lib/api";
 
-const API = "http://127.0.0.1:8001";
+const API = PY_API;
 
 interface StockItem {
   id: number; list_type: string; symbol: string; close: number | null;

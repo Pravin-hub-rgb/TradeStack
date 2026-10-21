@@ -2,7 +2,7 @@
 
 import { Chip, Box, Typography } from "@mui/material";
 
-export const PY_API = "http://127.0.0.1:8001";
+export { PY_API } from "@/lib/api";
 export const POLL_INTERVAL = 2000;
 
 export type TradingMode = "continuation" | "reversal";

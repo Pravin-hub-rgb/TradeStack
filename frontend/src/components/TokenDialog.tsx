@@ -21,8 +21,9 @@ import {
   Key as KeyIcon,
   CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
+import { PY_API } from "@/lib/api";
 
-const API = "http://127.0.0.1:8001";
+const API = PY_API;
 
 interface TokenDialogProps {
   open: boolean;

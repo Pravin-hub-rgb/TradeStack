@@ -1,6 +1,5 @@
 import { StockInfo, Trade, SessionStats } from "./types";
-
-const PY_API = "http://127.0.0.1:8001";
+import { PY_API } from "@/lib/api";
 
 export interface TradableStock {
   instrumentKey: string;
