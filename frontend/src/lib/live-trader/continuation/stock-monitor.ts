@@ -53,7 +53,7 @@ export class ContinuationStockState extends ContinuationStateMachine {
       const tsDate = new Date(ts);
       if (isNaN(tsDate.getTime())) continue;
       // Only consider candles at/after ORB start (09:15) if set
-      const start = (this as any)._orbStartMinute as Date | null;
+      const start = this._orbStartMinute;
       const inWindow = !start || tsDate >= start;
       if (c.high > 0) {
         this.dailyHigh = Math.max(this.dailyHigh, c.high);
@@ -68,16 +68,15 @@ export class ContinuationStockState extends ContinuationStateMachine {
         earliest = c;
       }
     }
-    if (earliest && (this as any)._firstTs === undefined) (this as any)._firstTs = Infinity;
     if (earliest && this.firstCandleOpen === null) {
       this.firstCandleOpen = earliest.open;
-      (this as any)._firstTs = earliestTs;
-    } else if (earliest && earliestTs < (this as any)._firstTs) {
+      this._firstTs = earliestTs;
+    } else if (earliest && earliestTs < this._firstTs) {
       this.firstCandleOpen = earliest.open;
-      (this as any)._firstTs = earliestTs;
+      this._firstTs = earliestTs;
     }
     if (earliestTs !== Infinity) {
-      (this as any)._firstTs = Math.min((this as any)._firstTs as number, earliestTs);
+      this._firstTs = Math.min(this._firstTs, earliestTs);
     }
   }
 
@@ -158,7 +157,7 @@ export class StockMonitor {
 
   freezeOrb(): void {
     for (const stock of this.stocks.values()) {
-      if (stock.isActive && (stock as any).orbHigh !== null) {
+      if (stock.isActive && stock.orbHigh !== null) {
         stock.freezeOrb();
         console.log(`[ORB] ${stock.symbol} frozen orbHigh=${stock.orbHigh?.toFixed(2) ?? "N/A"} orbLow=${stock.orbLow?.toFixed(2) ?? "N/A"} firstOpen=${stock.firstCandleOpen?.toFixed(2) ?? "N/A"} dailyHigh=${stock.dailyHigh.toFixed(2)} dailyLow=${stock.dailyLow.toFixed(2)}`);
       }

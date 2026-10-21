@@ -12,6 +12,7 @@
 import { describe, expect, it } from "vitest";
 import { StockStateEnum } from "../../src/lib/live-trader/types";
 import { OHLCData } from "../../src/lib/live-trader/types";
+import type { ReversalSituation } from "../../src/lib/live-trader/types";
 import {
   ReversalStockState,
   ReversalStockMonitor,
@@ -40,7 +41,7 @@ const candle = (
   close: number,
 ): OHLCData => ({ interval: "I1", open, high, low, close, vol: 1000, ts });
 
-const makeStock = (situation = "reversal_s1", prevClose = 100, declineDays = 0): ReversalStockState =>
+const makeStock = (situation: ReversalSituation = "reversal_s1", prevClose = 100, declineDays = 0): ReversalStockState =>
   new ReversalStockState("TEST", "NSE_EQ|TEST", prevClose, situation, PARAMS, declineDays);
 
 describe("reversal gap gates (direction override)", () => {

@@ -13,19 +13,9 @@ import {
 import StockChart from "./scanner/StockChart";
 import ToastNotification from "./ToastNotification";
 import { PY_API } from "@/lib/api";
+import type { StockListItem as StockItem, CandleData } from "@/lib/types";
 
 const API = PY_API;
-
-interface StockItem {
-  id: number; list_type: string; symbol: string; close: number | null;
-  trend_context: string | null; period: number | null;
-  depth_pct: number | null; added_at: string;
-}
-
-interface CandleData {
-  candles: { date: string; open: number; high: number; low: number; close: number; volume: number }[];
-  sma: { date: string; value: number }[];
-}
 
 type ListType = "continuation" | "reversal";
 

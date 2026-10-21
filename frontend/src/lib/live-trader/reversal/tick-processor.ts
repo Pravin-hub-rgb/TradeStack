@@ -61,7 +61,7 @@ export class ReversalTickProcessor {
 
     // EntryHigh ratchet disabled once orbFrozen (5-min ORB frozen at ENTRY_TIME)
     if (this.stock.situation === "reversal_s1" && this.stock.openPrice !== null) {
-      if ((this.stock as any).orbFrozen) return;
+      if (this.stock.orbFrozen) return;
       const newHigh = this.stock.orbHigh ?? this.stock.dailyHigh;
       const newSl = newHigh * (1 - this.stock.params.entrySlPct);
       if (this.stock.entryHigh === null || newHigh > this.stock.entryHigh) {

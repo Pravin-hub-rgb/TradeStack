@@ -1,10 +1,10 @@
 import { UpstoxStreamer } from "./streamer";
 import { LiveTraderConfig, ScannerResult, ScannerStock, ReversalSituation, StockStateEnum } from "./types";
 
-import { ReversalStockMonitor } from "./reversal/stock-monitor";
+import { ReversalStockMonitor, ReversalStockState } from "./reversal/stock-monitor";
 import { ReversalIntegration } from "./reversal/integration";
 
-import { StockMonitor as ContinuationStockMonitor } from "./continuation/stock-monitor";
+import { StockMonitor as ContinuationStockMonitor, ContinuationStockState } from "./continuation/stock-monitor";
 import { ContinuationIntegration } from "./continuation/integration";
 
 import { PaperTrader } from "./paper-trader";
@@ -37,7 +37,7 @@ export class LiveTraderOrchestrator {
 
   private log(msg: string) {
     console.log(`[ORCHESTRATOR] ${msg}`);
-    (globalThis as any).__addLiveLog?.(msg);
+    globalThis.__addLiveLog?.(msg);
   }
 
   async initialize(
@@ -134,7 +134,7 @@ export class LiveTraderOrchestrator {
     this.streamer.onClose = () => this.log("Streamer disconnected");
 
     if (!this.preMarketComplete) {
-      const stocks: any[] = [];
+      const stocks: (ReversalStockState | ContinuationStockState)[] = [];
       if (this.mode === "continuation") for (const [, s] of this.continuationMonitor?.stocks ?? new Map()) stocks.push(s);
       if (this.mode === "reversal") for (const [, s] of this.reversalMonitor?.stocks ?? new Map()) stocks.push(s);
       if (stocks.length > 0) {
@@ -144,7 +144,12 @@ export class LiveTraderOrchestrator {
           const result = await runPreMarketFlow(pmParams, stocks, (msg) => this.log(msg));
           this.validatedInstrumentKeys = result.validatedKeys;
           this.preMarketComplete = true;
-        } catch (e: any) { this.log(`Pre-market flow failed: ${e.message}`); this.running = false; return; }
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          this.log(`Pre-market flow failed: ${msg}`);
+          this.running = false;
+          return;
+        }
       }
     }
 
@@ -193,7 +198,7 @@ export class LiveTraderOrchestrator {
       }
       for (const [, s] of this.reversalMonitor?.stocks ?? new Map()) {
         if (s.state === StockStateEnum.WAITING_FOR_ENTRY && s.situation === "reversal_s1") {
-          this.log(`${s.symbol}: ORB frozen orbHigh=${(s as any).orbHigh?.toFixed(2) ?? "N/A"} orbLow=${(s as any).orbLow?.toFixed(2) ?? "N/A"} firstOpen=${(s as any).firstCandleOpen?.toFixed(2) ?? "N/A"} dailyHigh=${s.dailyHigh.toFixed(2)} entryHigh=${s.entryHigh?.toFixed(2) ?? "N/A"}`);
+          this.log(`${s.symbol}: ORB frozen orbHigh=${s.orbHigh?.toFixed(2) ?? "N/A"} orbLow=${s.orbLow?.toFixed(2) ?? "N/A"} firstOpen=${s.firstCandleOpen?.toFixed(2) ?? "N/A"} dailyHigh=${s.dailyHigh.toFixed(2)} entryHigh=${s.entryHigh?.toFixed(2) ?? "N/A"}`);
         }
       }
     }

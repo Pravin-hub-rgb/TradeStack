@@ -17,10 +17,6 @@ export class ReversalStockState extends StateMachineMixin {
 
   // OHLC-based ORB tracking (automatic via streamer, like option-trading-bot)
   public candleAggregator: CandleAggregator;
-  public orbHigh: number | null = null;
-  public orbLow: number | null = null;
-  public firstCandleOpen: number | null = null;
-  public orbFrozen = false;
 
   constructor(
     symbol: string,
@@ -85,19 +81,19 @@ export class ReversalStockState extends StateMachineMixin {
       if (c.high > 0) {
         this.dailyHigh = Math.max(this.dailyHigh, c.high);
         // Only consider candles at or after startMinute for ORB
-        const start = (this.candleAggregator as any).startMinute as Date | null;
+        const start = this.candleAggregator.getStartMinute();
         if (!start || tsDate >= start) {
           if (this.orbHigh === null || c.high > this.orbHigh) this.orbHigh = c.high;
         }
       }
       if (c.low > 0) {
         this.dailyLow = Math.min(this.dailyLow, c.low);
-        const start = (this.candleAggregator as any).startMinute as Date | null;
+        const start = this.candleAggregator.getStartMinute();
         if (!start || tsDate >= start) {
           if (this.orbLow === null || c.low < this.orbLow) this.orbLow = c.low;
         }
       }
-      const start = (this.candleAggregator as any).startMinute as Date | null;
+      const start = this.candleAggregator.getStartMinute();
       if (c.open > 0 && (!start || tsDate >= start)) {
         if (tsMs < earliestTs) {
           earliestTs = tsMs;
@@ -107,10 +103,10 @@ export class ReversalStockState extends StateMachineMixin {
     }
     if (earliest && this.firstCandleOpen === null) {
       this.firstCandleOpen = earliest.open;
-    } else if (earliest && earliestTs < (this as any)._firstTs) {
+    } else if (earliest && earliestTs < this._firstTs) {
       this.firstCandleOpen = earliest.open;
     }
-    (this as any)._firstTs = Math.min((this as any)._firstTs ?? Infinity, earliestTs);
+    this._firstTs = Math.min(this._firstTs, earliestTs);
     // Update orb values from aggregator history (more accurate once committed)
     this.refreshOrbFromHistory();
   }

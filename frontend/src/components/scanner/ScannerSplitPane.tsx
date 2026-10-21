@@ -7,31 +7,21 @@ import {
 import { Add as AddIcon, Close as CloseIcon } from "@mui/icons-material";
 import StockChart from "./StockChart";
 import { PY_API } from "@/lib/api";
+import type { ScanResult, ReversalResult, CandleData } from "@/lib/types";
 
 const API = PY_API;
 
-interface ContStats {
-  symbol: string; close: number; sma20?: number; dist_to_ma_pct?: number;
-  phase1_high?: number; phase2_low?: number; depth_pct?: number; adr_pct: number;
-}
+type Stock = ScanResult | ReversalResult;
 
-interface RevStats {
-  symbol: string; close: number; period: number; green_days: number;
-  first_red_date: string; decline_percent: number; trend_context: string; adr_pct: number;
-}
-
-type Stock = ContStats | RevStats;
-
-interface CandleData {
-  candles: { date: string; open: number; high: number; low: number; close: number; volume: number }[];
-  sma: { date: string; value: number }[];
-}
+// Internal aliases kept for the detail-strip rendering below
+type ContStats = ScanResult;
+type RevStats = ReversalResult;
 
 interface Props {
   stocks: Stock[];
   mode: "continuation" | "reversal";
   savedSymbols: string[];
-  onToggle: (row: any) => void;
+  onToggle: (row: Stock) => void;
   chartCacheRef?: { current: Record<string, CandleData> };
 }
 
@@ -52,7 +42,7 @@ export default function ScannerSplitPane({ stocks, mode, savedSymbols, onToggle,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ symbols, days: 200 }),
       });
-      const d = await r.json();
+      const d = (await r.json()) as { data?: Record<string, CandleData> };
       setChartData(d.data || {});
     } catch {}
     setLoaded(true);

@@ -33,7 +33,7 @@ export class ContinuationTickProcessor {
 
   private trackEntryLevels(price: number, timestamp: Date): void {
     // If ORB frozen at ENTRY_TIME, don't ratchet — entryHigh locked to orbHigh
-    if ((this.stock as any).orbFrozen) return;
+    if (this.stock.orbFrozen) return;
     // Before freeze, track from dailyHigh (which now includes I1 candle highs)
     if (this.stock.dailyHigh > 0) {
       const newHigh = this.stock.dailyHigh;
@@ -69,7 +69,7 @@ export class ContinuationTickProcessor {
 
     // Strict > required: must break above ORB high, not touch (like reversal HAPPSTMNDS fix)
     if (price > this.stock.entryHigh) {
-      console.log(`[${this.stock.symbol}] BREAKOUT: price ${price.toFixed(2)} > entryHigh ${this.stock.entryHigh.toFixed(2)} (orbHigh ${(this.stock as any).orbHigh?.toFixed(2) ?? "N/A"} dailyHigh ${this.stock.dailyHigh.toFixed(2)})`);
+      console.log(`[${this.stock.symbol}] BREAKOUT: price ${price.toFixed(2)} > entryHigh ${this.stock.entryHigh.toFixed(2)} (orbHigh ${this.stock.orbHigh?.toFixed(2) ?? "N/A"} dailyHigh ${this.stock.dailyHigh.toFixed(2)})`);
       this.stock.enterPosition(price, timestamp);
     } else {
       console.log(`[${this.stock.symbol}] HOLD: price ${price.toFixed(2)} <= entryHigh ${this.stock.entryHigh.toFixed(2)} (need >)`);

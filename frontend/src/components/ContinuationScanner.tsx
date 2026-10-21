@@ -16,6 +16,7 @@ import {
   TableChart as TableIcon,
 } from "@mui/icons-material";
 import { useAppState } from "@/lib/AppStateContext";
+import type { ScanResult, ReversalResult, ScanStatusPayload, StockListResponse, CandleData, ScanRowPayload } from "@/lib/types";
 import { saveSetting } from "@/lib/settingsSync";
 import ScannerSplitPane from "./scanner/ScannerSplitPane";
 import CandleProgress from "./CandleProgress";
@@ -23,6 +24,16 @@ import ToastNotification from "./ToastNotification";
 import { PY_API } from "@/lib/api";
 
 const API = PY_API;
+
+const CONT_COLS: { k: keyof ScanResult; l: string }[] = [
+  { k: "symbol", l: "Symbol" },
+  { k: "close", l: "Close" },
+  { k: "dist_to_ma_pct", l: "Dist to MA %" },
+  { k: "phase1_high", l: "Phase1 High" },
+  { k: "phase2_low", l: "Phase2 Low" },
+  { k: "depth_pct", l: "Depth %" },
+  { k: "adr_pct", l: "ADR %" },
+];
 
 const loadFilter = (key: string, def: number) => {
   if (typeof window === "undefined") return def;
@@ -43,7 +54,7 @@ export default function ContinuationScanner() {
   const [risingMaTol, setRisingMaTol] = useState(() => loadFilter("risingMaTol", 0));
   const { state, setContinuationResults, setContScanProgress, setContinuationViewMode } = useAppState();
   const { contScanProgress: { scanning, progress, status, operationId } } = state;
-  const [sortKey, setSortKey] = useState<keyof (typeof state.continuationResults)[number]>("depth_pct");
+  const [sortKey, setSortKey] = useState<keyof ScanResult>("depth_pct");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [savedSymbols, setSavedSymbols] = useState<string[]>([]);
   const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "warning"; position: number }[]>([]);
@@ -54,7 +65,7 @@ export default function ContinuationScanner() {
     setTimeout(() => removeToast(id), 4000);
   }, [removeToast]);
   const viewMode = state.continuationViewMode;
-  const chartCacheRef = useRef<Record<string, any>>({});
+  const chartCacheRef = useRef<Record<string, CandleData>>({});
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => { localStorage.setItem("cont_minPrice", String(minPrice)); saveSetting("price_min", String(minPrice)); }, [minPrice]);
@@ -90,7 +101,7 @@ export default function ContinuationScanner() {
   useEffect(() => {
     fetch(`${API}/api/stock-list/continuation`)
       .then(r => r.json())
-      .then(d => setSavedSymbols((d.stocks || []).map((s: any) => s.symbol)))
+      .then((d: StockListResponse) => setSavedSymbols((d.stocks || []).map((s) => s.symbol)))
       .catch(() => {});
   }, []);
 
@@ -99,7 +110,7 @@ export default function ContinuationScanner() {
     intervalRef.current = setInterval(async () => {
       try {
         const r = await fetch(`${API}/api/scanner/status/${operationId}`);
-        const d = await r.json();
+        const d = (await r.json()) as ScanStatusPayload;
         if (d.detail) {
           if (intervalRef.current) clearInterval(intervalRef.current);
           intervalRef.current = null;
@@ -111,8 +122,16 @@ export default function ContinuationScanner() {
         if (d.status === "completed") {
           if (intervalRef.current) clearInterval(intervalRef.current);
           intervalRef.current = null;
-          const rows = (d.result?.results || []).map((r: any) => ({
-            ...r, close: r.close ?? 0, adr_pct: r.adr_pct ?? 0,
+          const rawRows: ScanRowPayload[] = d.result?.results || [];
+          const rows: ScanResult[] = rawRows.map((r) => ({
+            symbol: String(r.symbol ?? ""),
+            close: Number(r.close ?? 0),
+            sma20: r.sma20 != null ? Number(r.sma20) : undefined,
+            dist_to_ma_pct: r.dist_to_ma_pct != null ? Number(r.dist_to_ma_pct) : undefined,
+            phase1_high: r.phase1_high != null ? Number(r.phase1_high) : undefined,
+            phase2_low: r.phase2_low != null ? Number(r.phase2_low) : undefined,
+            depth_pct: r.depth_pct != null ? Number(r.depth_pct) : undefined,
+            adr_pct: Number(r.adr_pct ?? 0),
           }));
           setContinuationResults(rows);
           setContScanProgress({ scanning: false, progress: 100, status: `Scan completed! Found ${rows.length} continuation setups`, operationId: null });
@@ -157,21 +176,30 @@ export default function ContinuationScanner() {
           },
         }),
       });
-      const d = await res.json();
+      const d = (await res.json()) as { status?: string; message?: string; operation_id?: string };
       if (d.status !== "started") throw new Error(d.message || "Failed to start");
-      setContScanProgress({ scanning: true, progress: 0, status: "Scan started...", operationId: d.operation_id });
-    } catch (e: any) {
-      setContScanProgress({ scanning: false, progress: 0, status: `Failed to start scan: ${e.message}`, operationId: null });
+      setContScanProgress({ scanning: true, progress: 0, status: "Scan started...", operationId: d.operation_id ?? null });
+    } catch (e) {
+      const err = e as Error;
+      setContScanProgress({ scanning: false, progress: 0, status: `Failed to start scan: ${err.message}`, operationId: null });
     }
   };
 
-  const handleSort = (key: string) => {
+  const handleSort = (key: keyof ScanResult) => {
     const dir = sortKey === key && sortDir === "asc" ? "desc" : "asc";
-    setSortKey(key as any);
+    setSortKey(key);
     setSortDir(dir);
     const sorted = [...state.continuationResults].sort((a, b) => {
-      const av = (a as any)[key] ?? 0; const bv = (b as any)[key] ?? 0;
-      return dir === "asc" ? (av < bv ? -1 : 1) : (av > bv ? -1 : 1);
+      const av = a[key] ?? 0;
+      const bv = b[key] ?? 0;
+      if (typeof av === "string" || typeof bv === "string") {
+        const as = String(av);
+        const bs = String(bv);
+        return dir === "asc" ? as.localeCompare(bs) : bs.localeCompare(as);
+      }
+      const an = Number(av);
+      const bn = Number(bv);
+      return dir === "asc" ? an - bn : bn - an;
     });
     setContinuationResults(sorted);
   };
@@ -195,9 +223,10 @@ export default function ContinuationScanner() {
     a.click(); URL.revokeObjectURL(url);
   };
 
-  const toggleContinuation = useCallback(async (row: any) => {
+  const toggleContinuation = useCallback(async (row: ScanResult | ReversalResult) => {
     const symbol = row.symbol;
     const isIn = savedSymbols.includes(symbol);
+    const depth = "depth_pct" in row ? (row.depth_pct ?? null) : null;
     try {
       if (isIn) {
         await fetch(`${API}/api/stock-list/continuation/${symbol}`, { method: "DELETE" });
@@ -207,7 +236,7 @@ export default function ContinuationScanner() {
         await fetch(`${API}/api/stock-list/continuation`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ symbol, close: row.close, depth_pct: row.depth_pct }),
+          body: JSON.stringify({ symbol, close: row.close, depth_pct: depth }),
         });
         setSavedSymbols(prev => [...prev, symbol]);
         showToast(`Added ${symbol} to list`, "success");
@@ -407,15 +436,7 @@ export default function ContinuationScanner() {
                       <TableCell sx={{ color: "#94a3b8", fontWeight: 600, width: 80, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
                         Actions
                       </TableCell>
-                      {[
-                        { k: "symbol", l: "Symbol" },
-                        { k: "close", l: "Close" },
-                        { k: "dist_to_ma_pct", l: "Dist to MA %" },
-                        { k: "phase1_high", l: "Phase1 High" },
-                        { k: "phase2_low", l: "Phase2 Low" },
-                        { k: "depth_pct", l: "Depth %" },
-                        { k: "adr_pct", l: "ADR %" },
-                      ].map(col => (
+                      {CONT_COLS.map(col => (
                         <TableCell key={col.k} sx={{ color: "#94a3b8", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
                           <TableSortLabel
                             active={sortKey === col.k}
@@ -434,7 +455,7 @@ export default function ContinuationScanner() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {state.continuationResults.map((row: any) => {
+                    {state.continuationResults.map((row) => {
                       const inList = savedSymbols.includes(row.symbol);
                       return (
                         <TableRow key={row.symbol} hover

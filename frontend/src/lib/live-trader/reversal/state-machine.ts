@@ -1,4 +1,5 @@
 import { StockStateEnum } from "../types";
+import { OrbFields } from "../orb-base";
 
 export interface StateMachineParams {
   flatGapThreshold: number;
@@ -9,7 +10,7 @@ export interface StateMachineParams {
   entryTime?: string;
 }
 
-export class StateMachineMixin {
+export class StateMachineMixin extends OrbFields {
   public state: StockStateEnum = StockStateEnum.INITIALIZED;
   public isSubscribed = true;
   public symbol = "";
@@ -42,6 +43,7 @@ export class StateMachineMixin {
   params: StateMachineParams;
 
   constructor(params: StateMachineParams) {
+    super();
     this.params = params;
   }
 
@@ -99,8 +101,8 @@ export class StateMachineMixin {
 
     // Use orbLow if available (OHLC-based), else dailyLow fallback
     // For 5-min ORB window, low is min of I1 lows + ticks
-    const effectiveLow = (this as any).orbLow ?? this.dailyLow;
-    const effectiveOpen = (this as any).firstCandleOpen ?? this.openPrice;
+    const effectiveLow = this.orbLow ?? this.dailyLow;
+    const effectiveOpen = this.firstCandleOpen ?? this.openPrice;
     // Primary check uses firstCandleOpen when available (exchange truth), else openPrice (IEP fallback)
     const threshold = effectiveOpen * (1 - this.params.lowViolationPct);
     // Also check dailyLow vs openPrice as secondary (covers gap where OHLC not yet finalized)
@@ -136,8 +138,8 @@ export class StateMachineMixin {
 
   private prepareStrongStart(): void {
     // Use orbLow/firstOpen if available (OHLC truth), fallback to dailyLow/openPrice
-    const effectiveLow = (this as any).orbLow ?? this.dailyLow;
-    const effectiveOpen = (this as any).firstCandleOpen ?? this.openPrice!;
+    const effectiveLow = this.orbLow ?? this.dailyLow;
+    const effectiveOpen = this.firstCandleOpen ?? this.openPrice!;
     const threshold = effectiveOpen * (1 - this.params.lowViolationPct);
     const altThreshold = this.openPrice! * (1 - this.params.lowViolationPct);
     if (effectiveLow < threshold || this.dailyLow < altThreshold) {
@@ -150,13 +152,12 @@ export class StateMachineMixin {
     this.entryReady = true;
     this.transitionTo(StockStateEnum.WAITING_FOR_ENTRY, "Strong Start ready");
     // Prefer orbHigh (OHLC-based ORB) for breakout level, fallback to dailyHigh
-    const stateExt = this as any;
-    if (stateExt.orbHigh !== null && stateExt.orbHigh !== undefined && stateExt.orbHigh > 0) {
+    if (this.orbHigh !== null && this.orbHigh > 0) {
       // Freeze ORB: entryHigh is orbHigh, not ratcheting dailyHigh
-      this.entryHigh = stateExt.orbHigh;
-      this.entrySl = (this.entryHigh as number) * (1 - this.params.entrySlPct);
+      this.entryHigh = this.orbHigh;
+      this.entrySl = this.entryHigh * (1 - this.params.entrySlPct);
       this.entryPrice = this.entryHigh;
-      const src = stateExt.orbHigh !== this.dailyHigh ? `orbHigh ${stateExt.orbHigh.toFixed(2)} (dailyHigh ${this.dailyHigh.toFixed(2)})` : `dailyHigh ${this.dailyHigh.toFixed(2)}`;
+      const src = this.orbHigh !== this.dailyHigh ? `orbHigh ${this.orbHigh.toFixed(2)} (dailyHigh ${this.dailyHigh.toFixed(2)})` : `dailyHigh ${this.dailyHigh.toFixed(2)}`;
       console.log(`[${this.symbol}] Strong Start entry frozen at ${(this.entryHigh as number).toFixed(2)} via ${src}, firstOpen ${effectiveOpen.toFixed(2)}`);
     } else {
       this.updateEntryLevels();
@@ -174,10 +175,9 @@ export class StateMachineMixin {
     if (!this.isActive || this.situation !== "reversal_s1" || this.openPrice === null) return;
 
     // If ORB is frozen, never ratchet — breakout level is fixed 5-min high
-    const stateExt = this as any;
-    if (stateExt.orbFrozen) return;
+    if (this.orbFrozen) return;
 
-    const newHigh = stateExt.orbHigh ?? this.dailyHigh;
+    const newHigh = this.orbHigh ?? this.dailyHigh;
     const newSl = newHigh * (1 - this.params.entrySlPct);
 
     if (this.entryHigh === null || newHigh > this.entryHigh) {

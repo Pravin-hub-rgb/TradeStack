@@ -116,6 +116,11 @@ export class CandleAggregator {
     return this.candleHistory;
   }
 
+  /** Start of the ORB window (configured via setStartMinute), or null. */
+  getStartMinute(): Date | null {
+    return this.startMinute;
+  }
+
   getCurrentCandle(): Candle | null {
     return this.currentCandle;
   }

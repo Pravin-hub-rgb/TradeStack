@@ -23,24 +23,9 @@ import {
   CloudDownload as CloudDownloadIcon,
 } from "@mui/icons-material";
 import { PY_API } from "@/lib/api";
+import type { CacheInfo, OperationStatus } from "@/lib/types";
 
 const API = PY_API;
-
-interface CacheInfo {
-  stock_count: number;
-  total_size_mb: number;
-  latest_date: string | null;
-}
-
-interface OperationStatus {
-  type: string;
-  status: "running" | "completed" | "error";
-  progress: number;
-  message: string;
-  error?: string;
-  result?: any;
-  logs?: string[];
-}
 
 const CacheData: React.FC = () => {
   const [cacheInfo, setCacheInfo] = useState<CacheInfo | null>(null);

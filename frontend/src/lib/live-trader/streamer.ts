@@ -59,8 +59,9 @@ export class UpstoxStreamer {
       this.protoRoot = await protobuf.load(SDK_PROTO_PATH);
       _sharedProtoRoot = this.protoRoot; // Make it available to SDK's initProtobuf patch
       this.log("Protobuf loaded");
-    } catch (err: any) {
-      this.log(`Protobuf load failed: ${err.message}`);
+    } catch (err) {
+      const e = err as Error;
+      this.log(`Protobuf load failed: ${e.message}`);
     }
   }
 
@@ -124,8 +125,9 @@ export class UpstoxStreamer {
 
         this.sdkStreamer.connect();
         this.sdkStreamer.autoReconnect(false);
-      } catch (err: any) {
-        this.log(`Connection failed: ${err.message}`);
+      } catch (err) {
+        const e = err as Error;
+        this.log(`Connection failed: ${e.message}`);
         resolve(false);
       }
     });
@@ -233,8 +235,9 @@ export class UpstoxStreamer {
             } else {
               attempt();
             }
-          } catch (e: any) {
-            this.log(`Reconnection error: ${e.message}`);
+          } catch (e) {
+            const err = e as Error;
+            this.log(`Reconnection error: ${err.message}`);
             this.reconnecting = false;
           }
         })();
@@ -259,6 +262,6 @@ export class UpstoxStreamer {
   private log(msg: string): void {
     const time = new Date().toLocaleTimeString("en-IN", { hour12: false });
     console.log(`[${time}] [Streamer] ${msg}`);
-    (globalThis as any).__addLiveLog?.(`[Streamer] ${msg}`);
+    globalThis.__addLiveLog?.(`[Streamer] ${msg}`);
   }
 }

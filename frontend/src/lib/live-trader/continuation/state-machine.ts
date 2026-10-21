@@ -1,4 +1,5 @@
 import { StockStateEnum } from "../types";
+import { OrbFields } from "../orb-base";
 
 export interface ContinuationStateMachineParams {
   flatGapThreshold: number;
@@ -14,7 +15,7 @@ function parseTime(t: string): number {
   return parseInt(parts[0]) * 60 + parseInt(parts[1]);
 }
 
-export class ContinuationStateMachine {
+export class ContinuationStateMachine extends OrbFields {
   public state: StockStateEnum = StockStateEnum.INITIALIZED;
   public isSubscribed = true;
   public symbol = "";
@@ -22,13 +23,7 @@ export class ContinuationStateMachine {
   public previousClose = 0;
   public dailyLow = Infinity;
   public dailyHigh = -Infinity;
-  // ORB (5-min opening range) from I1 OHLC — simple tracker (Option B), not full aggregator
-  public orbHigh: number | null = null;
-  public orbLow: number | null = null;
-  public firstCandleOpen: number | null = null;
-  public orbFrozen = false;
-  private _firstTs: number = Infinity;
-  private _orbStartMinute: Date | null = null;
+  protected _orbStartMinute: Date | null = null;
   public situation = "continuation";
   public gapValidated = false;
   public lowViolationChecked = false;
@@ -53,6 +48,7 @@ export class ContinuationStateMachine {
   params: ContinuationStateMachineParams;
 
   constructor(params: ContinuationStateMachineParams) {
+    super();
     this.params = params;
   }
 

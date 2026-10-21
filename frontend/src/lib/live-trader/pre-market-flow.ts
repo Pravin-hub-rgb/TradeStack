@@ -1,4 +1,4 @@
-import { LiveTraderConfig, ScannerStock } from "./types";
+import { LiveTraderConfig } from "./types";
 import { ReversalStockMonitor } from "./reversal/stock-monitor";
 import { StockMonitor as ContinuationStockMonitor } from "./continuation/stock-monitor";
 import { fetchFromPython, sleepUntilIST } from "./task-utils";
@@ -12,7 +12,7 @@ export interface PreMarketParams {
 
 export async function runPreMarketFlow(
   params: PreMarketParams,
-  stocks: ScannerStock[],
+  stocks: { symbol: string; instrumentKey?: string; previousClose: number }[],
   log: (msg: string) => void,
 ): Promise<{ validatedKeys: string[] }> {
   if (!params.config) throw new Error("Not initialized");
@@ -33,8 +33,9 @@ export async function runPreMarketFlow(
       );
       volumeBaselines = vbResult.baselines;
       log(`Volume baselines loaded for ${Object.keys(volumeBaselines).length} symbols`);
-    } catch (e: any) {
-      log(`Volume baseline fetch failed: ${e.message}`);
+    } catch (e) {
+      const err = e as Error;
+      log(`Volume baseline fetch failed: ${err.message}`);
     }
 
     try {
@@ -44,8 +45,9 @@ export async function runPreMarketFlow(
       );
       vahPrices = vahResult.vah;
       log(`VAH calculated for ${Object.keys(vahPrices).length} stocks`);
-    } catch (e: any) {
-      log(`VAH fetch failed: ${e.message}`);
+    } catch (e) {
+      const err = e as Error;
+      log(`VAH fetch failed: ${err.message}`);
     }
 
     for (const stock of stocks) {
@@ -68,8 +70,9 @@ export async function runPreMarketFlow(
     );
     iepPrices = iepResult.prices;
     log(`IEP fetched for ${Object.keys(iepPrices).length} symbols`);
-  } catch (e: any) {
-    log(`IEP fetch failed: ${e.message}`);
+  } catch (e) {
+    const err = e as Error;
+    log(`IEP fetch failed: ${err.message}`);
   }
 
   const validatedKeys: string[] = [];
@@ -78,7 +81,7 @@ export async function runPreMarketFlow(
     const key = stock.instrumentKey || stock.symbol;
     const iep = iepPrices[stock.symbol];
 
-    const stockState: any = isContinuation
+    const stockState = isContinuation
       ? params.continuationMonitor?.stocks.get(key)
       : params.reversalMonitor?.stocks.get(key);
 
@@ -106,8 +109,8 @@ export async function runPreMarketFlow(
         log(`${stock.symbol}: VAH data missing, rejecting (mandatory V gate)`);
         continue;
       }
-      const vahOk = stockState.validateVahRejection(vah);
-      if (!vahOk) { log(`${stock.symbol}: VAH validation FAILED - ${stockState.rejectionReason}`); continue; }
+      const vahOk = stockState && "validateVahRejection" in stockState ? stockState.validateVahRejection(vah) : false;
+      if (!vahOk) { log(`${stock.symbol}: VAH validation FAILED - ${stockState?.rejectionReason}`); continue; }
     }
 
     validatedKeys.push(key);

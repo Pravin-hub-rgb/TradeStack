@@ -1,17 +1,10 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import type { ScanResult, ReversalResult } from "@/lib/types";
 
-interface ScanResult {
-  symbol: string; close: number; sma20?: number; dist_to_ma_pct?: number;
-  phase1_high?: number; phase2_low?: number; depth_pct?: number; adr_pct: number;
-}
-
-interface ReversalResult {
-  symbol: string; close: number; period: number; green_days: number;
-  first_red_date: string; decline_percent: number;
-  trend_context: string; adr_pct: number;
-}
+// Re-exported for existing consumers (import defs from "@/lib/types" in new code)
+export type { ScanResult, ReversalResult } from "@/lib/types";
 
 export interface ScanProgress {
   scanning: boolean;

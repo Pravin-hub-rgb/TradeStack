@@ -186,10 +186,12 @@ export interface ScannerStock {
 export interface ScannerResult {
   reversal: {
     stocks: ScannerStock[];
-    declinePercent: number;
-    declineDaysMax: number;
+    declinePercent?: number;
+    declineDaysMax?: number;
   } | null;
   continuation: {
     stocks: ScannerStock[];
+    declinePercent?: number;
+    declineDaysMax?: number;
   } | null;
 }

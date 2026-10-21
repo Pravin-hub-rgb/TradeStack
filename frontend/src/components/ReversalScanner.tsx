@@ -18,6 +18,7 @@ import {
   TableChart as TableIcon,
 } from "@mui/icons-material";
 import { useAppState } from "@/lib/AppStateContext";
+import type { ScanResult, ReversalResult, ScanStatusPayload, StockListResponse, CandleData, ScanRowPayload } from "@/lib/types";
 import { saveSetting } from "@/lib/settingsSync";
 import CandleProgress from "./CandleProgress";
 import ScannerSplitPane from "./scanner/ScannerSplitPane";
@@ -25,6 +26,17 @@ import ToastNotification from "./ToastNotification";
 import { PY_API } from "@/lib/api";
 
 const API = PY_API;
+
+const REV_COLS: { k: keyof ReversalResult; l: string }[] = [
+  { k: "symbol", l: "Symbol" },
+  { k: "close", l: "Close" },
+  { k: "period", l: "Period" },
+  { k: "green_days", l: "Green Days" },
+  { k: "first_red_date", l: "First Red" },
+  { k: "decline_percent", l: "Decline %" },
+  { k: "trend_context", l: "Trend" },
+  { k: "adr_pct", l: "ADR %" },
+];
 
 const loadFilter = (key: string, def: number) => {
   if (typeof window === "undefined") return def;
@@ -41,7 +53,7 @@ export default function ReversalScanner() {
     return localStorage.getItem("rev_scanDate") || "";
   });
   const [savedSymbols, setSavedSymbols] = useState<string[]>([]);
-  const chartCacheRef = useRef<Record<string, any>>({});
+  const chartCacheRef = useRef<Record<string, CandleData>>({});
   const { state, setReversalResults, setRevScanProgress, setReversalViewMode } = useAppState();
   const { revScanProgress: { scanning, progress, status, operationId } } = state;
   const [toasts, setToasts] = useState<{ id: string; message: string; type: "success" | "error" | "warning"; position: number }[]>([]);
@@ -52,7 +64,7 @@ export default function ReversalScanner() {
     setTimeout(() => removeToast(id), 4000);
   }, [removeToast]);
   const viewMode = state.reversalViewMode;
-  const [sortKey, setSortKey] = useState<keyof (typeof state.reversalResults)[number]>("decline_percent");
+  const [sortKey, setSortKey] = useState<keyof ReversalResult>("decline_percent");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -80,7 +92,7 @@ export default function ReversalScanner() {
   useEffect(() => {
     fetch(`${API}/api/stock-list/reversal`)
       .then(r => r.json())
-      .then(d => setSavedSymbols((d.stocks || []).map((s: any) => s.symbol)))
+      .then((d: StockListResponse) => setSavedSymbols((d.stocks || []).map((s) => s.symbol)))
       .catch(() => {});
   }, []);
 
@@ -89,7 +101,7 @@ export default function ReversalScanner() {
     intervalRef.current = setInterval(async () => {
       try {
         const r = await fetch(`${API}/api/scanner/status/${operationId}`);
-        const d = await r.json();
+        const d = (await r.json()) as ScanStatusPayload;
         if (d.detail) {
           if (intervalRef.current) clearInterval(intervalRef.current);
           intervalRef.current = null;
@@ -101,8 +113,16 @@ export default function ReversalScanner() {
         if (d.status === "completed") {
           if (intervalRef.current) clearInterval(intervalRef.current);
           intervalRef.current = null;
-          const rows = (d.result?.results || []).map((r: any) => ({
-            ...r, close: r.close ?? 0, adr_pct: r.adr_pct ?? 0,
+          const rawRows: ScanRowPayload[] = d.result?.results || [];
+          const rows: ReversalResult[] = rawRows.map((r) => ({
+            symbol: String(r.symbol ?? ""),
+            close: Number(r.close ?? 0),
+            period: Number(r.period ?? 0),
+            green_days: Number(r.green_days ?? 0),
+            first_red_date: String(r.first_red_date ?? ""),
+            decline_percent: Number(r.decline_percent ?? 0),
+            trend_context: String(r.trend_context ?? ""),
+            adr_pct: Number(r.adr_pct ?? 0),
           }));
           setReversalResults(rows);
           setRevScanProgress({ scanning: false, progress: 100, status: `Scan completed! Found ${rows.length} reversal setups`, operationId: null });
@@ -144,21 +164,30 @@ export default function ReversalScanner() {
           },
         }),
       });
-      const d = await res.json();
+      const d = (await res.json()) as { status?: string; message?: string; operation_id?: string };
       if (d.status !== "started") throw new Error(d.message || "Failed to start");
-      setRevScanProgress({ scanning: true, progress: 0, status: "Scan started...", operationId: d.operation_id });
-    } catch (e: any) {
-      setRevScanProgress({ scanning: false, progress: 0, status: `Failed to start scan: ${e.message}`, operationId: null });
+      setRevScanProgress({ scanning: true, progress: 0, status: "Scan started...", operationId: d.operation_id ?? null });
+    } catch (e) {
+      const err = e as Error;
+      setRevScanProgress({ scanning: false, progress: 0, status: `Failed to start scan: ${err.message}`, operationId: null });
     }
   };
 
-  const handleSort = (key: string) => {
+  const handleSort = (key: keyof ReversalResult) => {
     const dir = sortKey === key && sortDir === "asc" ? "desc" : "asc";
-    setSortKey(key as any);
+    setSortKey(key);
     setSortDir(dir);
     const sorted = [...state.reversalResults].sort((a, b) => {
-      const av = (a as any)[key] ?? 0; const bv = (b as any)[key] ?? 0;
-      return dir === "asc" ? (av < bv ? -1 : 1) : (av > bv ? -1 : 1);
+      const av = a[key] ?? 0;
+      const bv = b[key] ?? 0;
+      if (typeof av === "string" || typeof bv === "string") {
+        const as = String(av);
+        const bs = String(bv);
+        return dir === "asc" ? as.localeCompare(bs) : bs.localeCompare(as);
+      }
+      const an = Number(av);
+      const bn = Number(bv);
+      return dir === "asc" ? an - bn : bn - an;
     });
     setReversalResults(sorted);
   };
@@ -182,9 +211,11 @@ export default function ReversalScanner() {
     a.click(); URL.revokeObjectURL(url);
   };
 
-  const toggleReversal = useCallback(async (row: any) => {
+  const toggleReversal = useCallback(async (row: ScanResult | ReversalResult) => {
     const symbol = row.symbol;
     const isIn = savedSymbols.includes(symbol);
+    const trendCtx = "trend_context" in row ? (row.trend_context ?? null) : null;
+    const period = "period" in row ? (row.period ?? null) : null;
     try {
       if (isIn) {
         await fetch(`${API}/api/stock-list/reversal/${symbol}`, { method: "DELETE" });
@@ -194,7 +225,7 @@ export default function ReversalScanner() {
         await fetch(`${API}/api/stock-list/reversal`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ symbol, close: row.close, trend_context: row.trend_context, period: row.period }),
+          body: JSON.stringify({ symbol, close: row.close, trend_context: trendCtx, period }),
         });
         setSavedSymbols(prev => [...prev, symbol]);
         showToast(`Added ${symbol} to list`, "success");
@@ -372,16 +403,7 @@ export default function ReversalScanner() {
                       <TableCell sx={{ color: "#94a3b8", fontWeight: 600, width: 80, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
                         Actions
                       </TableCell>
-                      {[
-                        { k: "symbol", l: "Symbol" },
-                        { k: "close", l: "Close" },
-                        { k: "period", l: "Period" },
-                        { k: "green_days", l: "Green Days" },
-                        { k: "first_red_date", l: "First Red" },
-                        { k: "decline_percent", l: "Decline %" },
-                        { k: "trend_context", l: "Trend" },
-                        { k: "adr_pct", l: "ADR %" },
-                      ].map(col => (
+                      {REV_COLS.map(col => (
                         <TableCell key={col.k} sx={{ color: "#94a3b8", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
                           <TableSortLabel
                             active={sortKey === col.k}
@@ -400,7 +422,7 @@ export default function ReversalScanner() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {state.reversalResults.map((row: any) => {
+                    {state.reversalResults.map((row) => {
                       const inList = savedSymbols.includes(row.symbol);
                       return (
                       <TableRow key={row.symbol} hover

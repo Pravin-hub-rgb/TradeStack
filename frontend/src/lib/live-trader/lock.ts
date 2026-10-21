@@ -38,16 +38,17 @@ export class LockManager {
       this.lockAcquired = true;
       const label = this.botType === "reversal" ? "Reversal" : "Continuation";
       console.log(`[LOCK] ${label} bot singleton lock acquired`);
-      (globalThis as any).__addLiveLog?.(`[LOCK] ${label} bot singleton lock acquired`);
+      globalThis.__addLiveLog?.(`[LOCK] ${label} bot singleton lock acquired`);
       return true;
-    } catch (err: any) {
+    } catch (err) {
+      const e = err as NodeJS.ErrnoException;
       const label = this.botType === "reversal" ? "reversal" : "continuation";
-      if (err.code === "EEXIST") {
+      if (e.code === "EEXIST") {
         console.log(`ERROR: Another ${label} bot instance is already running - refusing to connect`);
         console.log(`[LOCK] Lock file exists: ${this.lockFile}`);
-        (globalThis as any).__addLiveLog?.(`[LOCK] ERROR: Another ${label} bot instance is already running`);
+        globalThis.__addLiveLog?.(`[LOCK] ERROR: Another ${label} bot instance is already running`);
       } else {
-        console.log(`WARNING: Could not acquire ${label} bot lock: ${err.message}`);
+        console.log(`WARNING: Could not acquire ${label} bot lock: ${e.message}`);
       }
       return false;
     }
@@ -62,10 +63,11 @@ export class LockManager {
         fs.unlinkSync(this.lockFile);
         const label = this.botType === "reversal" ? "Reversal" : "Continuation";
         console.log(`[UNLOCK] ${label} bot singleton lock released`);
-        (globalThis as any).__addLiveLog?.(`[UNLOCK] ${label} bot singleton lock released`);
+        globalThis.__addLiveLog?.(`[UNLOCK] ${label} bot singleton lock released`);
       }
-    } catch (err: any) {
-      console.log(`WARNING: Could not cleanup lock: ${err.message}`);
+    } catch (err) {
+      const e = err as NodeJS.ErrnoException;
+      console.log(`WARNING: Could not cleanup lock: ${e.message}`);
     }
   }
 
