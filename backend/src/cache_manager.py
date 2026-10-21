@@ -151,7 +151,7 @@ class CacheManager:
         latest_date = self.get_latest_cache_date()
         return {
             "stock_count": len(files),
-            "total_size_mb": round(total_size / (1024 * 1024), 2),
+            "total_size_mb": total_size / (1024 * 1024),
             "latest_date": latest_date.isoformat() if latest_date else None,
         }
 

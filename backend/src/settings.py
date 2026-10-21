@@ -144,10 +144,16 @@ def reset_category(category: str):
     _seed_category(category)
 
 
+def _upsert_seed(seed_row: dict):
+    """Insert one SEED row, stripping UI-only fields the settings table doesn't store."""
+    safe = {k: v for k, v in seed_row.items() if k != "options"}
+    db.settings_upsert(**safe)
+
+
 def reset_all():
     """Reset ALL settings to seed defaults."""
     for r in SEED:
-        db.settings_upsert(**r)
+        _upsert_seed(r)
 
 
 def _cast_value(value: str, type_: str) -> Any:
@@ -167,7 +173,7 @@ def _seed_category(category: str):
     """Insert seed defaults for one category."""
     for r in SEED:
         if r["category"] == category:
-            db.settings_upsert(**r)
+            _upsert_seed(r)
 
 
 def ensure_settings():
@@ -178,7 +184,7 @@ def ensure_settings():
     else:
         logger.info(f"Settings: seeding (version={SETTINGS_VERSION}, previous={version})")
         for r in SEED:
-            db.settings_upsert(**r)
+            _upsert_seed(r)
         db.settings_set_meta("settings_version", SETTINGS_VERSION)
         logger.info(f"Settings: seeded {len(SEED)} defaults")
 
@@ -186,8 +192,7 @@ def ensure_settings():
     existing_keys = {r["key"] for r in db.settings_get_all()}
     for r in SEED:
         if r["key"] not in existing_keys:
-            safe = {k: v for k, v in r.items() if k != "options"}
-            db.settings_upsert(**safe)
+            _upsert_seed(r)
             logger.info(f"Settings: added missing key '{r['key']}' with default '{r['value']}'")
 
     # --- Targeted one-time migration: price_max 2000 → 10000 ---
