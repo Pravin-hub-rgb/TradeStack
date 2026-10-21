@@ -166,12 +166,24 @@ This keeps each commit self-consistent and buildable.
 - [ ] IST utils tests (`secondsUntilIST`, `sleepUntilIST`)
 - [ ] `api.ts` helper error-handling tests
 
-### Phase 3 — De-duplicate scanners + shared UI
-- [ ] Extract `useToastStack` (duplicated 5×)
-- [ ] Extract `usePollOperation` (1s/2s status poll loop)
-- [ ] Extract `useSavedList(listType)` (add/remove toggle)
-- [ ] Build `ScannerBase` driven by a strategy config object
-- [ ] `ContinuationScanner` / `ReversalScanner` become thin config wrappers
+### Phase 3 — De-duplicate scanners + shared UI (DONE 21 Oct 2026)
+- [x] Extract `useToastStack` — `frontend/src/lib/hooks/useToastStack.ts`; 4 simple call sites migrated (`Continuation`/`Reversal` via ScannerBase, `StockList`, `LiveTrading`); CacheData migrated with options (`durationMs: Infinity`, `defaultType: "success"`, custom `pickPosition` that reuses freed slots — position now computed inside the functional update from fresh state instead of the old stale closure)
+- [x] Extract `usePollOperation` (1s/2s status poll loop) — scanner variant: `useScannerStatusPoll` (1s loop, expired/progress/completed/error/lost-connection callbacks, mapper-injected row typing); CacheData keeps its 2s `OperationStatus` loop (different payload shape)
+- [x] Extract `useSavedList(listType)` — `scanner/useSavedList.ts` (load + toggle + toasts), used by both scanners
+- [x] Build `ScannerBase` driven by a strategy config object — `scanner/ScannerBase.tsx` (354 lines) + helpers `FilterBar.tsx` / `ScannerTable.tsx` (generic) / `useScannerFilters.ts` (generic filter dict + direction + scan-date, localStorage + settingsSync + hydration). Config: `palette` (colors), `filters`, optional `direction`, `scanFilters`/`postPayload`/`mapper`/`columns`/`renderCells`/`csvHeader`/`csvRow`, `defaultSortKey`. App-state props (`results`/`setResults`/`setProgress`/`viewMode`...) are supplied by the wrapper with exact types — **no casts needed anywhere**
+- [x] `ContinuationScanner` / `ReversalScanner` become thin config wrappers — ~103/105 lines (were ~505/~484)
+- Behaviour notes: per-field effects replaced by setter-persist + single mount persist/hydrate effect (identical request pattern on mount and change); scanner toasts now start `t-` ids (was `toast-...` in CacheData only — CacheData keeps its visible-on-click behaviour); breakout: the two old sort impls (`av < bv ? -1 : 1`) replaced with stable numeric/localeCompare compare (tie → 0)
+
+**Phase 3 evidence (21 Oct 2026):**
+
+| Check | Result |
+|-------|--------|
+| `tsc --noEmit` | ✅ clean |
+| `eslint src` | ✅ **48 problems (30 errors, 18 warnings)** vs Phase-2 51 (30, 21) — delta −3 |
+| vitest | ✅ 25/25 (ORB suites untouched by the UI refactor) |
+| `bun run build` | ✅ compiled in 4.0s |
+| Scanner wrapper sizes | Continuation **103** lines (was ~505), Reversal **105** (was ~484) |
+| Commit | `fef80ea` (13 files, +1120/−1007) |
 
 ### Phase 4 — Python tests (pytest)
 - [ ] Add `pytest` to `backend/requirements.txt`
@@ -236,6 +248,7 @@ This keeps each commit self-consistent and buildable.
 | 21 Oct 2026 | Phase 1 | Finished central API client + migrated all 13 remaining files, `.env.example` added. Deleted 25 bot scratch temp files from root; user notes moved to `docs/stock-vs-nifty/` + `docs/NSE_instrument_pipeline_notes_20Oct26.md`. Gates: grep-only-api.ts, tsc clean, eslint 126 = baseline, bun build ✅, backend import ✅. |
 | 21 Oct 2026 | Phase 4b (partial) | vitest 5.0.5 installed; `frontend/vitest.config.ts` + `test` script; **25 ORB regression tests across 2 suites written and green BEFORE any refactor** (fixture lesson: pre-entry `checkLowViolation()` must run in the test sequence like production ENTRY_TIME does, or post-entry ticks trip the rejection path). Commit `5bc5162`. |
 | 21 Oct 2026 | Phase 2 | Typed base class `OrbFields` (`orb-base.ts`), both state machines extend it, ~12 `as any` casts removed, `_firstTs` fixed in `OrbFields`, `lib/types.ts` created, `loadConfigFromPython` + `load` action fully typed (explicit `ScanRowLike`→`ScannerStock` mapping, `ScannerResult` optional fields), UI `any` kills in 6 components, `globals.d.ts` for `__addLiveLog`, 6 catch blocks typed. Gates: tsc ✅, eslint **51** (vs 126 baseline), vitest 25/25 ✅ post-refactor, build ✅ 4.2s, backend import ✅. Commit `cbd2121`. |
+| 21 Oct 2026 | Phase 3 | ScannerBase engine + 4 shared hooks; scanners went ~505/~484 → ~103/105 lines; scanner variant of the 1s poll hook; CacheData toast migrated with no-auto-dismiss + free-slot positions. Gates: tsc ✅, eslint **48** (30 err, 18 warn), vitest 25/25 ✅, build ✅ 4.0s. Commit `fef80ea`. |
 
 - [ ] Remove `test_write.txt` (stray scratch file at repo root)
 - [ ] Wire or remove unused config `trailingSlThreshold`
