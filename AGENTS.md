@@ -185,6 +185,28 @@ Each step produces test scripts in `tests/` that verify the new code works corre
 3. Tests compare new output against old codebase behavior where applicable
 4. After a bug fix, create/update a test that reproduces the bug so it never comes back
 
+**Verification commands (run from repo root unless noted):**
+```powershell
+# Backend unit tests (123 tests, date-independent — safe any day)
+backend\venv\Scripts\python.exe -m pytest tests
+
+# Backend import smoke
+cd backend ; .\venv\Scripts\python.exe -c "import sys; sys.path.insert(0,'.'); import server"
+
+# Frontend unit tests (37 tests: ORB regression, logger, errors)
+cd frontend ; bun run test
+
+# Frontend gates
+cd frontend ; bunx tsc --noEmit      # typecheck must be clean
+cd frontend ; bun run lint           # baseline: 48 problems — never exceed
+cd frontend ; bun run build          # production build must pass
+
+# Both servers
+bun run dev
+```
+
+Env overrides for tests/CI: `TRADESTACK_DB_PATH` (alternate SQLite file — used by pytest conftest), `TRADESTACK_LOGS_DIR` (alternate log dir), `NEXT_PUBLIC_PY_API` / `PY_API_INTERNAL` (backend URL for browser / Next server).
+
 **How to run tests:**
 ```powershell
 cd TradeStack\backend
