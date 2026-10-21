@@ -185,15 +185,19 @@ This keeps each commit self-consistent and buildable.
 | Scanner wrapper sizes | Continuation **103** lines (was ~505), Reversal **105** (was ~484) |
 | Commit | `fef80ea` (13 files, +1120/−1007) |
 
-### Phase 4 — Python tests (pytest)
-- [ ] Add `pytest` to `backend/requirements.txt`
-- [ ] `tests/conftest.py` — temp SQLite DB fixture (requires `DB_PATH` override hook in `backend/src/db.py`) + temp cache-dir fixture
-- [ ] `test_indicators.py` — SMA, ADR%, MA-angle, high/low distance vs hand-computed values
-- [ ] `test_scanner.py` — synthetic OHLCV: continuation hit/miss, reversal decline detection, base filters
-- [ ] `test_cache_manager.py` — save/load/update/merge idempotency, cache-index upsert
-- [ ] `test_db.py` — settings CRUD, stock-list CRUD, trade-log P&L
-- [ ] `test_server.py` — FastAPI TestClient smoke tests
-- [ ] **Replace the stale, date-dependent breadth test** with a date-independent pytest suite
+### Phase 4 — Python tests (pytest) — DONE (21 Oct 2026)
+- [x] `pytest` + `httpx` added to `backend/requirements.txt` (already present in venv)
+- [x] `tests/conftest.py` — session tmp SQLite DB via new `TRADESTACK_DB_PATH` env hook in `backend/src/db.py` + per-test `tmp_cache` fixture (CacheManager accepts `cache_dir`)
+- [x] `test_indicators.py` — SMA/ADR%/MA-angle slope (np.correlate orientation verified)/price change/high-low distance/filter helpers vs hand-computed values
+- [x] `test_scanner.py` — synthetic OHLCV: continuation zig-zag match (phase1/2/3 invariants), filters pass/fail, reversal pattern-logic matrix, best-decline-period, downtrend context
+- [x] `test_cache_manager.py` — save/load roundtrip, merge dedup `keep="last"` (7-bday overlap), corrupt/missing → None, cache-index upsert, batch-commit, rebuild_index, stats fallback
+- [x] `test_db.py` — settings CRUD, stock-list CRUD (`isNew` semantics), breadth upsert, trade-log auto-P&L (profit/loss), daily/yearly P&L, capital stats, upstox config
+- [x] `test_server.py` — TestClient smoke on safe endpoints (health, settings, stock-list, trades, breadth read) — scan/download endpoints deliberately excluded
+- [x] `test_settings_engine.py` — **regression for fresh-DB seed crash** (`options` SEED key broke `ensure_settings`/`reset_all` on empty tables → fixed with `_upsert_seed` strip helper)
+- [x] `test_breadth_bias.py` — date-independent: phase matrix, extremes ladder, range position, velocity, cycle, divergence, turn score, **all 16 resolve_bias priorities + overlays**, seeded `compute_daily_bias`
+- [x] **Stale date-dependent tests deleted** (`tests/test_bias_2026_08_19.py`, `tests/test_bias_engine.py` — they also imported real DB rows and had an outdated `resolve_bias` arity)
+- [x] Production bugs fixed by the suite: `settings.py:181/150/170` fresh-DB `TypeError` (options key) + `db.get_cache_stats()` rounding `total_size_mb` to 0.0 for caches < ~10MB (frontend formats itself; db + `cache_manager.stats()` now return un-rounded values)
+- Result: **111 passed in ~2.6s** (`.\backend\venv\Scripts\python.exe -m pytest tests` from repo root)
 
 ### Phase 4b — Frontend tests (Vitest)
 - [ ] Add `vitest` + config to `frontend/`
@@ -249,6 +253,7 @@ This keeps each commit self-consistent and buildable.
 | 21 Oct 2026 | Phase 4b (partial) | vitest 5.0.5 installed; `frontend/vitest.config.ts` + `test` script; **25 ORB regression tests across 2 suites written and green BEFORE any refactor** (fixture lesson: pre-entry `checkLowViolation()` must run in the test sequence like production ENTRY_TIME does, or post-entry ticks trip the rejection path). Commit `5bc5162`. |
 | 21 Oct 2026 | Phase 2 | Typed base class `OrbFields` (`orb-base.ts`), both state machines extend it, ~12 `as any` casts removed, `_firstTs` fixed in `OrbFields`, `lib/types.ts` created, `loadConfigFromPython` + `load` action fully typed (explicit `ScanRowLike`→`ScannerStock` mapping, `ScannerResult` optional fields), UI `any` kills in 6 components, `globals.d.ts` for `__addLiveLog`, 6 catch blocks typed. Gates: tsc ✅, eslint **51** (vs 126 baseline), vitest 25/25 ✅ post-refactor, build ✅ 4.2s, backend import ✅. Commit `cbd2121`. |
 | 21 Oct 2026 | Phase 3 | ScannerBase engine + 4 shared hooks; scanners went ~505/~484 → ~103/105 lines; scanner variant of the 1s poll hook; CacheData toast migrated with no-auto-dismiss + free-slot positions. Gates: tsc ✅, eslint **48** (30 err, 18 warn), vitest 25/25 ✅, build ✅ 4.0s. Commit `fef80ea`. |
+| 21 Oct 2026 | Phase 4 | Full pytest suite: conftest (TRADESTACK_DB_PATH + tmp cache), indicators/scanner/cache/db/server/settings-engine/breadth-bias tests — synthetic, date-independent. Killed the stale date-dependent breadth scripts. Suite caught **2 latent production bugs** (options-key crash on fresh DB seeding; total_size_mb 0.0 rounding) which were fixed. Gates: **pytest 111/111 ✅** (~2.6s), backend `import server` ✅. |
 
 - [ ] Remove `test_write.txt` (stray scratch file at repo root)
 - [ ] Wire or remove unused config `trailingSlThreshold`
