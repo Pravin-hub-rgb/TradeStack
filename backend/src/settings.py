@@ -84,6 +84,7 @@ SEED: list[dict] = [
     {"key": "trading_capital", "value": "100000", "type": "number", "category": "live_trading", "label": "Trading Capital", "description": "Total capital allocated for live trading", "min": "10000", "max": "10000000", "step": "10000"},
     {"key": "trading_quantity", "value": "100", "type": "number", "category": "live_trading", "label": "Trading Quantity", "description": "Number of shares per trade", "min": "1", "max": "10000", "step": "1"},
     {"key": "paper_trading", "value": "true", "type": "boolean", "category": "live_trading", "label": "Paper Trading", "description": "Run in paper trading mode (no real orders)"},
+    {"key": "order_product", "value": "I", "type": "string", "category": "live_trading", "label": "Real Order Product", "description": "Upstox product for real orders: I=Intraday, D=Delivery, MTF"},
     # ---- Connection / WebSocket ----
     {"key": "api_poll_delay_seconds", "value": "5", "type": "number", "category": "connection", "label": "API Poll Delay (seconds)", "description": "Delay between API status polls", "min": "1", "max": "60", "step": "1"},
     {"key": "api_retry_delay_seconds", "value": "30", "type": "number", "category": "connection", "label": "API Retry Delay (seconds)", "description": "Delay before retrying failed API call", "min": "1", "max": "300", "step": "5"},

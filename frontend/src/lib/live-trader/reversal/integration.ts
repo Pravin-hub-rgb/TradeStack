@@ -2,14 +2,13 @@ import { UpstoxStreamer } from "../streamer";
 import { ReversalStockMonitor, ReversalStockState } from "./stock-monitor";
 import { ReversalTickProcessor } from "./tick-processor";
 import { SubscriptionManager } from "./subscription-mgr";
-import { PaperTrader } from "../paper-trader";
-import { TradableStock } from "../paper-trader";
+import { TradeExecutor } from "../order-executor";
 import { StockStateEnum, OHLCData } from "../types";
 
 export class ReversalIntegration {
   private streamer: UpstoxStreamer;
   private monitor: ReversalStockMonitor;
-  private paperTrader: PaperTrader | null;
+  private tradeExecutor: TradeExecutor | null;
   private tickProcessors: Map<string, ReversalTickProcessor> = new Map();
   private enteredCount = 0;
   private lastTickTs: Map<string, number> = new Map();
@@ -20,12 +19,12 @@ export class ReversalIntegration {
   constructor(
     streamer: UpstoxStreamer,
     monitor: ReversalStockMonitor,
-    paperTrader: PaperTrader | null = null,
+    tradeExecutor: TradeExecutor | null = null,
     maxPositions = 2,
   ) {
     this.streamer = streamer;
     this.monitor = monitor;
-    this.paperTrader = paperTrader;
+    this.tradeExecutor = tradeExecutor;
     this.maxPositions = maxPositions;
 
     this.subscriptionManager = new SubscriptionManager(streamer, monitor);
@@ -71,7 +70,7 @@ export class ReversalIntegration {
       Math.abs(stock.entryTime.getTime() - timestamp.getTime()) < 1000
     ) {
       const tradeType = stock.situation === "reversal_s2" ? "reversal_oops" : "reversal_ss";
-      this.paperTrader?.logEntry(stock, price, timestamp, tradeType);
+      this.tradeExecutor?.logEntry(stock, price, timestamp, tradeType);
       this.checkAndUnsubscribeAfterPositionsFilled();
     }
 
@@ -80,7 +79,7 @@ export class ReversalIntegration {
       stock.exitTime &&
       Math.abs(stock.exitTime.getTime() - timestamp.getTime()) < 1000
     ) {
-      this.paperTrader?.logExit(stock, price, timestamp, "Stop Loss Hit");
+      this.tradeExecutor?.logExit(stock, price, timestamp, "Stop Loss Hit");
       // Immediately unsubscribe the exited stock from WebSocket feed
       this.subscriptionManager.safeUnsubscribe([stock.instrumentKey], "exit");
       this.subscriptionManager.markStocksUnsubscribed([stock.instrumentKey]);

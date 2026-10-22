@@ -136,6 +136,7 @@ async function loadConfigFromPython(): Promise<LiveTraderConfig> {
     svroMinVolumeRatio: (Number(s["svro_min_volume_ratio"]) || 7.5) / 100,
     gapUpMaxPct: (Number(s["gap_up_max_pct"]) || 5) / 100,
     paperTrading: s["paper_trading"] !== "false",
+    orderProduct: (["I", "D", "MTF"].includes(s["order_product"]) ? s["order_product"] : "I") as "I" | "D" | "MTF",
     riskPerTrade: Number(s["risk_per_trade"]) || Number(s["trading_capital"]) * (Number(s["risk_per_trade_pct"]) || 0.5) / 100,
   };
 }

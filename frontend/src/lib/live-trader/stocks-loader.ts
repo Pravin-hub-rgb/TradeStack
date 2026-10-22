@@ -1,9 +1,9 @@
-import { LiveTraderConfig, ScannerResult, ScannerStock, ReversalSituation } from "./types";
+import { LiveTraderConfig, ScannerResult, ReversalSituation } from "./types";
 import { ReversalStockMonitor } from "./reversal/stock-monitor";
 import { ReversalIntegration } from "./reversal/integration";
 import { StockMonitor as ContinuationStockMonitor } from "./continuation/stock-monitor";
 import { ContinuationIntegration } from "./continuation/integration";
-import { PaperTrader } from "./paper-trader";
+import { TradeExecutor } from "./order-executor";
 import { UpstoxStreamer } from "./streamer";
 
 export interface LoadResult {
@@ -15,7 +15,7 @@ export function loadStocksFromScanner(
   mode: "reversal" | "continuation",
   config: LiveTraderConfig,
   streamer: UpstoxStreamer,
-  paperTrader: PaperTrader | null,
+  tradeExecutor: TradeExecutor | null,
   reversalMonitor: ReversalStockMonitor,
   continuationMonitor: ContinuationStockMonitor,
   scannerResult: ScannerResult,
@@ -44,7 +44,7 @@ export function loadStocksFromScanner(
       log(`Loaded reversal stock: ${stock.symbol} (prev close: ${stock.previousClose}, decline: ${stock.declineDays || 0}d)`);
     }
 
-    reversalIntegration = new ReversalIntegration(streamer, reversalMonitor, paperTrader, config.maxPositions);
+    reversalIntegration = new ReversalIntegration(streamer, reversalMonitor, tradeExecutor, config.maxPositions);
   }
 
   if (mode === "continuation" && scannerResult.continuation) {
@@ -66,7 +66,7 @@ export function loadStocksFromScanner(
       log(`Loaded continuation stock: ${stock.symbol} (prev close: ${stock.previousClose})`);
     }
 
-    continuationIntegration = new ContinuationIntegration(streamer, continuationMonitor, paperTrader, config.maxPositions);
+    continuationIntegration = new ContinuationIntegration(streamer, continuationMonitor, tradeExecutor, config.maxPositions);
   }
 
   streamer.updateActiveInstruments(instrumentKeys);

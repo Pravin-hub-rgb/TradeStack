@@ -150,6 +150,8 @@ export interface LTPC {
   cp?: number;
 }
 
+export type OrderProduct = "I" | "D" | "MTF";
+
 export interface LiveTraderConfig {
   accessToken: string;
   marketOpen: string;
@@ -167,6 +169,7 @@ export interface LiveTraderConfig {
   svroMinVolumeRatio: number;
   gapUpMaxPct: number;
   paperTrading: boolean;
+  orderProduct: OrderProduct;
   riskPerTrade: number;
 }
 

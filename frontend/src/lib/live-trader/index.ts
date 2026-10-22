@@ -12,6 +12,7 @@ import { sleepUntilIST, PY_API } from "./task-utils";
 import { runPreMarketFlow, PreMarketParams } from "./pre-market-flow";
 import { loadStocksFromScanner } from "./stocks-loader";
 import type { LogLevel } from "@/lib/logger";
+import { createTradeExecutor, type TradeExecutor } from "./order-executor";
 
 export type BotMode = "reversal" | "continuation";
 
@@ -20,6 +21,7 @@ export class LiveTraderOrchestrator {
   public config: LiveTraderConfig | null = null;
   public streamer: UpstoxStreamer | null = null;
   public paperTrader: PaperTrader | null = null;
+  public tradeExecutor: TradeExecutor | null = null;
 
   public reversalMonitor: ReversalStockMonitor | null = null;
   public reversalIntegration: ReversalIntegration | null = null;
@@ -65,9 +67,16 @@ export class LiveTraderOrchestrator {
     }
     this.streamer.setSymbolMap(symbolMap);
 
-    if (this.config.paperTrading) {
-      this.paperTrader = new PaperTrader(this.config.capital, this.config.riskPerTrade, this.config.entrySlPct, this.sessionId);
-    }
+    if (this.config.paperTrading) this.paperTrader = new PaperTrader(this.config.capital, this.config.riskPerTrade, this.config.entrySlPct, this.sessionId);
+    this.tradeExecutor = createTradeExecutor(
+      this.config.paperTrading,
+      {
+        logEntry: (stock, price, time, tradeType) => this.paperTrader?.logEntry(stock, price, time, tradeType),
+        logExit: (stock, price, time, reason) => this.paperTrader?.logExit(stock, price, time, reason),
+      },
+      this.config.accessToken,
+      { product: this.config.orderProduct, quantity: this.config.quantity },
+    );
 
     if (instruments.length > 0) this.streamer.updateActiveInstruments(instruments);
 
@@ -86,7 +95,7 @@ export class LiveTraderOrchestrator {
           this.log(`Loaded reversal stock: ${s.symbol} (prev close: ${s.previousClose}, decline: ${s.declineDays || 0}d)`);
         }
       }
-      this.reversalIntegration = new ReversalIntegration(this.streamer, this.reversalMonitor, this.paperTrader, this.config?.maxPositions);
+      this.reversalIntegration = new ReversalIntegration(this.streamer, this.reversalMonitor, this.tradeExecutor, this.config?.maxPositions);
       this.reversalMonitor.marketOpenTime = this.config.marketOpenTime;
     }
 
@@ -104,7 +113,7 @@ export class LiveTraderOrchestrator {
           this.log(`Loaded continuation stock: ${s.symbol} (prev close: ${s.previousClose})`);
         }
       }
-      this.continuationIntegration = new ContinuationIntegration(this.streamer, this.continuationMonitor, this.paperTrader, this.config?.maxPositions);
+      this.continuationIntegration = new ContinuationIntegration(this.streamer, this.continuationMonitor, this.tradeExecutor, this.config?.maxPositions);
       this.continuationMonitor.marketOpenTime = this.config.marketOpenTime;
     }
   }
@@ -306,7 +315,7 @@ export class LiveTraderOrchestrator {
     if (!this.streamer || !this.config) return;
     if (!this.reversalMonitor && !this.continuationMonitor) return;
     const result = loadStocksFromScanner(
-      this.mode, this.config, this.streamer, this.paperTrader,
+      this.mode, this.config, this.streamer, this.tradeExecutor,
       this.reversalMonitor!, this.continuationMonitor!, scannerResult,
       (msg) => this.log(msg),
     );

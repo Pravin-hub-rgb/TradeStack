@@ -275,6 +275,16 @@ This keeps each commit self-consistent and buildable.
 ### Phase 10 — Bug fix: reversal "max positions filled" (DONE 06 Aug 2026)
 - [x] Already fixed upstream in `index.ts` — backups stay subscribed as standby
 
+### Phase 12 — Real-order execution (DONE 22 Oct 2026)
+Beyond the original checklist: fills the OFF side of the `paper_trading` switch.
+- [x] `order-executor.ts` — `TradeExecutor` seam + `PaperExecutor` + `UpstoxExecutor` (MARKET entry → fill poll → SL-M stop → trade log; exits manual, never placed)
+- [x] Wired into orchestrator + both integrations + stocks-loader (param rename `paperTrader` → `tradeExecutor`)
+- [x] `order_product` setting seeded (I/D/MTF, live_trading) + `route.ts` mapping + `OrderProduct` type in `types.ts`
+- [x] LiveTrading.tsx real-mode confirm dialog (red, explicit consequence text)
+- [x] Solved during work: `time` missing in `executeEntry`, required `entry_date` field, rejected-SL mislog, SL polled forever
+- [x] 7 executor vitest tests (mocked fetch, fake timers) — suite 44/44; tsc clean; lint **45** (below 46 baseline); build ✅; pytest 123/123 ✅
+- [x] Step doc: `docs/steps/step22_real_order_execution_22Oct26.md`
+
 ### Phase 11 — Cross-PC deployment: Docker + desktop shortcut
 - [ ] `Dockerfile.backend` — `python:3.11-slim`, uvicorn on `0.0.0.0:8001`
 - [ ] `Dockerfile.frontend` — `oven/bun:1`, `next start -p 3000`

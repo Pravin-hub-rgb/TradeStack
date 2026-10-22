@@ -2,13 +2,13 @@ import { UpstoxStreamer } from "../streamer";
 import { StockMonitor, ContinuationStockState } from "./stock-monitor";
 import { ContinuationTickProcessor } from "./tick-processor";
 import { ContinuationSubscriptionManager } from "./subscription-mgr";
-import { PaperTrader } from "../paper-trader";
+import { TradeExecutor } from "../order-executor";
 import { StockStateEnum, OHLCData } from "../types";
 
 export class ContinuationIntegration {
   private streamer: UpstoxStreamer;
   private monitor: StockMonitor;
-  private paperTrader: PaperTrader | null;
+  private tradeExecutor: TradeExecutor | null;
   private tickProcessors: Map<string, ContinuationTickProcessor> = new Map();
   private enteredCount = 0;
   private lastTickTs: Map<string, number> = new Map();
@@ -19,12 +19,12 @@ export class ContinuationIntegration {
   constructor(
     streamer: UpstoxStreamer,
     monitor: StockMonitor,
-    paperTrader: PaperTrader | null = null,
+    tradeExecutor: TradeExecutor | null = null,
     maxPositions = 2,
   ) {
     this.streamer = streamer;
     this.monitor = monitor;
-    this.paperTrader = paperTrader;
+    this.tradeExecutor = tradeExecutor;
     this.maxPositions = maxPositions;
 
     for (const stock of monitor.stocks.values()) {
@@ -69,7 +69,7 @@ export class ContinuationIntegration {
       stock.entryTime &&
       Math.abs(stock.entryTime.getTime() - timestamp.getTime()) < 1000
     ) {
-      this.paperTrader?.logEntry(stock, price, timestamp, "continuation");
+      this.tradeExecutor?.logEntry(stock, price, timestamp, "continuation");
       this.checkAndUnsubscribeAfterPositionsFilled();
     }
 
@@ -78,7 +78,7 @@ export class ContinuationIntegration {
       stock.exitTime &&
       Math.abs(stock.exitTime.getTime() - timestamp.getTime()) < 1000
     ) {
-      this.paperTrader?.logExit(stock, price, timestamp, "Stop Loss Hit");
+      this.tradeExecutor?.logExit(stock, price, timestamp, "Stop Loss Hit");
       this.subscriptionManager.safeUnsubscribe([stock.instrumentKey], "exit");
       this.subscriptionManager.markStocksUnsubscribed([stock.instrumentKey]);
     }

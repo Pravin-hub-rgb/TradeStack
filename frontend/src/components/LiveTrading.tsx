@@ -83,6 +83,7 @@ export default function LiveTrading() {
     message: string;
   } | null>(null);
   const [showStaleDialog, setShowStaleDialog] = useState(false);
+  const [showRealConfirm, setShowRealConfirm] = useState(false);
 
   const { toasts, showToast, removeToast } = useToastStack();
 
@@ -193,6 +194,17 @@ export default function LiveTrading() {
   }, []);
 
   const doStart = async () => {
+    // Real-mode gate: paper_trading=false means live orders will be placed.
+    let realMode = false;
+    try {
+      const pd = (await fetch(`${PY_API}/api/settings/paper_trading`).then((r) => r.json())) as { value?: string };
+      realMode = (pd.value ?? "true") === "false";
+    } catch { /* default to paper behavior */ }
+    if (realMode) setShowRealConfirm(true);
+    else void startBot();
+  };
+
+  const startBot = async () => {
     setIsStarting(true);
     setError("");
     try {
@@ -510,6 +522,61 @@ export default function LiveTrading() {
               </Typography>
             </Paper>
           )}
+
+          {/* Real-money mode confirmation dialog */}
+          <Dialog
+            open={showRealConfirm}
+            onClose={() => setShowRealConfirm(false)}
+            slotProps={{
+              paper: {
+                sx: {
+                  bgcolor: "#1e293b",
+                  color: "#e2e8f0",
+                  border: "1px solid #ef4444",
+                  borderRadius: 2,
+                  minWidth: 460,
+                },
+              },
+            }}
+          >
+            <DialogTitle sx={{ fontWeight: 700, color: "#ef4444" }}>
+              Real-Money Mode Active
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText sx={{ color: "#cbd5e1", mb: 2 }}>
+                Paper trading is <strong style={{ color: "#ef4444" }}>OFF</strong>. Starting the
+                bot will place <strong>REAL orders on your Upstox account</strong>: a MARKET
+                entry order, then an SL-M stop order once the entry fills. Exits are manual —
+                the bot does not square off positions.
+              </DialogContentText>
+              <Typography variant="body2" sx={{ color: "#94a3b8" }}>
+                Quantity, product (I/D/MTF) and SL % come from Settings. Make sure quantity and
+                capital settings are what you intend.
+              </Typography>
+            </DialogContent>
+            <DialogActions sx={{ p: 2, gap: 1 }}>
+              <Button
+                onClick={() => setShowRealConfirm(false)}
+                sx={{ color: "#94a3b8", textTransform: "none" }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowRealConfirm(false);
+                  void startBot();
+                }}
+                variant="contained"
+                sx={{
+                  background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+                  textTransform: "none",
+                  "&:hover": { background: "linear-gradient(135deg, #dc2626 0%, #b91c1c 100%)" },
+                }}
+              >
+                I understand — start real trading
+              </Button>
+            </DialogActions>
+          </Dialog>
 
           {/* Stale cache warning dialog */}
           <Dialog
