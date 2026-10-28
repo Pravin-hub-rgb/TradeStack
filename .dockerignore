@@ -1,0 +1,57 @@
+# TradeStack — Docker build context exclusions.
+# Applies to BOTH Dockerfile.backend and Dockerfile.frontend (root context).
+
+# --- OS / editor / scratch ---
+*.log
+*.py[cod]
+__pycache__/
+*.egg-info/
+.Python
+
+# --- VCS & local tooling ---
+.git/
+.gitignore
+*.md
+.kilo/
+old-legacy-code/
+
+# --- Node ---
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+frontend/.env
+.env
+.env.local
+.env.production
+
+# --- Python venv (rebuilt inside the image) ---
+backend/venv/
+backend/.venv/
+venv/
+ENV/
+
+# --- Tests (not needed in runtime images) ---
+tests/
+.pytest_cache/
+.coverage
+
+# --- Data: runtime bind-mount, not baked image content ---
+# The repo only tracks data/NSE.json.gz (instrument map). Everything else
+# (settings.db, cache/*.pkl, logs) is gitignored and provided/managed at
+# runtime via the ./data bind-mount in docker-compose.yml.
+data/cache/
+data/logs/
+data/settings.db
+*.pkl
+*.csv.gz
+
+# --- Build artifacts & misc scratch ---
+downloads/
+reports/
+trade_logs/
+market_breadth_reports/
+reversal_scans/
+continuation_scans/
+debug_*.py
+*_debug.py

@@ -1,0 +1,39 @@
+# ====================================================================
+# TradeStack — Backend Docker image (FastAPI data microservice)
+# python:3.11-slim + uvicorn
+# ====================================================================
+FROM python:3.11-slim AS base
+
+# python:3.11-slim is a minimal image; keep deps tight.
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Mirror the repo layout so file-location-based path resolution keeps working:
+#   backend/src/upstox_fetcher.py -> __file__ -> up 3 parents -> /app/data/
+WORKDIR /app/backend
+
+# Install Python dependencies first (cached layer).
+COPY backend/requirements.txt /app/backend/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy backend source (src/, server.py, etc.).
+COPY backend/ /app/backend/
+
+# Bundle the NSE instrument map OUTSIDE data/ so a bind-mounted ./data volume
+# (which masks /app/data at runtime) never hides it. The entrypoint copies it
+# into /app/data/ at startup if the bind-mount doesn't already provide one.
+COPY data/NSE.json.gz /app/instruments/NSE.json.gz
+
+# Healthcheck helper: probe the /health endpoint using stdlib only (no curl).
+COPY docker/backend-healthcheck.py /app/backend/healthcheck.py
+
+# Entrypoint guarantees the instrument map is present in the runtime data
+# volume (handles fresh/empty bind-mounts on a cloned or image-imported PC).
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+EXPOSE 8001
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["uvicorn", "server:app", "--host", "0.0.0.0", "--port", "8001"]

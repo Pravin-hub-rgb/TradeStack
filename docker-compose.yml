@@ -1,0 +1,55 @@
+# ====================================================================
+# TradeStack — Docker Compose (portable deployment for any PC)
+#
+# The tri-partite split is preserved:
+#   frontend  — Next.js UI (port 3000)
+#   backend   — FastAPI data svc (port 8001)
+#
+# networking:
+#   browser  -> http://localhost:8001  (NEXT_PUBLIC_PY_API, baked at build)
+#   next.js  -> http://backend:8001    (PY_API_INTERNAL, service DNS)
+#
+# data/: bind-mounted into backend -> settings.db + cache persist on host.
+# ====================================================================
+name: tradestack
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    image: tradestack/backend:1.0
+    container_name: tradestack-backend
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./data:/app/data
+    environment:
+      # Point SQLite + logs into the bind-mounted volume (persist on host).
+      - TRADESTACK_DB_PATH=/app/data/settings.db
+      - TRADESTACK_LOGS_DIR=/app/data/logs
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as r; r.urlopen('http://127.0.0.1:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        # Baked at build time (browser-side base URL).
+        NEXT_PUBLIC_PY_API: http://localhost:8001
+    image: tradestack/frontend:1.0
+    container_name: tradestack-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # Runtime, server-side only (Next.js server -> backend service by name).
+      - PY_API_INTERNAL=http://backend:8001
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

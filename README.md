@@ -170,6 +170,53 @@ Backend env overrides (useful for tests/CI): `TRADESTACK_DB_PATH` (alternate SQL
 
 ---
 
+## Run on another PC (Docker)
+
+TradeStack ships as two containers with `docker compose`. A target machine needs **only Docker Desktop** — no Python, Node, or bun. A native dev path (`bun run dev`) remains the recommended way to run locally.
+
+### Install Docker Desktop (Windows, one-time)
+
+Docker Desktop requires WSL 2 and hardware virtualization. You can check virtualization **without rebooting into BIOS**:
+
+1. **Task Manager → Performance → CPU** — look for **Virtualization: Enabled**. (PowerShell equivalent: `Get-CimInstance Win32_Processor | Select-Object -ExpandProperty VirtualizationFirmwareEnabled`.)
+2. Install WSL 2 (open PowerShell **as Administrator**): `wsl --install` → **reboot** when prompted.
+3. Download [Docker Desktop for Windows](https://docker.com/products/docker-desktop), run the installer as Administrator, leave **Use WSL 2 instead of HyperV** checked → **reboot**.
+4. Launch Docker Desktop → accept the EULA → choose "Personal use" → (optionally sign in).
+5. Verify: `docker run hello-world` → prints `Hello from Docker!`.
+
+> Virtualization must read **Enabled** in step 1. If it reads **Disabled**, enable **Intel VT-x** / **AMD-V** in your UEFI/BIOS firmware first, then retry.
+
+Once Docker is running, start TradeStack:
+
+**Files:** `Dockerfile.backend`, `Dockerfile.frontend`, `docker-compose.yml`, `.dockerignore`, and one-click scripts: `docker-start.bat` / `docker-start.sh` (build + start + open browser + stream logs), `docker-stop.bat` / `docker-stop.sh` (teardown), `install-shortcut.bat` (desktop `.lnk`).
+
+**Quick start:**
+
+```powershell
+docker-start.bat      # Windows
+./docker-start.sh     # Linux / macOS
+```
+
+The stack exposes `localhost:3000` (frontend) and `localhost:8001` (backend). Networking split (already designed in `frontend/src/lib/api.ts`):
+- **Browser → backend** = `http://localhost:8001` — `NEXT_PUBLIC_PY_API`, baked at build time.
+- **Next.js server → backend** = `http://backend:8001` — `PY_API_INTERNAL`, injected at runtime (service name via Docker DNS).
+
+**Data persistence:** `./data` is bind-mounted into the backend container, so `settings.db`, `cache/`, and `logs/` live on the host and survive image rebuilds. `data/NSE.json.gz` (the 8635-entry NSE instrument map, tracked in git) is included from the clone and also bundled in the backend image as a fallback for image-import setups (an entrypoint restores it into a fresh volume). Backend startup auto-seeds the DB on first run (`settings.py:ensure_settings()`).
+
+**Offline PC (demo / interview, no internet on the target):**
+
+```powershell
+docker compose build
+docker save tradestack/backend:1.0 tradestack/frontend:1.0 -o tradestack-images.tar
+# copy tradestack-images.tar (+ ./data if you have it) to PC2
+docker load -i tradestack-images.tar
+docker-start.bat    # entrypoint restores NSE.json.gz if ./data is empty
+```
+
+> Requires Docker Compose v2 (`docker compose`, not legacy `docker-compose`).
+
+---
+
 ## End-to-End Data Flow
 
 1. **Data in** — *Scanner → Cache Data* tab: "Update Bhavcopy" (NSE EOD) or "Download Historical" (Upstox, ~180 calendar days/stock) run as tracked background operations (`/api/data/update-bhavcopy` → progress polling). Each write goes `cache/<SYMBOL>.pkl` → SQLite `cache_index` upsert.

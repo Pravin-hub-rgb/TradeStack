@@ -1,0 +1,35 @@
+# ====================================================================
+# TradeStack — Frontend Docker image (Next.js 16, App Router)
+# oven/bun:1  ->  bun install  ->  bun run build  ->  next start
+# ====================================================================
+FROM oven/bun:1 AS base
+
+WORKDIR /app
+
+# Install dependencies first (cached layer).
+COPY frontend/package.json frontend/bun.lock ./
+RUN bun install --frozen-lockfile
+
+# Copy the rest of the frontend source.
+COPY frontend/ .
+
+# --- Build-time configuration --------------------------------------
+# NEXT_PUBLIC_* vars are inlined by Next.js into the CLIENT bundle at BUILD
+# time. The browser reaches the backend on the HOST (localhost:8001 maps to
+# the backend container's exposed port). This is a build arg so the value is
+# baked into the production image.
+ARG NEXT_PUBLIC_PY_API=http://localhost:8001
+ENV NEXT_PUBLIC_PY_API=${NEXT_PUBLIC_PY_API} \
+    NEXT_TELEMETRY_DISABLED=1
+
+# Build the production client bundle.
+RUN bun run build
+
+# --- Runtime -------------------------------------------------------
+# PY_API_INTERNAL is read by serverless/server code (app/api/* routes) at
+# REQUEST time, so it is NOT a NEXT_PUBLIC var and is injected via compose
+# environment (defaults to NEXT_PUBLIC_PY_API if unset — see lib/api.ts).
+EXPOSE 3000
+ENV NODE_ENV=production
+
+CMD ["bun", "run", "start", "--port", "3000"]

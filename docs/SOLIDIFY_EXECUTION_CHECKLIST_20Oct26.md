@@ -267,6 +267,8 @@ This keeps each commit self-consistent and buildable.
 | 21 Oct 2026 | Phase 6 | ErrorBoundary wrapped around page children; `lib/logger.ts` (severity + sinks) + `lib/errors.ts` (`errorMessage`) with vitest coverage and `api.ts` adoption; live-trader logs now structured with severity end-to-end (`LogLine` through `__addLiveLog` → route buffer/SSE → TerminalLogs level colors). Gates: vitest **37/37 ✅**, tsc ✅, eslint baseline 48 restored, build ✅. |
 | 21 Oct 2026 | Phase 7 | README rewritten (ASCII + Mermaid architecture diagram, "why" tech-stack table, command/env tables, E2E data flow, testing table); AGENTS.md Testing Approach now lists the real verification commands. Commit `e1b8afa`. Docs-only — no code gates. |
 | 21 Oct 2026 | Phase 8 | `setup.ps1` (verified end-to-end: bun installs, venv, pip, seed) + `setup.sh` (bash -n clean) + `backend/seed_db.py` (init_db + ensure_settings + rebuild_index → 2658 entries) + root `.env.example`; `data/NSE.json.gz` tracked via `data/*`/`!data/NSE.json.gz` negations. pytest 123/123 re-verified after seed script. Commit `8855c91`. |
+| 28 Oct 2026 | Phase 12 | Real-order execution (the chat's work): `order-executor.ts` seam (Paper/Upstox executors), wired into orchestrator + both integrations + stocks-loader; `order_product` setting seed; LiveTrading.tsx real-mode confirm dialog; 2 bugs fixed (time undefined, missing entry_date). Commit `c7a7630`. Gates: vimest 44/44, tsc clean, lint 45, build ✅, pytest 123/123. |
+| 28 Oct 2026 | Phase 11 | Cross-PC deployment: Dockerized frontend (bun) + backend (python:3.11-slim). `docker-compose.yml` with `./data` bind-mount, `NEXT_PUBLIC_PY_API` (build) + `PY_API_INTERNAL` (runtime) split, backend healthcheck. CORS: added `127.0.0.1:3000`. Entry-point restores `NSE.json.gz` in fresh volumes. README "Run on another PC" + step23 doc. Docker NOT installed locally → authored + syntax-reviewed, not build-tested. Branch `phase11/docker-deploy`. |
 
 - [x] Remove `test_write.txt` (stray scratch file at repo root) — Phase 9
 - [x] Wire or remove unused config `trailingSlThreshold` — removed the dead TS plumbing; Settings row stays, reserved — Phase 9
@@ -286,14 +288,14 @@ Beyond the original checklist: fills the OFF side of the `paper_trading` switch.
 - [x] Step doc: `docs/steps/step22_real_order_execution_22Oct26.md`
 
 ### Phase 11 — Cross-PC deployment: Docker + desktop shortcut
-- [ ] `Dockerfile.backend` — `python:3.11-slim`, uvicorn on `0.0.0.0:8001`
-- [ ] `Dockerfile.frontend` — `oven/bun:1`, `next start -p 3000`
-- [ ] `docker-compose.yml` — 2 services, `./data` bind-mount, `NEXT_PUBLIC_PY_API` baked at build
-- [ ] **Use `data/NSE.json.gz`**, not the stale `data/complete.csv.gz` assumption
-- [ ] CORS — add `http://127.0.0.1:3000` defensively in `backend/server.py`
-- [ ] `start.bat` / `start.sh` / `stop.bat` / `stop.sh` / `install-shortcut.bat`
-- [ ] README "Run on another PC" section
-- [!] **Docker not installed locally** → files can be authored and lint-reviewed, but **cannot be built or run-tested**
+- [x] `Dockerfile.backend` — `python:3.11-slim`, uvicorn on `0.0.0.0:8001`
+- [x] `Dockerfile.frontend` — `oven/bun:1`, `next start -p 3000`
+- [x] `docker-compose.yml` — 2 services, `./data` bind-mount, `NEXT_PUBLIC_PY_API` baked at build, `PY_API_INTERNAL` at runtime, explicit image tags + backend healthcheck
+- [x] **`data/NSE.json.gz`** bundled in backend image (at `/app/instruments/`) + restorable into fresh bind-mount volumes via entrypoint
+- [x] CORS — added `http://127.0.0.1:3000` in `backend/server.py`
+- [x] `docker-start.bat` / `docker-start.sh` / `docker-stop.bat` / `docker-stop.sh` / `install-shortcut.bat`
+- [x] README "Run on another PC (Docker)" section
+- [!] **Docker not installed locally** → files authored + syntax-reviewed, but **cannot be built or run-tested** here
 
 ---
 
