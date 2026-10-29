@@ -193,9 +193,12 @@ Once Docker is running, start TradeStack:
 **Quick start:**
 
 ```powershell
-docker-start.bat      # Windows
-./docker-start.sh     # Linux / macOS
+.\docker-start.bat      # Windows PowerShell (note the .\ prefix)
+docker-start.bat        # ...or Command Prompt (same directory)
+./docker-start.sh       # Linux / macOS
 ```
+
+PowerShell won't run a `.bat` in the current directory without `.\`; Command Prompt and the desktop shortcut work bare.
 
 The stack exposes `localhost:3000` (frontend) and `localhost:8001` (backend). Networking split (already designed in `frontend/src/lib/api.ts`):
 - **Browser → backend** = `http://localhost:8001` — `NEXT_PUBLIC_PY_API`, baked at build time.
@@ -210,7 +213,7 @@ docker compose build
 docker save tradestack/backend:1.0 tradestack/frontend:1.0 -o tradestack-images.tar
 # copy tradestack-images.tar (+ ./data if you have it) to PC2
 docker load -i tradestack-images.tar
-docker-start.bat    # entrypoint restores NSE.json.gz if ./data is empty
+.\docker-start.bat    # entrypoint restores NSE.json.gz if ./data is empty
 ```
 
 > Requires Docker Compose v2 (`docker compose`, not legacy `docker-compose`).
