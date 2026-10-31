@@ -121,3 +121,6 @@ tests/
 
 # Fix/dev notes
 fix/
+
+# Project notes (local-only, not pushed)
+docs/notes/
