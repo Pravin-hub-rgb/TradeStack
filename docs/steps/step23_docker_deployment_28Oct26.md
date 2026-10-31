@@ -4,6 +4,18 @@
 **Phase:** SOLIDIFY Phase 11 (Cross-PC deployment) + docs
 **Branch:** `phase11/docker-deploy`
 
+## Quick run
+
+```powershell
+docker compose up -d    # start backend (8001) + frontend (3000)
+docker-start.bat        # ...or one-click: up + health poll + opens browser
+docker-stop.bat         # stop & remove containers (./data persists)
+```
+
+> Fresh clone + Docker only: `./data` already holds `NSE.json.gz` (tracked in git), and the
+> entrypoint auto-seeds `settings.db` on first backend start (`settings.py:ensure_settings()`).
+> See [Validation](#validation) to confirm the stack.
+
 ## Why this step
 
 The SOLIDIFY plan (`SOLIDIFY_TRADESTACK_PLAN_3Aug26.md`) treats deployment-readiness as Priority #1 for making TradeStack an interview-grade asset. Phase 8 delivered a **native** setup script (`setup.ps1`/`setup.sh`); Phase 11 delivers the **portable** path: a target PC that has *only Docker* can run the whole stack with one click. This is also the demo/interview path (export images → load on an offline PC).

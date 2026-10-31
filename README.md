@@ -198,6 +198,14 @@ docker-start.bat        # ...or Command Prompt (same directory)
 ./docker-start.sh       # Linux / macOS
 ```
 
+Direct (compose CLI, no helper scripts):
+
+```powershell
+docker compose up -d    # start backend (8001) + frontend (3000)
+docker-start.bat        # ...or one-click: up + health poll + opens browser
+docker-stop.bat         # stop & remove containers (./data persists)
+```
+
 PowerShell won't run a `.bat` in the current directory without `.\`; Command Prompt and the desktop shortcut work bare.
 
 The stack exposes `localhost:3000` (frontend) and `localhost:8001` (backend). Networking split (already designed in `frontend/src/lib/api.ts`):
