@@ -1,7 +1,6 @@
 "use client";
 
 import { Box } from "@mui/material";
-import { useEffect, useState } from "react";
 
 const baseHeights = [36, 48, 32, 56, 40, 28, 52, 44, 38, 50, 34, 46, 42, 54, 30, 48, 36, 52, 40, 44];
 const baseWickT = [14, 10, 18, 8, 12, 20, 8, 10, 16, 12, 14, 10, 18, 8, 16, 12, 10, 14, 8, 16];
@@ -19,38 +18,16 @@ interface CandleProgressProps {
 }
 
 export default function CandleProgress({ total = 100, progress = 0, height = 20, candleWidth = 8, gap = 0.4, borderWidth = 0.5, wickWidth = 0.5, fillDirection = "vertical" }: CandleProgressProps) {
-  // Smoothly interpolate displayed progress toward the target progress so fast
-  // jumps (e.g. 0 -> 100) animate instead of snapping.
-  const [displayed, setDisplayed] = useState(progress);
-  useEffect(() => {
-    if (progress === displayed) return;
-    const start = displayed;
-    const target = progress;
-    const duration = 400;
-    const t0 = performance.now();
-    let raf = 0;
-    const step = (now: number) => {
-      const elapsed = now - t0;
-      const t = Math.min(1, elapsed / duration);
-      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
-      setDisplayed(start + (target - start) * eased);
-      if (t < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [progress]);
-
   const c1 = "#22c55e";
   const c2 = "#ef4444";
-  const raw = total * (displayed / 100);
+  const raw = total * (progress / 100);
   const fullCandles = Math.floor(raw);
   const fraction = raw - fullCandles;
   const scale = height / 50;
   const bodyW = Math.max(1, candleWidth - borderWidth * 2);
 
   return (
-    <Box sx={{ display: "flex", alignItems: "flex-end", gap, height, width: "100%", px: 0.25, overflow: "hidden" }}>
+    <Box sx={{ display: "flex", alignItems: "flex-end", gap, height, width: "100%", px: 0.25 }}>
       {Array.from({ length: total }).map((_, i) => {
         const isFull = i < fullCandles;
         const isPartial = i === fullCandles && fraction > 0;
@@ -75,7 +52,7 @@ export default function CandleProgress({ total = 100, progress = 0, height = 20,
                 position: "absolute",
                 ...fillSx,
                 bgcolor: c,
-                transition: "height 0.15s linear, width 0.15s linear",
+                transition: "height 0.2s ease, width 0.2s ease",
                 opacity: fillOpacity,
               }} />
             </Box>
