@@ -62,6 +62,7 @@ from src.db import (
 )
 from src.upstox_config import get_status as token_status, validate_token as validate_token_svc, check_token, get_token as get_raw_token, get_api_key, get_api_secret
 from src.upstox_fetcher import fetch_all_stocks, instrument_keys_loaded
+from src.corporate_actions import audit_stock, fetch_upstox_corporate_actions
 from src.settings import get_all as settings_get_all, get as settings_get, set as settings_set, reset_category, reset_all
 from src.scanner import ContinuationScanner, ReversalScanner, get_default_params, get_default_reversal_params
 from src.market_breadth import calculate_breadth
@@ -413,7 +414,94 @@ def trigger_historical_download(background_tasks: BackgroundTasks):
     return {"status": "started", "operation_id": operation_id}
 
 
-@app.get("/api/data/scan-new-stocks")
+@app.get("/api/data/audit/{symbol}")
+def audit_stock_endpoint(symbol: str):
+    """Audit a cached stock: gaps + Upstox corporate actions + explanation."""
+    from src.upstox_config import get_token
+    token = get_token()
+    report = audit_stock(symbol, token)
+    return report
+
+
+class FixStockRequest(BaseModel):
+    symbol: str
+
+
+@app.post("/api/data/fix-stock")
+def fix_stock(request: FixStockRequest):
+    """Re-download a single stock from Upstox (adjusted) replacing its cached entry."""
+    from src.upstox_config import get_token
+    from src.upstox_fetcher import fetch_historical_data, get_instrument_key
+
+    symbol = request.symbol.upper().strip()
+    token = get_token()
+    if not token:
+        return {"status": "error", "message": "No Upstox token configured."}
+
+    # Remove existing cache entry
+    try:
+        p = cache_manager.get_cache_path(symbol)
+        if p.exists():
+            p.unlink()
+    except Exception as e:
+        logger.warning(f"Could not remove cache for {symbol}: {e}")
+
+    df = fetch_historical_data(symbol, token, days=180)
+    if df is None or df.empty:
+        return {"status": "error", "message": f"No data returned from Upstox for {symbol}."}
+
+    try:
+        cache_manager.save(symbol, df)
+    except Exception as e:
+        return {"status": "error", "message": f"Failed to save cache for {symbol}: {e}"}
+
+    return {
+        "status": "completed",
+        "symbol": symbol,
+        "rows": len(df),
+        "first_date": str(df.index.min().date()) if hasattr(df.index.min(), "date") else str(df.index.min()),
+        "last_date": str(df.index.max().date()) if hasattr(df.index.max(), "date") else str(df.index.max()),
+    }
+
+
+@app.post("/api/data/fix-gap-stocks")
+def trigger_fix_gap_stocks(background_tasks: BackgroundTasks):
+    """Find stocks with gaps, delete their cache, re-download them from Upstox (adjusted)."""
+    operation_id = f"fixgaps_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+
+    if not instrument_keys_loaded():
+        return {"status": "error", "message": "Instrument mapping file (NSE.json.gz) not found or empty."}
+
+    token = token_status()
+    if not token["exists"]:
+        return {"status": "error", "message": "No Upstox token configured. Please update your token first."}
+
+    active_operations[operation_id] = {
+        "operation_id": operation_id,
+        "type": "fix_gap_stocks",
+        "status": "starting",
+        "progress": 0,
+        "message": "Scanning for stocks with gaps...",
+        "logs": [f"[{datetime.now().strftime('%H:%M:%S')}] Starting gap-stock fix (Upstox re-download)..."],
+    }
+
+    background_tasks.add_task(_run_fix_gap_stocks, operation_id)
+    return {"status": "started", "operation_id": operation_id}
+
+
+@app.get("/api/data/gaps-scan")
+def gaps_scan(min_trading_days: int = 5, limit: int = 200):
+    """Return list of cached stocks that have a gap of >= min_trading_days missing."""
+    from src.corporate_actions import detect_gaps
+    result = []
+    for sym in cache_manager.list_symbols():
+        gaps = detect_gaps(sym)
+        big = [g for g in gaps if g["trading_days_missing"] >= min_trading_days]
+        if big:
+            result.append({"symbol": sym, "gaps": big})
+            if len(result) >= limit:
+                break
+    return {"count": len(result), "stocks": result}
 def scan_new_stocks():
     """Download fresh NSE.json.gz, compare with cache_index, return list of new stocks."""
     import json
@@ -1111,6 +1199,81 @@ def _run_historical_download(operation_id: str):
         )
     except Exception as e:
         _fail_operation(operation_id, "historical download", e)
+
+
+def _run_fix_gap_stocks(operation_id: str):
+    try:
+        from src.upstox_config import get_token
+        from src.upstox_fetcher import fetch_historical_data, get_instrument_key
+        from src.corporate_actions import detect_gaps
+
+        token = get_token()
+        if not token:
+            active_operations[operation_id].update(status="error", message="No token available")
+            return
+
+        op = active_operations[operation_id]
+        op["status"] = "running"
+
+        def progress(pct=None, msg=None, log_entry=None):
+            if log_entry:
+                _log(op, log_entry)
+            if pct is not None:
+                op["progress"] = pct
+            if msg is not None:
+                op["message"] = msg
+
+        # Find gap stocks
+        _log(op, "Scanning cache for stocks with gaps...")
+        op["message"] = "Scanning for stocks with gaps..."
+        gap_stocks = []
+        for sym in cache_manager.list_symbols():
+            gaps = detect_gaps(sym)
+            if any(g["trading_days_missing"] >= 5 for g in gaps):
+                gap_stocks.append(sym)
+        _log(op, f"Found {len(gap_stocks)} stock(s) with gaps")
+        if not gap_stocks:
+            op.update(status="completed", progress=100, message="No stocks with gaps found", result={"updated": 0, "failed": 0, "total": 0})
+            return
+
+        total = len(gap_stocks)
+        updated = 0
+        failed = 0
+        for i, sym in enumerate(gap_stocks, 1):
+            pct = round(i / total * 100, 1)
+            msg = f"{i}/{total} — fixing {sym}"
+            progress(pct, msg, f"Fixing {sym} ({i}/{total})")
+            try:
+                # delete cache
+                p = cache_manager.get_cache_path(sym)
+                if p.exists():
+                    p.unlink()
+                df = fetch_historical_data(sym, token, days=180)
+                if df is None or df.empty:
+                    failed += 1
+                    _log(op, f"No data returned for {sym}")
+                    continue
+                cache_manager.save(sym, df)
+                updated += 1
+                _log(op, f"Fixed {sym}: {len(df)} rows")
+            except Exception as e:
+                failed += 1
+                _log(op, f"Failed {sym}: {e}")
+
+        _log(op, "Rebuilding SQLite cache index...")
+        op["message"] = "Rebuilding cache index..."
+        idx_count = cache_manager.rebuild_index()
+        _log(op, f"Cache index rebuilt: {idx_count} entries")
+
+        op.update(
+            status="completed",
+            progress=100,
+            message=f"Done — {updated} fixed, {failed} failed out of {total}",
+            result={"updated": updated, "failed": failed, "total": total},
+            index_rebuilt=idx_count,
+        )
+    except Exception as e:
+        _fail_operation(operation_id, "fix gap stocks", e)
 
 
 def _run_sync_new_stocks(operation_id: str, symbols: list[str]):

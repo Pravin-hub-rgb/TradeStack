@@ -38,6 +38,7 @@ const CacheData: React.FC = () => {
   const [showTokenDialog, setShowTokenDialog] = useState(false);
   const [isDownloadingHistorical, setIsDownloadingHistorical] = useState(false);
   const [checkingToken, setCheckingToken] = useState(false);
+  const [isFixingGaps, setIsFixingGaps] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<{ new_count: number; new_symbols: string[] } | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -155,6 +156,43 @@ const CacheData: React.FC = () => {
     }
   };
 
+  const handleFixGapStocks = async () => {
+    setCheckingToken(true);
+    try {
+      const tokenResp = await fetch(`${API}/api/token/status`);
+      const tokenData = await tokenResp.json();
+      if (!tokenData.exists) {
+        setShowTokenDialog(true);
+        return;
+      }
+      setIsFixingGaps(true);
+      const resp = await fetch(`${API}/api/data/fix-gap-stocks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await resp.json();
+      if (data.status === "error") {
+        if (data.message?.includes("token")) setShowTokenDialog(true);
+        else showToast(data.message || "Failed to start", "error");
+        setIsFixingGaps(false);
+        return;
+      }
+      if (data.status === "started") {
+        setOperationId(data.operation_id);
+        setOperationStatus({
+          type: "fix_gap_stocks",
+          status: "running",
+          progress: 0,
+          message: "Fixing stocks with gaps...",
+        });
+      }
+    } catch {
+      showToast("Failed to connect to server", "error");
+    } finally {
+      setCheckingToken(false);
+    }
+  };
+
   const handleScanNewStocks = async () => {
     setIsScanning(true);
     setScanResult(null);
@@ -255,6 +293,7 @@ const CacheData: React.FC = () => {
       if (data.status === "completed") {
         setIsUpdating(false);
         setIsDownloadingHistorical(false);
+        setIsFixingGaps(false);
         setIsSyncing(false);
         setOperationId(null);
         if (data.type === "sync_new_stocks") {
@@ -266,6 +305,8 @@ const CacheData: React.FC = () => {
           ? "Historical data"
           : data.type === "sync_new_stocks"
           ? `New stocks synced`
+          : data.type === "fix_gap_stocks"
+          ? `Gap stocks fixed`
           : `Cache updated for ${data.result?.date}`;
         showToast(data.result?.updated
           ? `${label}: ${data.result.updated} stocks updated`
@@ -276,6 +317,7 @@ const CacheData: React.FC = () => {
       } else if (data.status === "error") {
         setIsUpdating(false);
         setIsDownloadingHistorical(false);
+        setIsFixingGaps(false);
         setIsSyncing(false);
         setOperationId(null);
         showToast(data.error || "Operation failed", "error");
@@ -390,6 +432,27 @@ const CacheData: React.FC = () => {
               <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
                 Recommended: Run once on a fresh install. Requires a valid Upstox access token.
               </Typography>
+
+              {/* Fix Gap Stocks Section */}
+              <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid", borderColor: "divider" }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Fix Stocks with Gaps
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 2 }}>
+                  Finds cached stocks with date gaps, deletes only those, and re-downloads them from
+                  Upstox (adjusted). Requires a valid Upstox access token.
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={isFixingGaps ? <CloudDownloadIcon sx={{ animation: "spin 1s linear infinite" }} /> : <CloudDownloadIcon />}
+                  onClick={handleFixGapStocks}
+                  disabled={isUpdating || isDownloadingHistorical || isFixingGaps || checkingToken}
+                  fullWidth
+                  sx={{ mb: 1, bgcolor: "#f59e0b", "&:hover": { bgcolor: "#d97706" } }}
+                >
+                  {isFixingGaps ? "Fixing..." : checkingToken ? "Checking..." : "Fix Gap Stocks (re-download from Upstox)"}
+                </Button>
+              </Box>
 
               {/* New Stock Sync Section */}
               <Box sx={{ mt: 3, pt: 2, borderTop: "1px solid", borderColor: "divider" }}>
