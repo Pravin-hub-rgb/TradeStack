@@ -22,6 +22,19 @@ from . import db
 
 logger = logging.getLogger(__name__)
 
+# Columns that represent raw exchange data. Everything else (indicators like
+# sma_20, ma_angle, adr, price_change, ...) is derived and must never be
+# persisted, otherwise it goes stale as new rows arrive.
+RAW_COLUMNS = {"open", "high", "low", "close", "volume", "oi", "last_updated"}
+
+
+def _strip_to_raw(data: pd.DataFrame) -> pd.DataFrame:
+    """Keep only raw OHLCV (+ last_updated) columns; drop stale indicators."""
+    if not isinstance(data, pd.DataFrame) or data.empty:
+        return data
+    keep = [c for c in data.columns if c in RAW_COLUMNS]
+    return data[keep].copy()
+
 
 class CacheManager:
     def __init__(self, cache_dir: Optional[str] = None):
@@ -42,6 +55,7 @@ class CacheManager:
             with open(path, "rb") as f:
                 data = pickle.load(f)
             if isinstance(data, pd.DataFrame) and not data.empty:
+                data = _strip_to_raw(data)
                 logger.debug(f"Loaded cache for {symbol}: {len(data)} rows")
                 return data
             return None
@@ -52,6 +66,7 @@ class CacheManager:
     def save(self, symbol: str, data: pd.DataFrame, commit: bool = True):
         path = self.get_cache_path(symbol)
         try:
+            data = _strip_to_raw(data)
             with open(path, "wb") as f:
                 pickle.dump(data, f)
             self._update_index(symbol, data, path, commit=commit)
