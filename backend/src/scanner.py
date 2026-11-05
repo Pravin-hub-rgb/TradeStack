@@ -174,8 +174,7 @@ class ContinuationScanner:
             df["Near_MA"] = df["Dist_to_MA_pct"] <= NEAR_TH
         df["Above_MA"] = df["close"] > df["SMA20"]
         df["SMA20_prev_max"] = df["SMA20"].shift(1).rolling(rising_ma_window).max()
-        rising_ma_tolerance = self.params.get("rising_ma_tolerance", 0.0) / 100
-        df["Rising_MA"] = df["SMA20"] >= df["SMA20_prev_max"] * (1 - rising_ma_tolerance)
+        df["Rising_MA"] = df["SMA20"] > df["SMA20_prev_max"]
 
         latest = df.iloc[-1]
 
